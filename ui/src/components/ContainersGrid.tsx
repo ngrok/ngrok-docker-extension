@@ -11,6 +11,7 @@ import { GridRowParams } from "@mui/x-data-grid/models/params/gridRowParams";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DoNotDisturbIcon from "@mui/icons-material/DoNotDisturb";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 
 export type DataGridColumnType = (GridActionsColDef | GridColDef)[];
@@ -83,40 +84,63 @@ export default function ContainersGrid() {
       headerName: "Actions",
       type: "actions",
       headerAlign: "center",
-      align: "center",
+      align: "left",
       flex: 1,
-      getActions: (params: GridRowParams) => [
-        //@ts-ignore
-        <GridActionsCellItem
-          key={"action_open_tunnel_" + params.row.id}
-          icon={<Tooltip title="Open tunnel">{<LanguageIcon />}</Tooltip>}
-          label="Open tunnel"
-          onClick={handleOpenTunnel(params.row.url)}
-          disabled={
-            params.row.publishedPort === undefined || params.row.url === "-"
-          }
-        />,
-        //@ts-ignore
-        <GridActionsCellItem
-          key={"action_start_tunnel_" + params.row.id}
-          icon={<Tooltip title="Start tunnel">{<PlayArrowIcon />}</Tooltip>}
-          onClick={handleStart(params.row)}
-          label="Start tunnel"
-          disabled={
-            params.row.publishedPort === undefined || params.row.url !== "-"
-          }
-        />,
-        //@ts-ignore
-        <GridActionsCellItem
-          key={"action_stop_tunnel_" + params.row.id}
-          icon={<Tooltip title="Stop tunnel">{<DoNotDisturbIcon />}</Tooltip>}
-          label="Stop tunnel"
-          onClick={handleStopTunnel(params.row.containerName)}
-          disabled={
-            params.row.publishedPort === undefined || params.row.url === "-"
-          }
-        />,
-      ],
+      getActions: (params: GridRowParams) => {
+        const actions = [
+          //@ts-ignore
+          <GridActionsCellItem
+            key={"action_open_tunnel_" + params.row.id}
+            icon={<Tooltip title="Open tunnel">{<LanguageIcon />}</Tooltip>}
+            label="Open tunnel"
+            onClick={handleOpenTunnel(params.row.url)}
+            disabled={
+              params.row.publishedPort === undefined || params.row.url === "-"
+            }
+          />,
+          //@ts-ignore
+          <GridActionsCellItem
+            key={"action_start_tunnel_" + params.row.id}
+            icon={<Tooltip title="Start tunnel">{<PlayArrowIcon />}</Tooltip>}
+            onClick={handleStart(params.row)}
+            label="Start tunnel"
+            disabled={
+              params.row.publishedPort === undefined || params.row.url !== "-"
+            }
+          />,
+          //@ts-ignore
+          <GridActionsCellItem
+            key={"action_stop_tunnel_" + params.row.id}
+            icon={<Tooltip title="Stop tunnel">{<DoNotDisturbIcon />}</Tooltip>}
+            label="Stop tunnel"
+            onClick={handleStopTunnel(params.row.containerName)}
+            disabled={
+              params.row.publishedPort === undefined || params.row.url === "-"
+            }
+          />,
+        ];
+
+        if (params.row.url !== "-") {
+          return [
+            ...actions, //@ts-ignore
+            <GridActionsCellItem
+              key={"action_copy_tunnel_address_" + params.row.id}
+              icon={
+                <Tooltip title="Copy tunnel address">
+                  {<ContentCopyIcon />}
+                </Tooltip>
+              }
+              label="Copy tunnel address"
+              onClick={() => {
+                navigator.clipboard.writeText(params.row.url)
+                ddClient.desktopUI.toast.success("Tunnel address copied to clipboard")
+              }}
+            />,
+          ];
+        } else {
+          return actions;
+        }
+      },
     },
   ];
 
@@ -218,10 +242,10 @@ export default function ContainersGrid() {
         {
           stream: {
             async onOutput(data: any) {
-              console.log("**** EVENT received")
+              console.log("**** EVENT received");
               console.log(data);
               await listContainers();
-              console.log("*** DONE")
+              console.log("*** DONE");
             },
             onClose(exitCode) {
               console.log("onClose with exit code " + exitCode);
