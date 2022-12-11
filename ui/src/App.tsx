@@ -31,7 +31,6 @@ export function App() {
   }, []);
 
   const onSave = () => {
-    console.log("onSave");
     setAuthIsSetup(true);
   };
 

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useEffect, useState } from "react";
 import {
   DataGrid,
   GridActionsCellItem,
@@ -11,7 +12,6 @@ import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DoNotDisturbIcon from "@mui/icons-material/DoNotDisturb";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { useEffect, useState } from "react";
 
 export type DataGridColumnType = (GridActionsColDef | GridColDef)[];
 
@@ -152,81 +152,88 @@ export default function ContainersGrid() {
   };
 
   const ddClient = useDockerDesktopClient();
-
   const [rows, setRows] = useState<ContainerRow[]>();
 
   useEffect(() => {
     listContainers();
   }, []);
 
-  const listContainers = () => {
-    ddClient.docker
-      .listContainers()
-      // @ts-ignore
-      .then((containers: Container[]) => {
-        console.log("containers:", containers);
+  const listContainers = async () => {
+    console.log("listContainers");
+    const containers = (await ddClient.docker.listContainers()) as Container[];
+    console.log("containers:", containers);
 
-        let arr: ContainerRow[] = [];
+    let arr: ContainerRow[] = [];
+    for (let i = 0; i < containers.length; i++) {
+      let x: ContainerRow = {
+        id: i,
+        containerName: containers[i].Names[0].substring(1),
+        url: "-",
+      };
 
-        for (let i = 0; i < containers.length; i++) {
-          let x: ContainerRow = {
-            id: i,
-            containerName: containers[i].Names[0].substring(1),
-            url: "-",
-          };
+      if (containers[i].Ports.length > 0) {
+        x.publishedPort = containers[i].Ports[0].PublicPort;
+      }
 
-          if (containers[i].Ports.length > 0) {
-            x.publishedPort = containers[i].Ports[0].PublicPort;
-          }
-
-          arr.push(x);
-        }
-        setRows(arr);
-      })
-      .catch((err: Error) => {
-        console.log(err);
-      });
-  };
-
-  const [tunnels, setTunnels] = useState<Record<string, Tunnel>>({});
-
-  const listTunnels = async () => {
-    const tunnelsResp = (await ddClient.extension.vm?.service?.get(
-      "/progress"
-    )) as Record<string, Tunnel>;
-    console.log("/progress ->", tunnelsResp);
-    setTunnels(tunnelsResp);
-  };
-
-  useEffect(() => {
-    console.log("useEffect - listTunnels");
-    listTunnels();
-  }, []);
-
-  useEffect(() => {
-    console.log("useEffect - tunnels have changed, updating rows...");
-    console.log("4.1/ tunnels:", tunnels);
-
-    if (rows === undefined) {
-      console.log("rows is undefined, nothing to do");
-      return;
+      arr.push(x);
     }
 
-    const rowsCopy = rows.slice();
+    console.log("GET /progress");
+    const tunnels = (await ddClient.extension.vm?.service?.get(
+      "/progress"
+    )) as Record<string, Tunnel>;
+
+    console.log("tunnels:", tunnels);
+
     // update rows with url
-    for (let i = 0; i < rowsCopy.length; i++) {
+    for (let i = 0; i < arr.length; i++) {
       // check if tunnels contains the key "containerName"
       for (const key in tunnels) {
-        if (rowsCopy[i].containerName === key) {
+        if (arr[i].containerName === key) {
           // if so, update the row url
-          rowsCopy[i].url = tunnels[key].URL;
+          arr[i].url = tunnels[key].URL;
         }
       }
     }
 
-    console.log("5/ set rows");
-    setRows(rowsCopy);
-  }, [tunnels]);
+    console.log("updating rows:", arr);
+    setRows(arr);
+  };
+
+  useEffect(() => {
+    const containersEvents = async () => {
+      console.log("listening to container events...");
+      await ddClient.docker.cli.exec(
+        "events",
+        [
+          "--format",
+          `"{{ json . }}"`,
+          "--filter",
+          "type=container",
+          "--filter",
+          "event=start",
+          "--filter",
+          "event=destroy",
+        ],
+        {
+          stream: {
+            async onOutput(data: any) {
+              console.log("**** EVENT received")
+              console.log(data);
+              await listContainers();
+              console.log("*** DONE")
+            },
+            onClose(exitCode) {
+              console.log("onClose with exit code " + exitCode);
+            },
+            splitOutputLines: true,
+          },
+        }
+      );
+    };
+
+    containersEvents();
+  }, []);
 
   const handleStart = (row: any) => async () => {
     console.log("1/ handleStart:", row);
@@ -234,8 +241,8 @@ export default function ContainersGrid() {
     console.log("2/ startTunnel");
     await startTunnel(row.containerName, row.publishedPort);
 
-    console.log("3/ listTunnels");
-    await listTunnels();
+    console.log("3/ listContainers");
+    await listContainers();
   };
 
   const startTunnel = async (containerID: string, port: number) => {
