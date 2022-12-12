@@ -195,8 +195,12 @@ export default function ContainersGrid() {
         url: "-",
       };
 
-      if (containers[i].Ports.length > 0) {
-        x.publishedPort = containers[i].Ports[0].PublicPort;
+      // use the first public port available
+      for (let j = 0; j < containers[i].Ports.length; j++) {
+        if(containers[i].Ports[j].PublicPort !== undefined){
+          x.publishedPort = containers[i].Ports[j].PublicPort;
+          break
+        }
       }
 
       arr.push(x);
