@@ -91,9 +91,7 @@ func main() {
 	//			filters.Arg("label", "com.docker.desktop.extension.name=Ngrok Docker Extension"),
 	//			filters.Arg("event", "die"),
 	//			filters.Arg("event", "stop"),
-	//			filters.Arg("event", "pause"),
 	//			filters.Arg("event", "start"),
-	//			filters.Arg("event", "unpause"),
 	//		),
 	//	})
 	//	for {

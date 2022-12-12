@@ -24,18 +24,20 @@ RUN npm run build
 
 FROM alpine
 LABEL org.opencontainers.image.title="Ngrok" \
-    org.opencontainers.image.description="Ngrok Docker extension" \
+    org.opencontainers.image.description="Expose your containers to the public internet using Ngrok tunnels." \
     org.opencontainers.image.vendor="Felipe" \
     com.docker.desktop.extension.api.version="0.3.0" \
-    com.docker.extension.screenshots="" \
-    com.docker.extension.detailed-description="" \
-    com.docker.extension.publisher-url="" \
+    com.docker.desktop.extension.icon="https://avatars.githubusercontent.com/u/10625446?s=200" \
+    com.docker.extension.screenshots="[{\"alt\":\"containers\", \"url\":\"https://i.postimg.cc/vHrP3Gns/containers.png\"},{\"alt\":\"settings\", \"url\":\"https://i.postimg.cc/vHsh1CNS/settings.png\"}]" \
+    com.docker.extension.detailed-description="Use this extension to expose the containers that have published ports in Docker Desktop to the public internet using Ngrok tunnels." \
+    com.docker.extension.publisher-url="https://twitter.com/felipecruz" \
     com.docker.extension.additional-urls="" \
-    com.docker.extension.changelog=""
+    com.docker.extension.changelog="" \
+    com.docker.extension.categories="networking,utility-tools"
 
 COPY --from=builder /backend/bin/service /
 COPY docker-compose.yaml .
 COPY metadata.json .
-COPY docker.svg .
+COPY ngrok.svg .
 COPY --from=client-builder /ui/build ui
 CMD /service -socket /run/guest-services/backend.sock
