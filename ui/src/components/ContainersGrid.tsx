@@ -58,7 +58,6 @@ export default function ContainersGrid() {
       headerAlign: "center",
       align: "center",
       width: 150,
-      editable: true,
       flex: 1,
     },
     {
@@ -67,7 +66,6 @@ export default function ContainersGrid() {
       headerAlign: "center",
       align: "center",
       width: 150,
-      editable: true,
       flex: 1,
     },
     {
@@ -132,8 +130,10 @@ export default function ContainersGrid() {
               }
               label="Copy tunnel address"
               onClick={() => {
-                navigator.clipboard.writeText(params.row.url)
-                ddClient.desktopUI.toast.success("Tunnel address copied to clipboard")
+                navigator.clipboard.writeText(params.row.url);
+                ddClient.desktopUI.toast.success(
+                  "Tunnel address copied to clipboard"
+                );
               }}
             />,
           ];
@@ -197,9 +197,9 @@ export default function ContainersGrid() {
 
       // use the first public port available
       for (let j = 0; j < containers[i].Ports.length; j++) {
-        if(containers[i].Ports[j].PublicPort !== undefined){
+        if (containers[i].Ports[j].PublicPort !== undefined) {
           x.publishedPort = containers[i].Ports[j].PublicPort;
-          break
+          break;
         }
       }
 
