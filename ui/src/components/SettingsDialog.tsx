@@ -23,9 +23,7 @@ interface Props {
 
 export default function SettingsDialog({ ...props }: Props) {
   const [authToken, setAuthToken] = useState<string>(() => {
-    const token = localStorage.getItem("authToken");
-    console.log("authToken:", token);
-    return token || "";
+    return localStorage.getItem("authToken") || "";
   });
   const [open, setOpen] = React.useState(false);
 

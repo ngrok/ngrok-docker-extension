@@ -48,7 +48,7 @@ export function App() {
       >
         <Grid item>
           <Typography variant="h2" color="text.secondary" mt={2}>
-            ngrok is the fastest way to put your containers on the internet.
+            Ngrok is the fastest way to put your containers on the internet.
           </Typography>
         </Grid>
 

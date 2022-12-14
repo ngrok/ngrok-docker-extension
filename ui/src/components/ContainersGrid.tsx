@@ -13,6 +13,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DoNotDisturbIcon from "@mui/icons-material/DoNotDisturb";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
+import AlertDialog from "./AlertDialog";
 
 export type DataGridColumnType = (GridActionsColDef | GridColDef)[];
 
@@ -41,7 +42,7 @@ interface ContainerRow {
   id: number;
   containerName: string;
   publishedPort?: number;
-  url: string;
+  url?: string;
 }
 
 export default function ContainersGrid() {
@@ -82,43 +83,64 @@ export default function ContainersGrid() {
       headerName: "Actions",
       type: "actions",
       headerAlign: "center",
-      align: "left",
+      align: "center",
+      maxWidth: 200,
       flex: 1,
       getActions: (params: GridRowParams) => {
         const actions = [
           //@ts-ignore
           <GridActionsCellItem
-            key={"action_open_tunnel_" + params.row.id}
-            icon={<Tooltip title="Open tunnel">{<LanguageIcon />}</Tooltip>}
-            label="Open tunnel"
+            key={"action_open_browser_" + params.row.id}
+            icon={<Tooltip title="Open in browser">{<LanguageIcon />}</Tooltip>}
+            label="Open in browser"
             onClick={handleOpenTunnel(params.row.url)}
             disabled={
-              params.row.publishedPort === undefined || params.row.url === "-"
-            }
-          />,
-          //@ts-ignore
-          <GridActionsCellItem
-            key={"action_start_tunnel_" + params.row.id}
-            icon={<Tooltip title="Start tunnel">{<PlayArrowIcon />}</Tooltip>}
-            onClick={handleStart(params.row)}
-            label="Start tunnel"
-            disabled={
-              params.row.publishedPort === undefined || params.row.url !== "-"
-            }
-          />,
-          //@ts-ignore
-          <GridActionsCellItem
-            key={"action_stop_tunnel_" + params.row.id}
-            icon={<Tooltip title="Stop tunnel">{<DoNotDisturbIcon />}</Tooltip>}
-            label="Stop tunnel"
-            onClick={handleStopTunnel(params.row.containerName)}
-            disabled={
-              params.row.publishedPort === undefined || params.row.url === "-"
+              params.row.publishedPort === undefined ||
+              params.row.url === undefined
             }
           />,
         ];
 
-        if (params.row.url !== "-") {
+        if (
+          params.row.publishedPort !== undefined &&
+          params.row.url === undefined
+        ) {
+          return [
+            <GridActionsCellItem
+              key={"action_publish_" + params.row.id}
+              icon={
+                <Tooltip title="Publish on the internet">
+                  {<PlayArrowIcon />}
+                </Tooltip>
+              }
+              onClick={handleStart(params.row)}
+              label="Publish on the internet"
+              disabled={startingTunnel}
+            />,
+            ...actions,
+          ];
+        } else {
+          return [
+            <GridActionsCellItem
+              key={"action_stop_publishing_" + params.row.id}
+              icon={
+                <Tooltip title="Stop publishing on the internet">
+                  {<DoNotDisturbIcon />}
+                </Tooltip>
+              }
+              label="Stop publishing on the internet"
+              onClick={handleStopTunnel(params.row.containerName)}
+              disabled={
+                params.row.publishedPort === undefined ||
+                params.row.url === undefined ||
+                stoppingTunnel
+              }
+            />,
+            ...actions,
+          ];
+        }
+
+        if (params.row.url !== undefined) {
           return [
             ...actions, //@ts-ignore
             <GridActionsCellItem
@@ -148,23 +170,27 @@ export default function ContainersGrid() {
     ddClient.host.openExternal(url);
   };
 
+  const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
+  const [alertDialogMsg, setAlertDialogMsg] = useState<string>("");
+
+  const [stoppingTunnel, setStoppingTunnel] = useState<boolean>(false);
+
   const handleStopTunnel = (containerName: string) => () => {
+    setStoppingTunnel(true);
+
     ddClient.extension.vm?.service
       ?.delete(`/remove/${containerName}`)
       .then(() => {
         if (rows === undefined) {
-          console.log("rows is undefined, nothing to do");
           return;
         }
 
         let updatedRows = rows.map((row) => {
           if (row.containerName == containerName) {
-            return { ...row, url: "-" };
+            return { ...row, url: "" };
           }
           return row;
         });
-
-        console.log("updated rows:", updatedRows);
 
         setRows(updatedRows);
 
@@ -172,6 +198,9 @@ export default function ContainersGrid() {
       })
       .catch((error) => {
         ddClient.desktopUI.toast.error(`Failed stopping tunnel: ${error}`);
+      })
+      .finally(() => {
+        setStoppingTunnel(false);
       });
   };
 
@@ -183,16 +212,13 @@ export default function ContainersGrid() {
   }, []);
 
   const listContainers = async () => {
-    console.log("listContainers");
     const containers = (await ddClient.docker.listContainers()) as Container[];
-    console.log("containers:", containers);
 
     let arr: ContainerRow[] = [];
     for (let i = 0; i < containers.length; i++) {
       let x: ContainerRow = {
         id: i,
         containerName: containers[i].Names[0].substring(1),
-        url: "-",
       };
 
       // use the first public port available
@@ -206,12 +232,9 @@ export default function ContainersGrid() {
       arr.push(x);
     }
 
-    console.log("GET /progress");
     const tunnels = (await ddClient.extension.vm?.service?.get(
       "/progress"
     )) as Record<string, Tunnel>;
-
-    console.log("tunnels:", tunnels);
 
     // update rows with url
     for (let i = 0; i < arr.length; i++) {
@@ -224,13 +247,40 @@ export default function ContainersGrid() {
       }
     }
 
-    console.log("updating rows:", arr);
+    // sort containers that have exposed ports
+    arr.sort((a, b) => {
+      // two undefined values should be treated as equal ( 0 )
+      if (
+        typeof a.publishedPort === "undefined" &&
+        typeof b.publishedPort === "undefined"
+      )
+        return 0;
+      // if a is "undefined" and b isn't a should have a lower index in the array
+      else if (typeof a.publishedPort === "undefined") return 1;
+      // if b is "undefined" and a isn't a should have a higher index in the array
+      else if (typeof b.publishedPort === "undefined") return -1;
+      // if both numbers are defined compare as normal
+      else return a.publishedPort - b.publishedPort;
+    });
+
+    // sort containers that have a ngrok url
+    arr.sort((a, b) => {
+      // two undefined values should be treated as equal ( 0 )
+      if (typeof a.url === "undefined" && typeof b.url === "undefined")
+        return 0;
+      // if a is "undefined" and b isn't a should have a lower index in the array
+      else if (typeof a.url === "undefined") return 1;
+      // if b is "undefined" and a isn't a should have a higher index in the array
+      else if (typeof b.url === "undefined") return -1;
+      // if both numbers are defined compare as normal
+      else return a.url.localeCompare(b.url);
+    });
+
     setRows(arr);
   };
 
   useEffect(() => {
     const containersEvents = async () => {
-      console.log("listening to container events...");
       await ddClient.docker.cli.exec(
         "events",
         [
@@ -246,10 +296,7 @@ export default function ContainersGrid() {
         {
           stream: {
             async onOutput(data: any) {
-              console.log("**** EVENT received");
-              console.log(data);
               await listContainers();
-              console.log("*** DONE");
             },
             onClose(exitCode) {
               console.log("onClose with exit code " + exitCode);
@@ -263,13 +310,10 @@ export default function ContainersGrid() {
     containersEvents();
   }, []);
 
+  const [startingTunnel, setStartingTunnel] = useState<boolean>(false);
+
   const handleStart = (row: any) => async () => {
-    console.log("1/ handleStart:", row);
-
-    console.log("2/ startTunnel");
     await startTunnel(row.containerName, row.publishedPort);
-
-    console.log("3/ listContainers");
     await listContainers();
   };
 
@@ -277,6 +321,8 @@ export default function ContainersGrid() {
     console.log(
       `Starting tunnel for container ${containerID} on port ${port}...`
     );
+
+    setStartingTunnel(true);
 
     try {
       const tunnelURL = await ddClient.extension.vm?.service?.post(
@@ -288,12 +334,21 @@ export default function ContainersGrid() {
         `Tunnel started for container ${containerID} on port ${port} at ${tunnelURL}`
       );
     } catch (error: any) {
-      ddClient.desktopUI.toast.error(error.message);
+      let errMsg = error.message.replaceAll(`"`, "").replaceAll("\\r", "");
+      setAlertDialogMsg(errMsg);
+      setShowAlertDialog(true);
+    } finally {
+      setStartingTunnel(false);
     }
   };
 
   return (
     <Grid container flex={1} height="calc(100vh - 134px)">
+      <AlertDialog
+        open={showAlertDialog}
+        msg={alertDialogMsg}
+        onClose={() => setShowAlertDialog(false)}
+      />
       <DataGrid
         rows={rows || []}
         columns={columns}
