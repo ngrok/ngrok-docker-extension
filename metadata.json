@@ -1,0 +1,19 @@
+{
+  "icon": "ngrok.svg",
+  "vm": {
+    "composefile": "docker-compose.yaml",
+    "exposes": {
+      "socket": "backend.sock"
+    }
+  },
+  "ui": {
+    "dashboard-tab": {
+      "title": "Ngrok",
+      "src": "index.html",
+      "root": "ui",
+      "backend": {
+        "socket": "backend.sock"
+      }
+    }
+  }
+}
