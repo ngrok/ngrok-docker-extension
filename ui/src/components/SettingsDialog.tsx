@@ -18,6 +18,7 @@ export default function SettingsDialog() {
   const [open, setOpen] = React.useState(false);
 
   const handleClickOpen = () => {
+    setTempAuthToken(authToken);
     setOpen(true);
   };
 
