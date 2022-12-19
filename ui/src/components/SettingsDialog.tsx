@@ -9,22 +9,12 @@ import {
 import Button from "@mui/material/Button";
 import React, { useState } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { createDockerDesktopClient } from "@docker/extension-api-client";
+import { useAuthContext } from "./AuthContext";
 
-const client = createDockerDesktopClient();
+export default function SettingsDialog() {
+  const { authToken, setAuthToken } = useAuthContext();
+  const [tempAuthToken, setTempAuthToken] = useState(authToken);
 
-function useDockerDesktopClient() {
-  return client;
-}
-
-interface Props {
-  onSave(): void;
-}
-
-export default function SettingsDialog({ ...props }: Props) {
-  const [authToken, setAuthToken] = useState<string>(() => {
-    return localStorage.getItem("authToken") || "";
-  });
   const [open, setOpen] = React.useState(false);
 
   const handleClickOpen = () => {
@@ -36,21 +26,12 @@ export default function SettingsDialog({ ...props }: Props) {
   };
 
   const handleChange = (event: any) => {
-    setAuthToken(event.target.value);
+    setTempAuthToken(event.target.value);
   };
 
   const handleSave = (event: any) => {
-    const ddClient = useDockerDesktopClient();
-
-    ddClient.extension.vm?.service
-      ?.get(`/auth?token=${authToken}`)
-      .then((result) => {
-        localStorage.setItem("authToken", authToken);
-      });
-
+    setAuthToken(tempAuthToken);
     setOpen(false);
-
-    props.onSave();
   };
 
   return (
@@ -74,14 +55,14 @@ export default function SettingsDialog({ ...props }: Props) {
             fullWidth
             variant="standard"
             onChange={handleChange}
-            value={authToken}
+            value={tempAuthToken}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancel} variant="outlined">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={authToken.length === 0}>
+          <Button onClick={handleSave} disabled={tempAuthToken.length === 0}>
             Save
           </Button>
         </DialogActions>

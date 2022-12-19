@@ -34,11 +34,7 @@ const steps = [
   },
 ];
 
-interface Props {
-  onSave(): void;
-}
-
-export default function AuthStepper({ ...props }: Props) {
+export default function AuthStepper() {
   const ddClient = useDockerDesktopClient();
   const [activeStep, setActiveStep] = React.useState(0);
 
@@ -101,9 +97,7 @@ export default function AuthStepper({ ...props }: Props) {
                     )}
                   </Grid>
                   <Grid item>
-                    {index === 1 && activeStep === 1 && (
-                      <SettingsDialog onSave={props.onSave} />
-                    )}
+                    {index === 1 && activeStep === 1 && <SettingsDialog />}
                   </Grid>
                 </Grid>
               </StepContent>

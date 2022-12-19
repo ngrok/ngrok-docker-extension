@@ -8,15 +8,16 @@ This extension is composed of:
 - A [backend](./backend) container that runs an API in Go. It exposes the `/hello` endpoint which returns a JSON payload.
 
 > You can build your Docker Extension using your fav tech stack:
+>
 > - Frontend: React, Angular, Vue, Svelte, etc.
-> Basically, any frontend framework which generates an index.html with CSS, and JS assets.
+>   Basically, any frontend framework which generates an index.html with CSS, and JS assets.
 > - Backend (optional): anything that can run in a container.
 
 <details>
   <summary>Looking for more templates?</summary>
 
 1. [React + NodeJS](https://github.com/benja-M-1/node-backend-extension).
-2. [React + .NET 6 WebAPI](https://github.com/felipecruz91/dotnet-api-docker-extension). 
+2. [React + .NET 6 WebAPI](https://github.com/felipecruz91/dotnet-api-docker-extension).
 
 Request one or submit yours [here](https://github.com/docker/extensions-sdk/issues).
 
@@ -27,6 +28,7 @@ Request one or submit yours [here](https://github.com/docker/extensions-sdk/issu
 You can use `docker` to build, install and push your extension. Also, we provide an opinionated [Makefile](Makefile) that could be convenient for you. There isn't a strong preference of using one over the other, so just use the one you're most comfortable with.
 
 To build the extension, use `make build-extension` **or**:
+
 ```shell
   docker buildx build -t felipecruz/ngrok-docker-extension:latest . --load
 ```
@@ -36,6 +38,7 @@ To install the extension, use `make install-extension` **or**:
 ```shell
   docker extension install felipecruz/ngrok-docker-extension:latest
 ```
+
 > If you want to automate this command, use the `-f` or `--force` flag to accept the warning message.
 
 To preview the extension in Docker Desktop, open Docker Dashboard once the installation is complete. The left-hand menu displays a new tab with the name of your extension. You can also use `docker extension ls` to see that the extension has been installed successfully.
@@ -48,7 +51,7 @@ Assuming your app runs on the default port, start your UI app and then run:
 ```shell
   cd ui
   npm install
-  npm start
+  npm run dev
 ```
 
 This starts a development server that listens on port `3000`.
@@ -81,6 +84,7 @@ Use the `docker extension update` command to remove and re-install the extension
 ```shell
 docker extension update felipecruz/ngrok-docker-extension:latest
 ```
+
 > If you want to automate this command, use the `-f` or `--force` flag to accept the warning message.
 
 > Extension containers are hidden from the Docker Dashboard by default. You can change this in Settings > Extensions > Show Docker Extensions system containers.
