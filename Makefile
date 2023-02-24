@@ -1,4 +1,4 @@
-IMAGE?=felipecruz/ngrok-docker-extension
+IMAGE?=ngrok/ngrok-docker-extension
 TAG?=latest
 
 BUILDER=buildx-multi-arch

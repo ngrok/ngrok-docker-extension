@@ -20,7 +20,7 @@ const steps = [
   {
     label: "Get Authtoken",
     description: `To expose your containers to the public internet you need an Authtoken.
-    Sign in or Log in Ngrok to get an Authtoken by clicking below:`,
+    Sign in or Log in ngrok to get an Authtoken by clicking below:`,
   },
   {
     label: "Save the Authtoken in Settings",

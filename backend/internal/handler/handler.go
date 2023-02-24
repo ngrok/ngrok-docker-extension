@@ -16,14 +16,14 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/felipecruz91/ngrok-go/internal"
-	"github.com/felipecruz91/ngrok-go/internal/log"
+	"github.com/ngrok/ngrok-docker-extension/internal"
+	"github.com/ngrok/ngrok-docker-extension/internal/log"
 )
 
 type Handler struct {
 	DockerClient   func() (*client.Client, error)
 	ProgressCache  *ProgressCache
-	NgrokAuthToken string
+	ngrokAuthToken string
 }
 
 func New(ctx context.Context, cliFactory func() (*client.Client, error)) *Handler {
@@ -41,7 +41,7 @@ func New(ctx context.Context, cliFactory func() (*client.Client, error)) *Handle
 		ProgressCache: &ProgressCache{
 			m: initCache(ctx, cli),
 		},
-		NgrokAuthToken: os.Getenv("NGROK_AUTHTOKEN"),
+		ngrokAuthToken: os.Getenv("NGROK_AUTHTOKEN"),
 	}
 }
 
@@ -49,7 +49,6 @@ func pullImagesIfNotPresent(ctx context.Context, cli *client.Client) {
 	g, ctx := errgroup.WithContext(ctx)
 
 	images := []string{
-		internal.NgrokImage,
 		internal.AlpineImage,
 	}
 
@@ -82,7 +81,7 @@ func initCache(ctx context.Context, cli *client.Client) map[string]Tunnel {
 	list, err := cli.ContainerList(ctx, types.ContainerListOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("label", "com.docker.desktop.extension=true"),
-			filters.Arg("label", "com.docker.desktop.extension.name=Ngrok Docker Extension"),
+			filters.Arg("label", "com.docker.desktop.extension.name=ngrok Docker Extension"),
 		),
 	})
 	if err != nil {
@@ -117,7 +116,7 @@ func initCache(ctx context.Context, cli *client.Client) map[string]Tunnel {
 			}
 		}
 
-		m[cID] = Tunnel{ContainerID: ctr.ID, URL: st.URL}
+		m[cID] = Tunnel{TunnelID: ctr.ID, URL: st.URL}
 	}
 
 	log.Info(m)
@@ -140,7 +139,7 @@ func createVolumeIfNotExists(ctx context.Context, cli *client.Client) {
 			User:         "root",
 			Labels: map[string]string{
 				"com.docker.desktop.extension":      "true",
-				"com.docker.desktop.extension.name": "Ngrok Docker Extension",
+				"com.docker.desktop.extension.name": "ngrok Docker Extension",
 				"com.docker.compose.project":        "felipecruz_ngrok-docker-extension-desktop-extension",
 			},
 		}, &container.HostConfig{

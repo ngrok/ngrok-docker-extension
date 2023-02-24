@@ -5,8 +5,9 @@ import {
   GridActionsCellItem,
   GridActionsColDef,
   GridColDef,
+  GridColumns,
 } from "@mui/x-data-grid";
-import { CircularProgress, Grid, Tooltip, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Grid, MenuItem, Modal, Select, SelectChangeEvent, Switch, Tooltip, Typography } from "@mui/material";
 import { GridRowParams } from "@mui/x-data-grid/models/params/gridRowParams";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -15,8 +16,10 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
+import { NgrokContainer, Tunnel, useNgrokContext } from "./NgrokContext";
+import { Settings } from "@mui/icons-material";
 
-export type DataGridColumnType = (GridActionsColDef | GridColDef)[];
+export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
 
 const client = createDockerDesktopClient();
 
@@ -24,29 +27,10 @@ function useDockerDesktopClient() {
   return client;
 }
 
-export interface Container {
-  Names: string[];
-  Ports: Port[];
-}
-
-export interface Port {
-  PublicPort: number;
-  Type: string;
-}
-
-export interface Tunnel {
-  ContainerID: string;
-  URL: string;
-}
-
-interface ContainerRow {
-  id: number;
-  containerName: string;
-  publishedPort?: number;
-  url?: string;
-}
-
 export default function ContainersGrid() {
+  const { containers, setContainers, tunnels, setTunnels } = useNgrokContext();
+  const [rows, setRows] = useState<NgrokContainer[]>(Object.values(containers));
+
   const columns: DataGridColumnType = [
     {
       field: "id",
@@ -55,7 +39,7 @@ export default function ContainersGrid() {
       hide: true,
     },
     {
-      field: "containerName",
+      field: "Name",
       headerName: "Container",
       headerAlign: "center",
       align: "center",
@@ -64,11 +48,18 @@ export default function ContainersGrid() {
     },
     {
       field: "publishedPort",
-      headerName: "Published Ports",
+      headerName: "Published Port",
       headerAlign: "center",
       align: "center",
       maxWidth: 150,
       flex: 1,
+      renderCell: (params) => {
+        return (
+          <Typography>
+            {params.row.Port.PublicPort}
+          </Typography>
+        );
+      },
     },
     {
       field: "url",
@@ -76,10 +67,9 @@ export default function ContainersGrid() {
       headerAlign: "center",
       align: "center",
       type: "number",
-      maxWidth: 310,
       flex: 1,
       renderCell: (params) => {
-        if (!params.row.url) {
+        if (!tunnels[params.row.id]) {
           return;
         }
 
@@ -92,13 +82,13 @@ export default function ContainersGrid() {
             justifyContent={"end"}
           >
             <Grid item>
-              <Typography noWrap={true}>{params.row.url}</Typography>
+              <Typography noWrap={true}>{tunnels[params.row.id].URL}</Typography>
             </Grid>
             <Grid item>
               <Tooltip title="Copy URL">
                 <ContentCopyIcon
                   onClick={() => {
-                    navigator.clipboard.writeText(params.row.url);
+                    navigator.clipboard.writeText(tunnels[params.row.id].URL);
                     ddClient.desktopUI.toast.success("URL copied to clipboard");
                   }}
                 />
@@ -116,8 +106,8 @@ export default function ContainersGrid() {
       align: "center",
       maxWidth: 200,
       flex: 1,
-      getActions: (params: GridRowParams) => {
-        if (startingTunnel[params.row.containerName]) {
+      getActions: (params: GridRowParams<NgrokContainer>) => {
+        if (startingTunnel[params.row.id]) {
           return [
             <GridActionsCellItem
               className="circular-progress"
@@ -134,7 +124,7 @@ export default function ContainersGrid() {
           ];
         }
 
-        if (!params.row.publishedPort) {
+        if (!params.row.Port.PublicPort) {
           return [
             <GridActionsCellItem
               key={"action_info_" + params.row.id}
@@ -153,7 +143,7 @@ export default function ContainersGrid() {
         // @ts-ignore
         let actions: GridActionsCellItem[] = [];
 
-        if (params.row.url) {
+        if (tunnels[params.row.id]?.URL) {
           actions.push(
             <GridActionsCellItem
               key={"action_open_browser_" + params.row.id}
@@ -161,18 +151,17 @@ export default function ContainersGrid() {
                 <Tooltip title="Open in browser">{<LanguageIcon />}</Tooltip>
               }
               label="Open in browser"
-              onClick={handleOpenTunnel(params.row.url)}
+              onClick={handleOpenTunnel(tunnels[params.row.id].URL)}
               disabled={
-                params.row.publishedPort === undefined ||
-                params.row.url === undefined
+                tunnels[params.row.id].URL === undefined
               }
             />
           );
         }
 
         if (
-          params.row.publishedPort !== undefined &&
-          params.row.url === undefined
+          tunnels[params.row.id] === undefined ||
+          tunnels[params.row.id].URL === undefined
         ) {
           actions.push(
             <GridActionsCellItem
@@ -184,11 +173,24 @@ export default function ContainersGrid() {
               }
               onClick={handleStart(params.row)}
               label="Publish on the internet"
-              disabled={startingTunnel[params.row.containerName]}
+              disabled={startingTunnel[params.row.id]}
+            />
+          );
+          actions.push(
+            <GridActionsCellItem
+              key={"action_config_" + params.row.id}
+              icon={
+                <Tooltip title="Configure ngrok tunnel">
+                  {<Settings />}
+                </Tooltip>
+              }
+              onClick={handleOpen(params.row)}
+              label="Configure ngrok tunnel"
+              disabled={startingTunnel[params.row.id]}
             />
           );
         } else {
-          if (params.row.url) {
+          if (tunnels[params.row.id]) {
             actions.push(
               <GridActionsCellItem
                 key={"action_stop_publishing_" + params.row.id}
@@ -198,10 +200,9 @@ export default function ContainersGrid() {
                   </Tooltip>
                 }
                 label="Stop publishing on the internet"
-                onClick={handleStopTunnel(params.row.containerName)}
+                onClick={handleStopTunnel(params.row.id)}
                 disabled={
-                  params.row.publishedPort === undefined ||
-                  params.row.url === undefined ||
+                  tunnels[params.row.id]?.URL === undefined ||
                   stoppingTunnel
                 }
               />
@@ -213,6 +214,25 @@ export default function ContainersGrid() {
       },
     },
   ];
+
+  const style = {
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+  };
+  
+  const [selectedContainer, setSelectedContainer] = useState<NgrokContainer>();
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = (container: NgrokContainer) => async () => {
+    setSelectedContainer(container);
+    setOpen(true)
+  };
+  const handleClose = () => setOpen(false);
 
   const handleOpenTunnel = (url: string) => () => {
     ddClient.host.openExternal(url);
@@ -228,23 +248,13 @@ export default function ContainersGrid() {
 
     ddClient.extension.vm?.service
       ?.delete(`/remove/${containerName}`)
-      .then(() => {
-        if (rows === undefined) {
-          return;
-        }
-
-        let updatedRows = rows.map((row) => {
-          if (row.containerName == containerName) {
-            return { ...row, url: "" };
-          }
-          return row;
-        });
-
-        setRows(updatedRows);
-
+      .then(async (resp) => {
+        const response = resp as Record<string, Tunnel>;
+        updateTunnels(response)
         ddClient.desktopUI.toast.success("Tunnel stopped successfully");
       })
       .catch((error) => {
+        console.log(error);
         ddClient.desktopUI.toast.error(`Failed stopping tunnel: ${error}`);
       })
       .finally(() => {
@@ -253,147 +263,64 @@ export default function ContainersGrid() {
   };
 
   const ddClient = useDockerDesktopClient();
-  const [rows, setRows] = useState<ContainerRow[]>();
 
   useEffect(() => {
-    listContainers();
-  }, []);
-
-  const listContainers = async () => {
-    const containers = (await ddClient.docker.listContainers()) as Container[];
-
-    let arr: ContainerRow[] = [];
-    for (let i = 0; i < containers.length; i++) {
-      let x: ContainerRow = {
-        id: i,
-        containerName: containers[i].Names[0].substring(1),
-      };
-
-      // use the first public port available
-      for (let j = 0; j < containers[i].Ports.length; j++) {
-        if (containers[i].Ports[j].PublicPort !== undefined) {
-          x.publishedPort = containers[i].Ports[j].PublicPort;
-          break;
-        }
-      }
-
-      arr.push(x);
-    }
-
-    const tunnels = (await ddClient.extension.vm?.service?.get(
-      "/progress"
-    )) as Record<string, Tunnel>;
-
-    // update rows with url
-    for (let i = 0; i < arr.length; i++) {
-      // check if tunnels contains the key "containerName"
-      for (const key in tunnels) {
-        if (arr[i].containerName === key) {
-          // if so, update the row url
-          arr[i].url = tunnels[key].URL;
-        }
-      }
-    }
-
-    // sort containers that have exposed ports
-    arr.sort((a, b) => {
-      // two undefined values should be treated as equal ( 0 )
-      if (
-        typeof a.publishedPort === "undefined" &&
-        typeof b.publishedPort === "undefined"
-      )
-        return 0;
-      // if a is "undefined" and b isn't a should have a lower index in the array
-      else if (typeof a.publishedPort === "undefined") return 1;
-      // if b is "undefined" and a isn't a should have a higher index in the array
-      else if (typeof b.publishedPort === "undefined") return -1;
-      // if both numbers are defined compare as normal
-      else return a.publishedPort - b.publishedPort;
-    });
-
-    // sort containers that have a ngrok url
-    arr.sort((a, b) => {
-      // two undefined values should be treated as equal ( 0 )
-      if (typeof a.url === "undefined" && typeof b.url === "undefined")
-        return 0;
-      // if a is "undefined" and b isn't a should have a lower index in the array
-      else if (typeof a.url === "undefined") return 1;
-      // if b is "undefined" and a isn't a should have a higher index in the array
-      else if (typeof b.url === "undefined") return -1;
-      // if both numbers are defined compare as normal
-      else return a.url.localeCompare(b.url);
-    });
-
-    setRows(arr);
-  };
+    console.log("containers changed", containers);
+    setRows(Object.values(containers));
+  }, [containers]);
 
   useEffect(() => {
-    const containersEvents = async () => {
-      await ddClient.docker.cli.exec(
-        "events",
-        [
-          "--format",
-          `"{{ json . }}"`,
-          "--filter",
-          "type=container",
-          "--filter",
-          "event=start",
-          "--filter",
-          "event=destroy",
-        ],
-        {
-          stream: {
-            async onOutput(data: any) {
-              await listContainers();
-            },
-            onClose(exitCode) {
-              console.log("onClose with exit code " + exitCode);
-            },
-            splitOutputLines: true,
-          },
-        }
-      );
-    };
-
-    containersEvents();
-  }, []);
+    console.log("tunnels changed", tunnels);
+  }, [tunnels]);
 
   const [startingTunnel, setStartingTunnel] = useState<Record<string, boolean>>(
     {}
   );
 
-  const handleStart = (row: any) => async () => {
-    await startTunnel(row.containerName, row.publishedPort);
-    await listContainers();
-  };
-
-  const startTunnel = async (containerID: string, port: number) => {
+  const handleStart = (row: NgrokContainer) => async () => {
     console.log(
-      `Starting tunnel for container ${containerID} on port ${port}...`
+      `Starting tunnel for container ${row.Name} on port ${row.Port.PublicPort}...`
     );
 
-    const copy = startingTunnel;
-    copy[containerID] = true;
-    setStartingTunnel(copy);
-
+    setStartingTunnel({...startingTunnel, [row.id]:true});
+    
     try {
-      const tunnelURL = await ddClient.extension.vm?.service?.post(
-        `/start/${containerID}?port=${port}`,
-        undefined
+      const tunnel:any = await ddClient.extension.vm?.service?.post(
+        `/start/${row.id}?port=${row.Port.PublicPort}&oauth=${row.oauth}&protocol=${row.tcp?'tcp':'http'}`,
+        {...row}
       );
 
+      setTunnels({...tunnels, [row.id]:tunnel});
+
       ddClient.desktopUI.toast.success(
-        `Tunnel started for container ${containerID} on port ${port} at ${tunnelURL}`
+        `Tunnel started for container ${row.Name} on port ${row.Port.PublicPort} at ${tunnel.URL}`
       );
     } catch (error: any) {
       let errMsg = error.message.replaceAll(`"`, "").replaceAll("\\r", "");
       setAlertDialogMsg(errMsg);
       setShowAlertDialog(true);
     } finally {
-      copy[containerID] = false;
-      setStartingTunnel(copy);
+      setStartingTunnel({...startingTunnel, [row.id]:false});
     }
   };
+
+  const toggleProtocol = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("toggle protocol", event.target.checked);
+    if(!selectedContainer) return;
+    selectedContainer.tcp = event.target.checked;
+    selectedContainer.http = !event.target.checked;
+    setSelectedContainer({...selectedContainer});
+    setContainers({...containers, [selectedContainer.id]:selectedContainer});
+  }
+
+  const toggleOAuth = (event: SelectChangeEvent<HTMLInputElement>) => {
+    console.log("toggle oAuth", event.target.value);
+    if(!selectedContainer) return;
+    selectedContainer.oauth = event.target.value as string;
+    setSelectedContainer({...selectedContainer});
+    setContainers({...containers, [selectedContainer.id]:selectedContainer});
+  }
+
 
   return (
     <Grid container flex={1} height="calc(100vh - 200px)">
@@ -430,6 +357,39 @@ export default function ContainersGrid() {
           },
         }}
       />
+  <Modal
+    open={open}
+    onClose={handleClose}
+    aria-labelledby="modal-modal-title"
+    aria-describedby="modal-modal-description"
+  >
+    <Box sx={style}>
+      <Typography id="modal-modal-title" variant="h6" component="h2">
+        Configure ngrok tunnel for {selectedContainer?.Name}
+      </Typography>
+      <div id="modal-modal-description">
+        <div><strong>Protocol:</strong> HTTP <Switch aria-label="HTTP TCP Switch" onChange={toggleProtocol} checked={selectedContainer?.tcp} /> TCP</div>
+        <div><strong>OAuth: </strong>
+          <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={selectedContainer?.oauth as ""}
+          displayEmpty
+          label="oAuth Provider"
+          onChange={toggleOAuth}
+        >
+          <MenuItem value=''>Off</MenuItem>
+          <MenuItem value='google'>Google</MenuItem>
+          <MenuItem value='facebook'>Facebook</MenuItem>
+        </Select></div>
+      </div>
+    </Box>
+  </Modal>
     </Grid>
   );
+
+  function updateTunnels(loaded: Record<string, Tunnel>) {
+    setTunnels(loaded);
+    localStorage.setItem("tunnels", JSON.stringify(loaded));
+  }
 }

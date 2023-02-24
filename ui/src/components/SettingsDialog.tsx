@@ -9,10 +9,10 @@ import {
 import Button from "@mui/material/Button";
 import React, { useState } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { useAuthContext } from "./AuthContext";
+import { useNgrokContext } from "./NgrokContext";
 
 export default function SettingsDialog() {
-  const { authToken, setAuthToken } = useAuthContext();
+  const { authToken, setAuthToken } = useNgrokContext();
   const [tempAuthToken, setTempAuthToken] = useState(authToken);
 
   const [open, setOpen] = React.useState(false);
@@ -50,7 +50,7 @@ export default function SettingsDialog() {
             autoFocus
             margin="dense"
             id="name"
-            label="Ngrok Auth Token"
+            label="ngrok Auth Token"
             placeholder="2GPS8IuofEuUw..."
             type="password"
             fullWidth
