@@ -33,6 +33,10 @@ func main() {
 	log.SetOutput(os.Stdout)
 
 	router := echo.New()
+	router.HTTPErrorHandler = func(err error, c echo.Context) {
+		log.Error("Error: %s", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
 	router.HideBanner = true
 
 	logMiddleware := middleware.LoggerWithConfig(middleware.LoggerConfig{

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -72,24 +73,37 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 	if protocol == "tcp" {
 		localConfig = config.TCPEndpoint()
 	} else {
+		var options = []config.HTTPEndpointOption{}
+
 		if len(oauth) > 0 {
-			localConfig = config.HTTPEndpoint(config.WithOAuth(oauth))
+			options = append(options, config.WithOAuth(oauth))
 		} else {
-			localConfig = config.HTTPEndpoint()
+			options = append(options, config.WithBasicAuth("admin", "admin"))
 		}
+
+		if true {
+			options = append(options, config.WithDomain("my-ngrok-docker-extension.ngrok.io"))
+		}
+
+		if true {
+			options = append(options, config.WithRequestHeader("email", "${.oauth.user.email}"))
+		}
+
+		localConfig = config.HTTPEndpoint(options...)
 	}
 
 	tun, err := ngrok.Listen(ctxReq, localConfig, ngrok.WithAuthtoken(h.ngrokAuthToken))
 
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
+
+	go forwardTraffic(tun, port)
 
 	h.ProgressCache.Lock()
 	h.ProgressCache.m[ctr] = Tunnel{Tunnel: tun, TunnelID: tun.ID(), URL: tun.URL()}
 	h.ProgressCache.Unlock()
-
-	go forwardTraffic(tun, port)
 
 	return ctx.JSON(http.StatusCreated, map[string]interface{}{"TunnelID": tun.ID(), "URL": tun.URL()})
 }

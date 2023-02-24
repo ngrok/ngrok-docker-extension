@@ -86,11 +86,11 @@ export function NgrokContextProvider({
 
   function updateContainers(loaded: DockerContainer[]) {
     if(loaded){
-      const newContainers: Record<string, NgrokContainer> = {...containers};
+      const newContainers: Record<string, NgrokContainer> = {};
       for(const container of loaded){
         for(const port of container.Ports.filter(x=>x.PublicPort)){
-          const container_id = `/${container.Id}/${port.PublicPort}`;
-          if(!newContainers[container_id]){
+          const container_id = `${container.Id}:${port.PublicPort}`;
+          if(!containers[container_id]){
             newContainers[container_id] = {
               id: container_id,
               ContainerId: container.Id,
@@ -101,6 +101,7 @@ export function NgrokContextProvider({
               oauth: "",
             };
           }else{
+            newContainers[container_id] = containers[container_id];
             if(newContainers[container_id].Name !== container.Names[0].substring(1,)){
               newContainers[container_id].Name = container.Names[0].substring(1);
             }

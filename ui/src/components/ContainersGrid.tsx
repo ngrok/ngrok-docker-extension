@@ -296,7 +296,8 @@ export default function ContainersGrid() {
         `Tunnel started for container ${row.Name} on port ${row.Port.PublicPort} at ${tunnel.URL}`
       );
     } catch (error: any) {
-      let errMsg = error.message.replaceAll(`"`, "").replaceAll("\\r", "");
+      console.log(error);
+      let errMsg = error.error ? error.error : error.message.replaceAll(`"`, "").replaceAll("\\r", "");
       setAlertDialogMsg(errMsg);
       setShowAlertDialog(true);
     } finally {
