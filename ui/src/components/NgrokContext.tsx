@@ -74,12 +74,12 @@ export function NgrokContextProvider({
 
   const getContainers = async () => {
     ddClient.docker.listContainers().then((loaded)=>{
-      console.log("Loaded containers", loaded);
+      // console.log("Loaded containers", loaded);
       updateContainers(loaded as DockerContainer[]);
     });
 
     ddClient.extension.vm?.service?.get("/progress").then((result)=>{
-      console.log('Get tunnels?', result);
+      // console.log('Loaded tunnels', result);
       updateTunnels(result as Record<string, Tunnel>);
     });
   }
@@ -159,28 +159,6 @@ export function NgrokContextProvider({
           stream: {
             async onOutput(data: any) {
               await getContainers();
-            },
-            onClose(exitCode) {
-              console.log("onClose with exit code " + exitCode);
-            },
-            splitOutputLines: true,
-          },
-        }
-      );
-
-      await ddClient.docker.cli.exec(
-        "events",
-        [
-          "--format",
-          `"{{ json . }}"`,
-          "--filter",
-          "type=container",
-        ],
-        {
-          stream: {
-            async onOutput(data: any) {
-              console.log('Event', data);
-              // await getContainers();
             },
             onClose(exitCode) {
               console.log("onClose with exit code " + exitCode);
