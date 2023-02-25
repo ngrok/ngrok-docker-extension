@@ -18,6 +18,8 @@ import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
 import { NgrokContainer, Tunnel, useNgrokContext } from "./NgrokContext";
 import { Settings } from "@mui/icons-material";
+import OAuthSelect from "./modules/OAuthSelect";
+import AuthSelector from "./modules/AuthSelector";
 
 export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
 
@@ -87,6 +89,7 @@ export default function ContainersGrid() {
             <Grid item>
               <Tooltip title="Copy URL">
                 <ContentCopyIcon
+                  fontSize="small"
                   onClick={() => {
                     navigator.clipboard.writeText(tunnels[params.row.id].URL);
                     ddClient.desktopUI.toast.success("URL copied to clipboard");
@@ -143,7 +146,7 @@ export default function ContainersGrid() {
         // @ts-ignore
         let actions: GridActionsCellItem[] = [];
 
-        if (tunnels[params.row.id]?.URL) {
+        if (tunnels[params.row.id]?.URL && containers[params.row.id].http) {
           actions.push(
             <GridActionsCellItem
               key={"action_open_browser_" + params.row.id}
@@ -265,12 +268,10 @@ export default function ContainersGrid() {
   const ddClient = useDockerDesktopClient();
 
   useEffect(() => {
-    console.log("containers changed", containers);
     setRows(Object.values(containers));
   }, [containers]);
 
   useEffect(() => {
-    console.log("tunnels changed", tunnels);
   }, [tunnels]);
 
   const [startingTunnel, setStartingTunnel] = useState<Record<string, boolean>>(
@@ -366,23 +367,12 @@ export default function ContainersGrid() {
   >
     <Box sx={style}>
       <Typography id="modal-modal-title" variant="h6" component="h2">
-        Configure ngrok tunnel for {selectedContainer?.Name}
+        ngrok tunnel config {selectedContainer?.Name}
       </Typography>
       <div id="modal-modal-description">
-        <div><strong>Protocol:</strong> HTTP <Switch aria-label="HTTP TCP Switch" onChange={toggleProtocol} checked={selectedContainer?.tcp} /> TCP</div>
-        <div><strong>OAuth: </strong>
-          <Select
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
-          value={selectedContainer?.oauth as ""}
-          displayEmpty
-          label="oAuth Provider"
-          onChange={toggleOAuth}
-        >
-          <MenuItem value=''>Off</MenuItem>
-          <MenuItem value='google'>Google</MenuItem>
-          <MenuItem value='facebook'>Facebook</MenuItem>
-        </Select></div>
+        <div style={{marginTop:"1em"}}><strong>Protocol:</strong> HTTP <Switch aria-label="HTTP TCP Switch" onChange={toggleProtocol} checked={selectedContainer?.tcp} /> TCP</div>
+        {selectedContainer?.http?
+        <AuthSelector container={selectedContainer}></AuthSelector>:null}
       </div>
     </Box>
   </Modal>
