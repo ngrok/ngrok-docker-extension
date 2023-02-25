@@ -18,7 +18,7 @@ func (h *Handler) RemoveTunnel(ctx echo.Context) error {
 	h.ProgressCache.Lock()
 	defer h.ProgressCache.Unlock()
 
-	h.ProgressCache.m[ctr].Tunnel.Close()
+	h.ProgressCache.m[ctr].Tunnel.Session().Close()
 
 	delete(h.ProgressCache.m, ctr)
 

@@ -32,67 +32,35 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 	oauth := ctx.QueryParam("oauth")
 	protocol := ctx.QueryParam("protocol")
 
-	/*
-		cli, err := h.DockerClient()
-		if err != nil {
-			return err
-		}
-
-		volumeName := "my-ngrok-volume"
-
-		// we pull the image before creating the container just in case it was removed by the user manually
-		_, _, err = cli.ImageInspectWithRaw(ctxReq, internal.NgrokImage)
-		if err != nil {
-			reader, err := cli.ImagePull(ctxReq, internal.NgrokImage, types.ImagePullOptions{
-				Platform: "linux/" + runtime.GOARCH,
-			})
-			if err != nil {
-				return err
-			}
-			_, err = io.Copy(io.Discard, reader)
-		}
-	*/
-
-	// var cmd []string
-
-	// if protocol == "http" {
-	// 	if len(oauth) > 0 {
-	// 		cmd = []string{"http", port, "--log=stdout", "--log-format=json", fmt.Sprintf("--oauth %s", oauth)}
-	// 	} else {
-	// 		cmd = []string{"http", port, "--log=stdout", "--log-format=json"}
-	// 	}
-	// } else {
-	// 	cmd = []string{"tcp", port, "--log=stdout", "--log-format=json"}
-	// }
-
-	// log.Infof("cmd: %s", cmd)
-	// var tun ngrok.Tunnel
-
-	var localConfig config.Tunnel
+	var tunConfig config.Tunnel
 
 	if protocol == "tcp" {
-		localConfig = config.TCPEndpoint()
+		tunConfig = config.TCPEndpoint()
 	} else {
 		var options = []config.HTTPEndpointOption{}
 
 		if len(oauth) > 0 {
 			options = append(options, config.WithOAuth(oauth))
 		} else {
-			options = append(options, config.WithBasicAuth("admin", "admin"))
+			// options = append(options, config.WithBasicAuth("admin", "admin"))
 		}
 
-		if true {
-			options = append(options, config.WithDomain("my-ngrok-docker-extension.ngrok.io"))
-		}
+		// if true {
+		// 	options = append(options, config.WithDomain("my-ngrok-docker-extension"))
+		// }
 
-		if true {
-			options = append(options, config.WithRequestHeader("email", "${.oauth.user.email}"))
-		}
+		// if true {
+		// 	options = append(options, config.WithDomain("my-ngrok-docker-extension.ngrok.io"))
+		// }
 
-		localConfig = config.HTTPEndpoint(options...)
+		// if true {
+		// 	options = append(options, config.WithRequestHeader("email", "${.oauth.user.email}"))
+		// }
+
+		tunConfig = config.HTTPEndpoint(options...)
 	}
 
-	tun, err := ngrok.Listen(ctxReq, localConfig, ngrok.WithAuthtoken(h.ngrokAuthToken))
+	tun, err := ngrok.Listen(ctxReq, tunConfig, ngrok.WithAuthtoken(h.ngrokAuthToken))
 
 	if err != nil {
 		fmt.Println(err)
