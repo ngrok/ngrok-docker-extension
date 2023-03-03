@@ -1,20 +1,14 @@
 package handler
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/stdcopy"
-	"golang.ngrok.com/ngrok"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ngrok/ngrok-docker-extension/internal"
@@ -22,10 +16,7 @@ import (
 )
 
 type Handler struct {
-	DockerClient   func() (*client.Client, error)
-	ProgressCache  *ProgressCache
-	ngrokAuthToken string
-	ngrokSession   ngrok.Session
+	DockerClient func() (*client.Client, error)
 }
 
 func New(ctx context.Context, cliFactory func() (*client.Client, error)) *Handler {
@@ -40,10 +31,6 @@ func New(ctx context.Context, cliFactory func() (*client.Client, error)) *Handle
 
 	return &Handler{
 		DockerClient: cliFactory,
-		ProgressCache: &ProgressCache{
-			m: initCache(ctx, cli),
-		},
-		ngrokAuthToken: os.Getenv("NGROK_AUTHTOKEN"),
 	}
 }
 
@@ -77,53 +64,6 @@ func pullImagesIfNotPresent(ctx context.Context, cli *client.Client) {
 	if err := g.Wait(); err == nil {
 		log.Info("Successfully pulled all the images")
 	}
-}
-
-func initCache(ctx context.Context, cli *client.Client) map[string]Tunnel {
-	list, err := cli.ContainerList(ctx, types.ContainerListOptions{
-		Filters: filters.NewArgs(
-			filters.Arg("label", "com.docker.desktop.extension=true"),
-			filters.Arg("label", "com.docker.desktop.extension.name=ngrok Docker Extension"),
-		),
-	})
-	if err != nil {
-		return nil
-	}
-
-	m := make(map[string]Tunnel)
-	for _, ctr := range list {
-		cID := ctr.Labels["app.container"]
-
-		out, err := cli.ContainerLogs(ctx, ctr.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
-		if err != nil {
-			//TODO: log error
-			continue
-		}
-
-		var buf bytes.Buffer
-		_, err = stdcopy.StdCopy(&buf, os.Stderr, out)
-		if err != nil {
-			//TODO: log error
-			continue
-		}
-
-		var st StartTunnelLine
-		for _, line := range strings.Split(buf.String(), "\n") {
-			log.Infof(line)
-			if strings.Contains(line, "started tunnel") {
-				if err := json.Unmarshal([]byte(line), &st); err != nil {
-					//TODO: log error
-					continue
-				}
-			}
-		}
-
-		m[cID] = Tunnel{TunnelID: ctr.ID, URL: st.URL}
-	}
-
-	log.Info(m)
-
-	return m
 }
 
 func createVolumeIfNotExists(ctx context.Context, cli *client.Client) {

@@ -16,10 +16,12 @@ import (
 
 	"github.com/ngrok/ngrok-docker-extension/internal/handler"
 	"github.com/ngrok/ngrok-docker-extension/internal/log"
+	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 var (
 	h *handler.Handler
+	// NgrokRootSession *ngrok.Session
 )
 
 func main() {
@@ -63,11 +65,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	h = handler.New(context.Background(), cliFactory)
 
 	router.GET("/auth", h.SetupAuth)
-	router.GET("/progress", h.ActionsInProgress)
+	router.GET("/progress", session.ActionsInProgress)
 	router.POST("/start/:container", h.StartTunnel)
 	router.DELETE("/remove/:container", h.RemoveTunnel)
 

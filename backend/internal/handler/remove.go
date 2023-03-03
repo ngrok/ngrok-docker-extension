@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/ngrok/ngrok-docker-extension/internal/log"
+	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 func (h *Handler) RemoveTunnel(ctx echo.Context) error {
@@ -15,12 +16,12 @@ func (h *Handler) RemoveTunnel(ctx echo.Context) error {
 	}
 	log.Infof("container: %s", ctr)
 
-	h.ProgressCache.Lock()
-	defer h.ProgressCache.Unlock()
+	session.Cache.Lock()
+	defer session.Cache.Unlock()
 
-	h.ProgressCache.m[ctr].Tunnel.Close()
+	session.Cache.Tunnels[ctr].Tunnel.Close()
 
-	delete(h.ProgressCache.m, ctr)
+	delete(session.Cache.Tunnels, ctr)
 
-	return ctx.JSON(http.StatusOK, h.ProgressCache.m)
+	return ctx.JSON(http.StatusOK, session.Cache.Tunnels)
 }
