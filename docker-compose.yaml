@@ -3,3 +3,4 @@ services:
     image: ${DESKTOP_PLUGIN_IMAGE}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: "host"

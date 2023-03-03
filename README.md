@@ -32,13 +32,13 @@ You can use `docker` to build, install and push your extension. Also, we provide
 To build the extension, use `make build-extension` **or**:
 
 ```shell
-  docker buildx build -t felipecruz/ngrok-docker-extension:latest . --load
+  docker buildx build -t ngrok/ngrok-docker-extension:latest . --load
 ```
 
 To install the extension, use `make install-extension` **or**:
 
 ```shell
-  docker extension install felipecruz/ngrok-docker-extension:latest
+  docker extension install ngrok/ngrok-docker-extension:latest
 ```
 
 > If you want to automate this command, use the `-f` or `--force` flag to accept the warning message.
@@ -61,19 +61,19 @@ This starts a development server that listens on port `3000`.
 You can now tell Docker Desktop to use this as the frontend source. In another terminal run:
 
 ```shell
-  docker extension dev ui-source felipecruz/ngrok-docker-extension:latest http://localhost:3000
+  docker extension dev ui-source ngrok/ngrok-docker-extension:latest http://localhost:3000
 ```
 
 In order to open the Chrome Dev Tools for your extension when you click on the extension tab, run:
 
 ```shell
-  docker extension dev debug felipecruz/ngrok-docker-extension:latest
+  docker extension dev debug ngrok/ngrok-docker-extension:latest
 ```
 
 Each subsequent click on the extension tab will also open Chrome Dev Tools. To stop this behaviour, run:
 
 ```shell
-  docker extension dev reset felipecruz/ngrok-docker-extension:latest
+  docker extension dev reset ngrok/ngrok-docker-extension:latest
 ```
 
 ### Backend development (optional)

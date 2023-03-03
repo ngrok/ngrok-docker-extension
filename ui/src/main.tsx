@@ -4,7 +4,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { DockerMuiThemeProvider } from "@docker/docker-mui-theme";
 
 import { App } from "./App";
-import { AuthContextProvider } from "./components/AuthContext";
+import { NgrokContextProvider } from "./components/NgrokContext";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -15,9 +15,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     */}
     <DockerMuiThemeProvider>
       <CssBaseline />
-      <AuthContextProvider>
+      <NgrokContextProvider>
         <App />
-      </AuthContextProvider>
+      </NgrokContextProvider>
     </DockerMuiThemeProvider>
   </React.StrictMode>
 );

@@ -14,8 +14,8 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/labstack/echo/v4"
 
-	"github.com/felipecruz91/ngrok-go/internal/handler"
-	"github.com/felipecruz91/ngrok-go/internal/log"
+	"github.com/ngrok/ngrok-docker-extension/internal/handler"
+	"github.com/ngrok/ngrok-docker-extension/internal/log"
 )
 
 var (
@@ -33,6 +33,10 @@ func main() {
 	log.SetOutput(os.Stdout)
 
 	router := echo.New()
+	router.HTTPErrorHandler = func(err error, c echo.Context) {
+		log.Error("Error: %s", err)
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
 	router.HideBanner = true
 
 	logMiddleware := middleware.LoggerWithConfig(middleware.LoggerConfig{
@@ -77,83 +81,6 @@ func main() {
 			log.Fatal("shutting down the server")
 		}
 	}()
-
-	//TODO: go func listening for stopped, kill events -> remove them from the map
-	//cli, err := cliFactory()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//go func() {
-	//	eventsCh, errCh := cli.Events(context.Background(), types.EventsOptions{
-	//		Filters: filters.NewArgs(
-	//			filters.Arg("type", "container"),
-	//			filters.Arg("label", "com.docker.desktop.extension.name=Ngrok Docker Extension"),
-	//			filters.Arg("event", "die"),
-	//			filters.Arg("event", "stop"),
-	//			filters.Arg("event", "start"),
-	//		),
-	//	})
-	//	for {
-	//		select {
-	//		case err := <-errCh:
-	//			log.Error(err)
-	//			//log.WithError(err).Error("Unable to connect to docker events channel, reconnecting...")
-	//			//time.Sleep(5 * time.Second)
-	//			//eventsCh, errCh = cli.Events(context.Background(), types.EventsOptions{})
-	//		case event := <-eventsCh:
-	//			log.Infof("Event received: %+v", event)
-	//
-	//			tunnelCtr, err := cli.ContainerInspect(context.Background(), event.ID)
-	//			if err != nil {
-	//				//TODO
-	//				log.Error(err)
-	//				//return nil
-	//			}
-	//			appCtr := tunnelCtr.Config.Labels["app.container"]
-	//			log.Infof("appCtr: %s", appCtr)
-	//
-	//			switch event.Action {
-	//			case "stop", "pause", "die":
-	//				log.Infof("Deleting %s from map", appCtr)
-	//				h.Delete(appCtr)
-	//
-	//			case "start", "unpause":
-	//
-	//				//TODO: we have to wait until container is fully started to read the logs
-	//				time.Sleep(3 * time.Second)
-	//
-	//				out, err := cli.ContainerLogs(context.Background(), event.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
-	//				if err != nil {
-	//					//TODO: log error
-	//					continue
-	//				}
-	//
-	//				var buf bytes.Buffer
-	//				_, err = stdcopy.StdCopy(&buf, os.Stderr, out)
-	//				if err != nil {
-	//					//TODO: log error
-	//					continue
-	//				}
-	//
-	//				var st handler.StartTunnelLine
-	//				for _, line := range strings.Split(buf.String(), "\n") {
-	//					log.Infof(line)
-	//					if strings.Contains(line, "started tunnel") {
-	//						if err := json.Unmarshal([]byte(line), &st); err != nil {
-	//							//TODO: log error
-	//							continue
-	//						}
-	//					}
-	//				}
-	//
-	//				// add it to the  map
-	//				log.Infof("Adding %s to map", appCtr)
-	//				h.Add(appCtr, event.ID, st.URL)
-	//			}
-	//		}
-	//	}
-	//}()
 
 	// Wait for interrupt signal to gracefully shut down the server with a timeout of 10 seconds.
 	// Use a buffered channel to avoid missing signals as recommended for signal.Notify

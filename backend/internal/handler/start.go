@@ -1,26 +1,30 @@
 package handler
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
-	"os"
-	"runtime"
-	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/labstack/echo/v4"
+	"golang.ngrok.com/ngrok"
+	"golang.ngrok.com/ngrok/config"
 
-	"github.com/felipecruz91/ngrok-go/internal"
-	"github.com/felipecruz91/ngrok-go/internal/log"
+	"github.com/ngrok/ngrok-docker-extension/internal/log"
 )
 
 func (h *Handler) StartTunnel(ctx echo.Context) error {
+	if h.ngrokSession == nil {
+		ngrokSession, err := ngrok.Connect(ctx.Request().Context(), ngrok.WithAuthtoken(h.ngrokAuthToken))
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		h.ngrokSession = ngrokSession
+	}
+
 	ctxReq := ctx.Request().Context()
 
 	ctr := ctx.Param("container")
@@ -35,97 +39,75 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 	}
 	log.Infof("port: %s", port)
 
-	cli, err := h.DockerClient()
-	if err != nil {
-		return err
-	}
+	oauth := ctx.QueryParam("oauth")
+	protocol := ctx.QueryParam("protocol")
 
-	volumeName := "my-ngrok-volume"
+	var tunConfig config.Tunnel
 
-	// we pull the image before creating the container just in case it was removed by the user manually
-	_, _, err = cli.ImageInspectWithRaw(ctxReq, internal.NgrokImage)
-	if err != nil {
-		reader, err := cli.ImagePull(ctxReq, internal.NgrokImage, types.ImagePullOptions{
-			Platform: "linux/" + runtime.GOARCH,
-		})
-		if err != nil {
-			return err
+	if protocol == "tcp" {
+		tunConfig = config.TCPEndpoint()
+	} else {
+		var options = []config.HTTPEndpointOption{}
+
+		if len(oauth) > 0 {
+			options = append(options, config.WithOAuth(oauth))
 		}
-		_, err = io.Copy(io.Discard, reader)
+		// } else {
+		// 	options = append(options, config.WithBasicAuth("admin", "admin"))
+		// }
+
+		// if true {
+		// 	options = append(options, config.WithDomain("my-ngrok-docker-extension"))
+		// }
+
+		// if true {
+		// 	options = append(options, config.WithDomain("my-ngrok-docker-extension.ngrok.io"))
+		// }
+
+		// if true {
+		// 	options = append(options, config.WithRequestHeader("email", "${.oauth.user.email}"))
+		// }
+
+		tunConfig = config.HTTPEndpoint(options...)
 	}
 
-	resp, err := cli.ContainerCreate(ctxReq, &container.Config{
-		Image:        internal.NgrokImage,
-		Tty:          false, // -d
-		AttachStdout: true,
-		AttachStderr: true,
-		Cmd:          []string{"http", port, "--log=stdout", "--log-format=json"},
-		User:         "root",
-		Labels: map[string]string{
-			"com.docker.desktop.extension":      "true",
-			"com.docker.desktop.extension.name": "Ngrok Docker Extension",
-			"app.container":                     ctr,
-			"com.docker.compose.project":        "felipecruz_ngrok-docker-extension-desktop-extension",
-		},
-		Env: []string{fmt.Sprintf("NGROK_AUTHTOKEN=%s", h.NgrokAuthToken)},
-	}, &container.HostConfig{
-		AutoRemove:  false,
-		NetworkMode: "host",
-		Binds: []string{
-			volumeName + ":" + "/var/lib/ngrok",
-		},
-	}, nil, nil, "")
+	tun, err := h.ngrokSession.Listen(ctxReq, tunConfig)
+
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
-	if err := cli.ContainerStart(ctxReq, resp.ID, types.ContainerStartOptions{}); err != nil {
-		return err
-	}
-
-	// TODO: (IMPROVE) Once the container is started, we need to wait for the logs to appear, so we can parse the tunnel address from the container logs
-	// Instead of sleeping a hard-coded amount of time for the logs to appear, we should be continuously reading the logs until we find the tunnel address.
-	time.Sleep(3 * time.Second)
-
-	out, err := cli.ContainerLogs(ctxReq, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
-	if err != nil {
-		return err
-	}
-
-	var buf bytes.Buffer
-	_, err = stdcopy.StdCopy(&buf, os.Stderr, out)
-	if err != nil {
-		return err
-	}
-
-	var st StartTunnelLine
-	for _, line := range strings.Split(buf.String(), "\n") {
-		log.Infof(line)
-
-		if strings.Contains(line, "Your account is limited to 1 simultaneous ngrok agent session") {
-
-			if err := json.Unmarshal([]byte(line), &st); err != nil {
-				return err
-			}
-
-			_ = cli.ContainerRemove(ctxReq, resp.ID, types.ContainerRemoveOptions{Force: true})
-
-			return ctx.String(http.StatusInternalServerError, st.Err)
-		}
-
-		if strings.Contains(line, "started tunnel") {
-			if err := json.Unmarshal([]byte(line), &st); err != nil {
-				return err
-			}
-			break
-		}
-	}
+	go forwardTraffic(tun, port)
 
 	h.ProgressCache.Lock()
-	h.ProgressCache.m[ctr] = Tunnel{ContainerID: resp.ID, URL: st.URL}
+	h.ProgressCache.m[ctr] = Tunnel{Tunnel: tun, TunnelID: tun.ID(), URL: tun.URL()}
 	h.ProgressCache.Unlock()
 
-	return ctx.String(http.StatusCreated, st.URL)
+	return ctx.JSON(http.StatusCreated, map[string]interface{}{"TunnelID": tun.ID(), "URL": tun.URL()})
+}
+
+func forwardTraffic(tun ngrok.Tunnel, port string) {
+	for {
+		conn, err := tun.Accept()
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		go handleRequest(conn, port)
+	}
+}
+
+func handleRequest(conn net.Conn, port string) {
+	defer conn.Close()
+	remote, err := net.Dial("tcp", "172.17.0.1:"+port)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	defer remote.Close()
+	go io.Copy(remote, conn)
+	io.Copy(conn, remote)
 }
 
 type StartTunnelLine struct {

@@ -12,7 +12,7 @@ func (h *Handler) SetupAuth(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, "token is required")
 	}
 
-	h.NgrokAuthToken = token
+	h.ngrokAuthToken = token
 
 	return ctx.String(http.StatusOK, "")
 }

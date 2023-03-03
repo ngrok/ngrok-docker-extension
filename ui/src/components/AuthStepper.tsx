@@ -19,8 +19,8 @@ function useDockerDesktopClient() {
 const steps = [
   {
     label: "Get Authtoken",
-    description: `To expose your containers to the public internet you need an Authtoken.
-    Sign in or Log in Ngrok to get an Authtoken by clicking below:`,
+    description: `To connect your containers to the public internet you need an Authtoken.
+    Sign in or Log in ngrok to get an Authtoken by clicking below:`,
   },
   {
     label: "Save the Authtoken in Settings",
@@ -30,7 +30,7 @@ const steps = [
   {
     label: "You're all set!",
     description:
-      "Start exposing your containers that have published ports to the internet",
+      "Start connecting your containers that have published ports to the internet",
   },
 ];
 
@@ -65,17 +65,17 @@ export default function AuthStepper() {
               </StepLabel>
 
               <StepContent>
-                <Typography mb={2}>{step.description}</Typography>
+                <Typography mb={2} align={"left"}>{step.description}</Typography>
                 <Grid
                   container
                   direction="row"
-                  alignItems={"center"}
-                  justifyContent={"center"}
+                  alignItems={"left"}
+                  justifyContent={"left"}
                   spacing={1}
                 >
                   {index !== 0 && (
                     <Grid item>
-                      <Button disabled={index === 0} onClick={handleBack}>
+                      <Button variant="outlined" disabled={index === 0} onClick={handleBack}>
                         Back
                       </Button>
                     </Grid>
@@ -83,7 +83,6 @@ export default function AuthStepper() {
                   <Grid item>
                     {index === 0 && activeStep === 0 && (
                       <Button
-                        variant="contained"
                         endIcon={<OpenInNewRoundedIcon />}
                         onClick={() => {
                           ddClient.host.openExternal(

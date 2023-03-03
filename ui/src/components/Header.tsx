@@ -1,9 +1,9 @@
 import { Grid, Typography } from "@mui/material";
 import SettingsDialog from "./SettingsDialog";
-import { useAuthContext } from "./AuthContext";
+import { useNgrokContext } from "./NgrokContext";
 
 export function Header() {
-  const { authToken } = useAuthContext();
+  const { authToken } = useNgrokContext();
   const authIsSetup = authToken != "";
 
   return (
@@ -12,7 +12,7 @@ export function Header() {
         <Grid>
           <Grid alignItems="center">
             <Typography data-testid="heading" variant="h3" role="title">
-              Ngrok
+              ngrok
             </Typography>
           </Grid>
           <Typography
@@ -21,7 +21,7 @@ export function Header() {
             color="text.secondary"
             sx={{ mt: 1 }}
           >
-            Expose your containers to the public internet using Ngrok.
+            Put your containers online with ngrok's ingress-as-a-service tunnels.
           </Typography>
         </Grid>
         {authIsSetup && (
