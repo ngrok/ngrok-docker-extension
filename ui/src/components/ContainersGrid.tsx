@@ -5,9 +5,9 @@ import {
   GridActionsCellItem,
   GridActionsColDef,
   GridColDef,
-  GridColumns,
+  gridStringOrNumberComparator,
 } from "@mui/x-data-grid";
-import { Box, Button, CircularProgress, Grid, MenuItem, Modal, Select, SelectChangeEvent, Switch, Tooltip, Typography } from "@mui/material";
+import { Box, CircularProgress, Grid, Modal, SelectChangeEvent, Switch, Tooltip, Typography } from "@mui/material";
 import { GridRowParams } from "@mui/x-data-grid/models/params/gridRowParams";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -18,7 +18,6 @@ import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
 import { NgrokContainer, Tunnel, useNgrokContext } from "./NgrokContext";
 import { Settings } from "@mui/icons-material";
-import OAuthSelect from "./modules/OAuthSelect";
 import AuthSelector from "./modules/AuthSelector";
 
 export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
@@ -43,18 +42,29 @@ export default function ContainersGrid() {
     {
       field: "Name",
       headerName: "Container",
-      headerAlign: "center",
-      align: "center",
+      headerAlign: "left",
+      align: "left",
       maxWidth: 200,
       flex: 1,
     },
     {
-      field: "publishedPort",
-      headerName: "Published Port",
-      headerAlign: "center",
-      align: "center",
-      maxWidth: 150,
+      field: "Port.PublicPort",
+      headerName: "Port",
+      headerAlign: "left",
+      align: "left",
+      maxWidth: 100,
       flex: 1,
+      sortComparator: (v1, v2, param1, param2) => {
+        console.log(v1, v2, param1, param2, rows);
+        // gridStringOrNumberComparator()
+        return 0;
+        // return gridStringOrNumberComparator(
+        //   v1,
+        //   v2,
+        //   param1.value.Port.PublicPort,
+        //   param2.value.Port.PublicPort,
+        // );
+      },
       renderCell: (params) => {
         return (
           <Typography>
@@ -63,12 +73,28 @@ export default function ContainersGrid() {
         );
       },
     },
+    // {
+    //   field: "protocol",
+    //   headerName: "Protocol",
+    //   headerAlign: "left",
+    //   align: "left",
+    //   maxWidth: 100,
+    //   flex: 1,
+    //   sortable: false,
+    //   renderCell: (params) => {
+    //     return (
+    //       <Typography>
+    //         {params.row.http ? "http" : "tcp"}
+    //       </Typography>
+    //     );
+    //   },
+    // },
     {
       field: "url",
       headerName: "URL",
-      headerAlign: "center",
-      align: "center",
-      type: "number",
+      headerAlign: "left",
+      align: "left",
+      type: "string",
       flex: 1,
       renderCell: (params) => {
         if (!tunnels[params.row.id]) {
@@ -81,11 +107,8 @@ export default function ContainersGrid() {
             container
             direction={"row"}
             spacing={1}
-            justifyContent={"end"}
+            justifyContent={"start"}
           >
-            <Grid item>
-              <Typography noWrap={true}>{tunnels[params.row.id].URL}</Typography>
-            </Grid>
             <Grid item>
               <Tooltip title="Copy URL">
                 <ContentCopyIcon
@@ -97,6 +120,9 @@ export default function ContainersGrid() {
                 />
               </Tooltip>
             </Grid>
+            <Grid item>
+              <Typography noWrap={true}>{tunnels[params.row.id].URL}</Typography>
+            </Grid>
           </Grid>
         );
       },
@@ -105,9 +131,9 @@ export default function ContainersGrid() {
       field: "actions",
       headerName: "Actions",
       type: "actions",
-      headerAlign: "center",
-      align: "center",
-      maxWidth: 200,
+      headerAlign: "right",
+      align: "right",
+      maxWidth: 100,
       flex: 1,
       getActions: (params: GridRowParams<NgrokContainer>) => {
         if (startingTunnel[params.row.id]) {
@@ -118,7 +144,7 @@ export default function ContainersGrid() {
               icon={
                 <>
                   <CircularProgress size={20} />
-                  <Typography ml={2}>Loading...</Typography>
+                  {/* <Typography ml={2}>Loading...</Typography> */}
                 </>
               }
               label="Loading"
@@ -179,19 +205,19 @@ export default function ContainersGrid() {
               disabled={startingTunnel[params.row.id]}
             />
           );
-          actions.push(
-            <GridActionsCellItem
-              key={"action_config_" + params.row.id}
-              icon={
-                <Tooltip title="Configure ngrok tunnel">
-                  {<Settings />}
-                </Tooltip>
-              }
-              onClick={handleOpen(params.row)}
-              label="Configure ngrok tunnel"
-              disabled={startingTunnel[params.row.id]}
-            />
-          );
+          // actions.push(
+          //   <GridActionsCellItem
+          //     key={"action_config_" + params.row.id}
+          //     icon={
+          //       <Tooltip title="Configure ngrok tunnel">
+          //         {<Settings />}
+          //       </Tooltip>
+          //     }
+          //     onClick={handleOpen(params.row)}
+          //     label="Configure ngrok tunnel"
+          //     disabled={startingTunnel[params.row.id]}
+          //   />
+          // );
         } else {
           if (tunnels[params.row.id]) {
             actions.push(
