@@ -9,20 +9,14 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"golang.ngrok.com/ngrok"
-	"golang.ngrok.com/ngrok/config"
 
 	"github.com/ngrok/ngrok-docker-extension/internal/log"
+	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 func (h *Handler) StartTunnel(ctx echo.Context) error {
-	if h.ngrokSession == nil {
-		ngrokSession, err := ngrok.Connect(ctx.Request().Context(), ngrok.WithAuthtoken(h.ngrokAuthToken))
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-
-		h.ngrokSession = ngrokSession
+	if session.NgrokRootSession == nil {
+		session.StartNgrokSession()
 	}
 
 	ctxReq := ctx.Request().Context()
@@ -39,39 +33,7 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 	}
 	log.Infof("port: %s", port)
 
-	oauth := ctx.QueryParam("oauth")
-	protocol := ctx.QueryParam("protocol")
-
-	var tunConfig config.Tunnel
-
-	if protocol == "tcp" {
-		tunConfig = config.TCPEndpoint()
-	} else {
-		var options = []config.HTTPEndpointOption{}
-
-		if len(oauth) > 0 {
-			options = append(options, config.WithOAuth(oauth))
-		}
-		// } else {
-		// 	options = append(options, config.WithBasicAuth("admin", "admin"))
-		// }
-
-		// if true {
-		// 	options = append(options, config.WithDomain("my-ngrok-docker-extension"))
-		// }
-
-		// if true {
-		// 	options = append(options, config.WithDomain("my-ngrok-docker-extension.ngrok.io"))
-		// }
-
-		// if true {
-		// 	options = append(options, config.WithRequestHeader("email", "${.oauth.user.email}"))
-		// }
-
-		tunConfig = config.HTTPEndpoint(options...)
-	}
-
-	tun, err := h.ngrokSession.Listen(ctxReq, tunConfig)
+	tun, err := session.StartTunnel(ctxReq)
 
 	if err != nil {
 		fmt.Println(err)
@@ -80,9 +42,9 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 
 	go forwardTraffic(tun, port)
 
-	h.ProgressCache.Lock()
-	h.ProgressCache.m[ctr] = Tunnel{Tunnel: tun, TunnelID: tun.ID(), URL: tun.URL()}
-	h.ProgressCache.Unlock()
+	session.Cache.Lock()
+	session.Cache.Tunnels[ctr] = session.Tunnel{Tunnel: tun, TunnelID: tun.ID(), URL: tun.URL()}
+	session.Cache.Unlock()
 
 	return ctx.JSON(http.StatusCreated, map[string]interface{}{"TunnelID": tun.ID(), "URL": tun.URL()})
 }

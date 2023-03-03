@@ -138,6 +138,8 @@ export function NgrokContextProvider({
     // If the auth token already exists in the local storage, make a GET /auth request automatically to set up the auth
     if (authToken !== null) {
       ddClient.extension.vm?.service?.get(`/auth?token=${authToken}`);
+
+      getContainers();
     }
   }, []);
 
