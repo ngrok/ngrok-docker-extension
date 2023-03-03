@@ -1,4 +1,6 @@
-# Ngrok
+# ngrok
+
+![ngrok-logo](https://user-images.githubusercontent.com/550861/222650471-a1908709-8920-406b-a55d-b8231cd3a4a5.svg)
 
 This repository defines an example of a Docker extension. The files in this repository have been automatically generated as a result of running `docker extension init`.
 
