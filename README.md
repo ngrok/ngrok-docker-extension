@@ -97,6 +97,10 @@ To remove the extension:
 docker extension rm felipecruz/ngrok-docker-extension:latest
 ```
 
+## Screenshots
+<img width="1292" alt="containers" src="https://user-images.githubusercontent.com/550861/222644761-b30982aa-e81a-4546-9678-dadfc731e0fc.png">
+<img width="1292" alt="settings" src="https://user-images.githubusercontent.com/550861/222644829-3b717704-5b58-455f-b729-dad4c96daf18.png">
+
 ## What's next?
 
 - To learn more about how to build your extension refer to the Extension SDK docs at https://docs.docker.com/desktop/extensions-sdk/.
