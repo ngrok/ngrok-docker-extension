@@ -1,5 +1,7 @@
 # ngrok
 
+![ngrok-logo](https://user-images.githubusercontent.com/550861/222650471-a1908709-8920-406b-a55d-b8231cd3a4a5.svg)
+
 This repository defines an example of a Docker extension. The files in this repository have been automatically generated as a result of running `docker extension init`.
 
 This extension is composed of:
@@ -96,6 +98,10 @@ To remove the extension:
 ```shell
 docker extension rm felipecruz/ngrok-docker-extension:latest
 ```
+
+## Screenshots
+<img width="1292" alt="containers" src="https://user-images.githubusercontent.com/550861/222644761-b30982aa-e81a-4546-9678-dadfc731e0fc.png">
+<img width="1292" alt="settings" src="https://user-images.githubusercontent.com/550861/222644829-3b717704-5b58-455f-b729-dad4c96daf18.png">
 
 ## What's next?
 
