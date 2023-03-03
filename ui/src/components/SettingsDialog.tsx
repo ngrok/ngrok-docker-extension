@@ -44,7 +44,7 @@ export default function SettingsDialog() {
         <DialogTitle>Settings</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Authenticate your ngrok agent. You only have to do this once.
+            Paste your Authtoken to authenticate your ngrok agent.<br/>You only have to do this once.
           </DialogContentText>
           <TextField
             autoFocus
