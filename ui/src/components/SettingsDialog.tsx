@@ -37,7 +37,7 @@ export default function SettingsDialog() {
 
   return (
     <div>
-      <Button variant="outlined" size="small" onClick={handleClickOpen}>
+      <Button size="small" onClick={handleClickOpen}>
         Settings
       </Button>
       <Dialog open={open} onClose={handleCancel}>
@@ -54,9 +54,10 @@ export default function SettingsDialog() {
             placeholder="2GPS8IuofEuUw..."
             type="password"
             fullWidth
-            variant="standard"
+            variant="filled"
             onChange={handleChange}
             value={tempAuthToken}
+            style={{marginTop:"1em"}}
           />
         </DialogContent>
         <DialogActions>

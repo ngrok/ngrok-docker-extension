@@ -21,7 +21,7 @@ export function Header() {
             color="text.secondary"
             sx={{ mt: 1 }}
           >
-            Expose your containers to the public internet using ngrok.
+            Put your containers online with ngrok's ingress-as-a-service tunnels.
           </Typography>
         </Grid>
         {authIsSetup && (
