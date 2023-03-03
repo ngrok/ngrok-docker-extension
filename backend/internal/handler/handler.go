@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"golang.ngrok.com/ngrok"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ngrok/ngrok-docker-extension/internal"
@@ -24,6 +25,7 @@ type Handler struct {
 	DockerClient   func() (*client.Client, error)
 	ProgressCache  *ProgressCache
 	ngrokAuthToken string
+	ngrokSession   ngrok.Session
 }
 
 func New(ctx context.Context, cliFactory func() (*client.Client, error)) *Handler {

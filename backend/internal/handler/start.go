@@ -15,6 +15,16 @@ import (
 )
 
 func (h *Handler) StartTunnel(ctx echo.Context) error {
+	if h.ngrokSession == nil {
+		ngrokSession, err := ngrok.Connect(ctx.Request().Context(), ngrok.WithAuthtoken(h.ngrokAuthToken))
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		h.ngrokSession = ngrokSession
+	}
+
 	ctxReq := ctx.Request().Context()
 
 	ctr := ctx.Param("container")
@@ -41,9 +51,10 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 
 		if len(oauth) > 0 {
 			options = append(options, config.WithOAuth(oauth))
-		} else {
-			// options = append(options, config.WithBasicAuth("admin", "admin"))
 		}
+		// } else {
+		// 	options = append(options, config.WithBasicAuth("admin", "admin"))
+		// }
 
 		// if true {
 		// 	options = append(options, config.WithDomain("my-ngrok-docker-extension"))
@@ -60,7 +71,7 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 		tunConfig = config.HTTPEndpoint(options...)
 	}
 
-	tun, err := ngrok.Listen(ctxReq, tunConfig, ngrok.WithAuthtoken(h.ngrokAuthToken))
+	tun, err := h.ngrokSession.Listen(ctxReq, tunConfig)
 
 	if err != nil {
 		fmt.Println(err)
