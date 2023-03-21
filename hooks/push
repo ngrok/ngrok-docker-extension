@@ -1,0 +1,2 @@
+#!/bin/bash
+echo "Push complete in build phase with custom build hook."
