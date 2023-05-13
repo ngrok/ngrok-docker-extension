@@ -3,8 +3,8 @@ import SettingsDialog from "./SettingsDialog";
 import { useNgrokContext } from "./NgrokContext";
 
 export function Header() {
-  const { authToken } = useNgrokContext();
-  const authIsSetup = authToken != "";
+  const { authtoken } = useNgrokContext();
+  const authIsSetup = authtoken != "";
 
   return (
     <>
@@ -21,7 +21,7 @@ export function Header() {
             color="text.secondary"
             sx={{ mt: 1 }}
           >
-            Put your containers online with ngrok's ingress-as-a-service tunnels.
+            Quickly create secure public ingress to your web applications running in Docker.
           </Typography>
         </Grid>
         {authIsSetup && (

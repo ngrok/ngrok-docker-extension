@@ -15,8 +15,8 @@ function useDockerDesktopClient() {
 }
 
 export function App() {
-  const { authToken, containers} = useNgrokContext();
-  const authIsSetup = authToken != "";
+  const { authtoken, containers} = useNgrokContext();
+  const authIsSetup = authtoken != "";
 
   return (
     <>

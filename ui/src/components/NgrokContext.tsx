@@ -36,8 +36,8 @@ function useDockerDesktopClient() {
 }
 
 interface IngrokContext {
-  authToken: string;
-  setAuthToken: (authToken: string) => void;
+  authtoken: string;
+  setAuthToken: (authtoken: string) => void;
 
   containers: Record<string,NgrokContainer>;
   setContainers: (containers: Record<string, NgrokContainer>) => void;
@@ -47,7 +47,7 @@ interface IngrokContext {
 }
 
 const NgrokContext = createContext<IngrokContext>({
-  authToken: "",
+  authtoken: "",
   setAuthToken: () => null,
   containers: {},
   setContainers: () => null,
@@ -60,8 +60,8 @@ export function NgrokContextProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [authToken, setAuthToken] = useState(
-    localStorage.getItem("authToken") ?? ""
+  const [authtoken, setAuthToken] = useState(
+    localStorage.getItem("authtoken") ?? ""
   );
 
   const [containers, setContainers] = useState(
@@ -74,12 +74,10 @@ export function NgrokContextProvider({
 
   const getContainers = async () => {
     ddClient.docker.listContainers().then((loaded)=>{
-      // console.log("Loaded containers", loaded);
       updateContainers(loaded as DockerContainer[]);
     });
 
     ddClient.extension.vm?.service?.get("/progress").then((result)=>{
-      // console.log('Loaded tunnels', result);
       updateTunnels(result as Record<string, Tunnel>);
     });
   }
@@ -125,19 +123,19 @@ export function NgrokContextProvider({
   const ddClient = useDockerDesktopClient();
   useEffect(() => {
     ddClient.extension.vm?.service
-      ?.get(`/auth?token=${authToken}`)
+      ?.get(`/auth?token=${authtoken}`)
       .then((result) => {
-        localStorage.setItem("authToken", authToken);
+        localStorage.setItem("authtoken", authtoken);
       });
     
       getContainers();
     
-  }, [authToken]);
+  }, [authtoken]);
 
   useEffect(() => {
     // If the auth token already exists in the local storage, make a GET /auth request automatically to set up the auth
-    if (authToken !== null) {
-      ddClient.extension.vm?.service?.get(`/auth?token=${authToken}`);
+    if (authtoken !== null) {
+      ddClient.extension.vm?.service?.get(`/auth?token=${authtoken}`);
 
       getContainers();
     }
@@ -177,7 +175,7 @@ export function NgrokContextProvider({
   return (
     <NgrokContext.Provider
       value={{
-        authToken,
+        authtoken,
         setAuthToken,
         containers,
         setContainers,

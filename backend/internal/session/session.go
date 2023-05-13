@@ -25,8 +25,7 @@ func StartNgrokSession() {
 	}
 
 	log.Info("Starting ngrok session")
-	log.Info(NgrokAuthToken)
-
+	
 	localSession, err := ngrok.Connect(
 		context.Background(),
 		ngrok.WithAuthtoken(NgrokAuthToken),
