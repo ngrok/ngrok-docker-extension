@@ -18,7 +18,6 @@ import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
 import { NgrokContainer, Tunnel, useNgrokContext } from "./NgrokContext";
 import { Settings } from "@mui/icons-material";
-import AuthSelector from "./modules/AuthSelector";
 
 export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
 
@@ -56,14 +55,7 @@ export default function ContainersGrid() {
       flex: 1,
       sortComparator: (v1, v2, param1, param2) => {
         console.log(v1, v2, param1, param2, rows);
-        // gridStringOrNumberComparator()
         return 0;
-        // return gridStringOrNumberComparator(
-        //   v1,
-        //   v2,
-        //   param1.value.Port.PublicPort,
-        //   param2.value.Port.PublicPort,
-        // );
       },
       renderCell: (params) => {
         return (
@@ -73,22 +65,6 @@ export default function ContainersGrid() {
         );
       },
     },
-    // {
-    //   field: "protocol",
-    //   headerName: "Protocol",
-    //   headerAlign: "left",
-    //   align: "left",
-    //   maxWidth: 100,
-    //   flex: 1,
-    //   sortable: false,
-    //   renderCell: (params) => {
-    //     return (
-    //       <Typography>
-    //         {params.row.http ? "http" : "tcp"}
-    //       </Typography>
-    //     );
-    //   },
-    // },
     {
       field: "url",
       headerName: "URL",
@@ -159,7 +135,7 @@ export default function ContainersGrid() {
               key={"action_info_" + params.row.id}
               icon={
                 <Tooltip
-                  title={`This container doesn't have a published port. Use docker run with the "-p" option to publish a port.`}
+                  title={`This container doesn't have a published TCP port. Use docker run with the "-p" option to publish a port.`}
                 >
                   {<InfoOutlinedIcon />}
                 </Tooltip>
@@ -205,19 +181,6 @@ export default function ContainersGrid() {
               disabled={startingTunnel[params.row.id]}
             />
           );
-          // actions.push(
-          //   <GridActionsCellItem
-          //     key={"action_config_" + params.row.id}
-          //     icon={
-          //       <Tooltip title="Configure ngrok tunnel">
-          //         {<Settings />}
-          //       </Tooltip>
-          //     }
-          //     onClick={handleOpen(params.row)}
-          //     label="Configure ngrok tunnel"
-          //     disabled={startingTunnel[params.row.id]}
-          //   />
-          // );
         } else {
           if (tunnels[params.row.id]) {
             actions.push(
@@ -280,11 +243,11 @@ export default function ContainersGrid() {
       .then(async (resp) => {
         const response = resp as Record<string, Tunnel>;
         updateTunnels(response)
-        ddClient.desktopUI.toast.success("Tunnel stopped successfully");
+        ddClient.desktopUI.toast.success("Connection stopped successfully");
       })
       .catch((error) => {
         console.log(error);
-        ddClient.desktopUI.toast.error(`Failed stopping tunnel: ${error}`);
+        ddClient.desktopUI.toast.error(`Failed to stop the connection: ${error}`);
       })
       .finally(() => {
         setStoppingTunnel(false);
@@ -306,7 +269,7 @@ export default function ContainersGrid() {
 
   const handleStart = (row: NgrokContainer) => async () => {
     console.log(
-      `Starting tunnel for container ${row.Name} on port ${row.Port.PublicPort}...`
+      `Starting connection for container ${row.Name} on port ${row.Port.PublicPort}...`
     );
 
     setStartingTunnel({...startingTunnel, [row.id]:true});
@@ -320,7 +283,7 @@ export default function ContainersGrid() {
       setTunnels({...tunnels, [row.id]:tunnel});
 
       ddClient.desktopUI.toast.success(
-        `Tunnel started for container ${row.Name} on port ${row.Port.PublicPort} at ${tunnel.URL}`
+        `Connection started for container ${row.Name} on port ${row.Port.PublicPort} at ${tunnel.URL}`
       );
     } catch (error: any) {
       console.log(error);
@@ -340,15 +303,6 @@ export default function ContainersGrid() {
     setSelectedContainer({...selectedContainer});
     setContainers({...containers, [selectedContainer.id]:selectedContainer});
   }
-
-  const toggleOAuth = (event: SelectChangeEvent<HTMLInputElement>) => {
-    console.log("toggle oAuth", event.target.value);
-    if(!selectedContainer) return;
-    selectedContainer.oauth = event.target.value as string;
-    setSelectedContainer({...selectedContainer});
-    setContainers({...containers, [selectedContainer.id]:selectedContainer});
-  }
-
 
   return (
     <Grid container flex={1} height="calc(100vh - 200px)">
@@ -397,8 +351,6 @@ export default function ContainersGrid() {
       </Typography>
       <div id="modal-modal-description">
         <div style={{marginTop:"1em"}}><strong>Protocol:</strong> HTTP <Switch aria-label="HTTP TCP Switch" onChange={toggleProtocol} checked={selectedContainer?.tcp} /> TCP</div>
-        {selectedContainer?.http?
-        <AuthSelector container={selectedContainer}></AuthSelector>:null}
       </div>
     </Box>
   </Modal>

@@ -12,13 +12,13 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useNgrokContext } from "./NgrokContext";
 
 export default function SettingsDialog() {
-  const { authToken, setAuthToken } = useNgrokContext();
-  const [tempAuthToken, setTempAuthToken] = useState(authToken);
+  const { authtoken, setAuthToken } = useNgrokContext();
+  const [tempAuthToken, setTempAuthToken] = useState(authtoken);
 
   const [open, setOpen] = React.useState(false);
 
   const handleClickOpen = () => {
-    setTempAuthToken(authToken);
+    setTempAuthToken(authtoken);
     setOpen(true);
   };
 
@@ -44,13 +44,13 @@ export default function SettingsDialog() {
         <DialogTitle>Settings</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Paste your Authtoken to authenticate your ngrok agent.<br/>You only have to do this once.
+            Copy your ngrok Authtoken here to use your ngrok account.<br/>You only have to do this once.
           </DialogContentText>
           <TextField
             autoFocus
             margin="dense"
             id="name"
-            label="ngrok Auth Token"
+            label="ngrok Authtoken"
             placeholder="2GPS8IuofEuUw..."
             type="password"
             fullWidth

@@ -1,3 +1,4 @@
+LOCAL_IMAGE?=ngrok/ngrok-docker-extension-dev
 IMAGE?=ngrok/ngrok-docker-extension
 TAG?=latest
 
@@ -9,15 +10,21 @@ NO_COLOR   = \033[m
 build-extension: ## Build service image to be deployed as a desktop extension
 	docker buildx build --tag=$(IMAGE):$(TAG) . --load
 
-install-extension: build-extension ## Install the extension
-	docker extension install -f $(IMAGE):$(TAG)
+build-dev: ## Build service image to be deployed as a desktop extension
+	docker build --tag=$(LOCAL_IMAGE) .
+
+install-extension: build-dev ## Install the extension
+	@if $$(docker extension ls | grep -q $(LOCAL_IMAGE)); \
+		then docker extension update -f $(LOCAL_IMAGE); \
+		else docker extension install -f $(LOCAL_IMAGE); fi
+.PHONY: install-extension
 
 dev-up:
-	docker extension dev ui-source $(IMAGE):$(TAG) http://localhost:3000
-	docker extension dev debug $(IMAGE):$(TAG)
+	docker extension dev ui-source $(LOCAL_IMAGE) http://localhost:3000
+	docker extension dev debug $(LOCAL_IMAGE)
 
 dev-reset:
-	docker extension dev reset $(IMAGE):$(TAG)
+	docker extension dev reset $(LOCAL_IMAGE)
 
 update-extension: build-extension ## Update the extension
 	docker extension update -f $(IMAGE):$(TAG)

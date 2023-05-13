@@ -21,7 +21,6 @@ import (
 
 var (
 	h *handler.Handler
-	// NgrokRootSession *ngrok.Session
 )
 
 func main() {

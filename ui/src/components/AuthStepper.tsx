@@ -18,9 +18,9 @@ function useDockerDesktopClient() {
 
 const steps = [
   {
-    label: "Get Authtoken",
-    description: `To connect your containers to the public internet you need an Authtoken.
-    Sign in or Log in ngrok to get an Authtoken by clicking below:`,
+    label: "Get an ngrok Authtoken",
+    description: `To connect your containers to the public internet you need to authenticate to your ngrok account with an Authtoken.
+    Sign up for a free ngrok account or log in to your existing account by clicking below:`,
   },
   {
     label: "Save the Authtoken in Settings",

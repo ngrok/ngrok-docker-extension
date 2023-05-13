@@ -9,7 +9,7 @@ import (
 )
 
 func (h *Handler) SetupAuth(ctx echo.Context) error {
-	log.Info("Setting up ngrok auth token")
+	log.Info("Setting up ngrok authtoken")
 	token := ctx.QueryParam("token")
 	if token == "" {
 		return ctx.String(http.StatusBadRequest, "token is required")
