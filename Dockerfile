@@ -23,6 +23,10 @@ COPY ui /ui
 RUN npm run build
 
 FROM alpine
+
+# Build argument for development dependencies
+ARG DEVELOPMENT=false
+
 LABEL org.opencontainers.image.title="ngrok" \
     org.opencontainers.image.description="Put your containers online with ngrok's ingress-as-a-service tunnels." \
     org.opencontainers.image.vendor="ngrok" \
@@ -35,6 +39,11 @@ LABEL org.opencontainers.image.title="ngrok" \
     com.docker.extension.changelog="<ul><li>Support for HTTP tunnels</li><li>Multiple tunnels in single session</li></ul>" \
     com.docker.extension.categories="networking,utility-tools" \
     com.docker.extension.account-info="required"
+
+# Conditionally install development tools
+RUN if [ "$DEVELOPMENT" = "true" ]; then \
+        apk add --no-cache curl; \
+    fi
 
 COPY --from=builder /backend/bin/service /
 COPY docker-compose.yaml .
