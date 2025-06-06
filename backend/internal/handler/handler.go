@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"io"
+	"log/slog"
 	"os"
 	"runtime"
 
@@ -12,29 +13,32 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ngrok/ngrok-docker-extension/internal"
-	"github.com/ngrok/ngrok-docker-extension/internal/log"
 )
 
 type Handler struct {
 	DockerClient func() (*client.Client, error)
+	logger       *slog.Logger
 }
 
-func New(ctx context.Context, cliFactory func() (*client.Client, error)) *Handler {
+func New(ctx context.Context, cliFactory func() (*client.Client, error), logger *slog.Logger) *Handler {
 	cli, err := cliFactory()
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("Failed to create docker client", "error", err)
+		os.Exit(1)
 	}
 
-	pullImagesIfNotPresent(ctx, cli)
-
-	createVolumeIfNotExists(ctx, cli)
-
-	return &Handler{
+	h := &Handler{
 		DockerClient: cliFactory,
+		logger:       logger,
 	}
+
+	h.pullImagesIfNotPresent(ctx, cli)
+	h.createVolumeIfNotExists(ctx, cli)
+
+	return h
 }
 
-func pullImagesIfNotPresent(ctx context.Context, cli *client.Client) {
+func (h *Handler) pullImagesIfNotPresent(ctx context.Context, cli *client.Client) {
 	g, ctx := errgroup.WithContext(ctx)
 
 	images := []string{
@@ -46,7 +50,7 @@ func pullImagesIfNotPresent(ctx context.Context, cli *client.Client) {
 		g.Go(func() error {
 			_, _, err := cli.ImageInspectWithRaw(ctx, image)
 			if err != nil {
-				log.Info("Pulling Image:", image)
+				h.logger.Info("Pulling Image", "image", image)
 				reader, err := cli.ImagePull(ctx, image, types.ImagePullOptions{
 					Platform: "linux/" + runtime.GOARCH,
 				})
@@ -54,6 +58,9 @@ func pullImagesIfNotPresent(ctx context.Context, cli *client.Client) {
 					return err
 				}
 				_, err = io.Copy(os.Stdout, reader)
+				if err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -62,11 +69,11 @@ func pullImagesIfNotPresent(ctx context.Context, cli *client.Client) {
 
 	// wait for all the pull operations to complete
 	if err := g.Wait(); err == nil {
-		log.Info("Successfully pulled all the images")
+		h.logger.Info("Successfully pulled all the images")
 	}
 }
 
-func createVolumeIfNotExists(ctx context.Context, cli *client.Client) {
+func (h *Handler) createVolumeIfNotExists(ctx context.Context, cli *client.Client) {
 	// check if volume exists
 	volumeName := "my-ngrok-volume"
 	vol, err := cli.VolumeInspect(ctx, volumeName)
@@ -91,13 +98,15 @@ func createVolumeIfNotExists(ctx context.Context, cli *client.Client) {
 			},
 		}, nil, nil, "")
 		if err != nil {
-			log.Fatal(err) //TODO
+			h.logger.Error("Failed to create container", "error", err)
+			os.Exit(1)
 		}
 
 		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-			log.Fatal(err) //TODO
+			h.logger.Error("Failed to start container", "error", err)
+			os.Exit(1)
 		}
 	} else {
-		log.Infof("Volume %q already exists, created at %q", vol.Name, vol.CreatedAt)
+		h.logger.Info("Volume already exists", "name", vol.Name, "createdAt", vol.CreatedAt)
 	}
 }

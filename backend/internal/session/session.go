@@ -2,10 +2,10 @@ package session
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"sync"
 
-	"github.com/ngrok/ngrok-docker-extension/internal/log"
 	"golang.ngrok.com/ngrok/v2"
 
 	"github.com/labstack/echo/v4"
@@ -17,30 +17,36 @@ var tunnels []ngrok.EndpointForwarder = nil
 var Cache ProgressCache = ProgressCache{
 	Tunnels: initCache(),
 }
+var logger *slog.Logger
+
+func SetLogger(l *slog.Logger) {
+	logger = l
+}
 
 func StartNgrokSession() {
 	if NgrokAgent != nil {
 		return
 	}
 
-	log.Info("Starting ngrok agent")
+	logger.Info("Starting ngrok agent")
 
 	agent, err := ngrok.NewAgent(
 		ngrok.WithAuthtoken(NgrokAuthToken),
+		ngrok.WithLogger(logger),
 		ngrok.WithEventHandler(func(event ngrok.Event) {
 			switch e := event.(type) {
 			case *ngrok.EventAgentConnectSucceeded:
-				log.Info("Connected to ngrok server")
+				logger.Info("Connected to ngrok server")
 			case *ngrok.EventAgentDisconnected:
-				log.Info("Disconnected from ngrok server")
+				logger.Info("Disconnected from ngrok server")
 				if e.Error != nil {
-					log.Error("Disconnect error:", e.Error)
+					logger.Error("Disconnect error", "error", e.Error)
 				}
 			}
 		}),
 	)
 	if err != nil {
-		log.Error("failed to create ngrok agent:", err)
+		logger.Error("Failed to create ngrok agent", "error", err)
 		return
 	}
 
@@ -71,7 +77,7 @@ func SetAuthToken(token string) {
 	NgrokAuthToken = token
 	
 	if NgrokAgent != nil {
-		log.Info("Closing ngrok agent, new AuthToken")
+		logger.Info("Closing ngrok agent, new AuthToken")
 		Cache.Tunnels = initCache()
 
 		for _, endpoint := range tunnels {
@@ -123,7 +129,9 @@ func Delete(key string) {
 func initCache() map[string]Tunnel {
 	m := make(map[string]Tunnel)
 
-	log.Info(m)
+	if logger != nil {
+		logger.Debug("Initialized cache", "cache", m)
+	}
 
 	return m
 }

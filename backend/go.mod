@@ -7,7 +7,6 @@ toolchain go1.24.2
 require (
 	github.com/docker/docker v20.10.21+incompatible
 	github.com/labstack/echo/v4 v4.10.2
-	github.com/sirupsen/logrus v1.9.0
 	golang.ngrok.com/ngrok/v2 v2.0.0
 	golang.org/x/sync v0.8.0
 )
@@ -31,6 +30,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

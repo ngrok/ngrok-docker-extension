@@ -5,7 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/ngrok/ngrok-docker-extension/internal/log"
 	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
@@ -14,7 +13,7 @@ func (h *Handler) RemoveTunnel(ctx echo.Context) error {
 	if ctr == "" {
 		return ctx.String(http.StatusBadRequest, "container is required")
 	}
-	log.Infof("container: %s", ctr)
+	h.logger.Info("Removing tunnel for container", "container", ctr)
 
 	session.Cache.Lock()
 	defer session.Cache.Unlock()

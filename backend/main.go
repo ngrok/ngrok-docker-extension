@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/ngrok/ngrok-docker-extension/internal/handler"
-	"github.com/ngrok/ngrok-docker-extension/internal/log"
 	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
@@ -31,12 +31,15 @@ func main() {
 
 	_ = os.RemoveAll(socketPath)
 
-	// Output to stdout instead of the default stderr
-	log.SetOutput(os.Stdout)
+	// Setup structured logger to output to stdout
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	// Set logger for session package
+	session.SetLogger(logger)
 
 	router := echo.New()
 	router.HTTPErrorHandler = func(err error, c echo.Context) {
-		log.Error("Error: %s", err)
+		logger.Error("HTTP error", "error", err)
 		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	router.HideBanner = true
@@ -52,20 +55,18 @@ func main() {
 	})
 	router.Use(logMiddleware)
 
-	log.Infof("Starting listening on %s\n", socketPath)
+	logger.Info("Starting listening", "socketPath", socketPath)
 	ln, err := net.Listen("unix", socketPath)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("Failed to listen on socket", "error", err)
+		os.Exit(1)
 	}
 	router.Listener = ln
 
 	cliFactory := func() (*client.Client, error) {
 		return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	h = handler.New(context.Background(), cliFactory)
+	h = handler.New(context.Background(), cliFactory, logger)
 
 	router.GET("/auth", h.SetupAuth)
 	router.GET("/progress", session.ActionsInProgress)
@@ -79,7 +80,8 @@ func main() {
 		}
 
 		if err := router.StartServer(server); err != nil && err != http.ErrServerClosed {
-			log.Fatal("shutting down the server")
+			logger.Error("Failed to start server", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -91,6 +93,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := router.Shutdown(ctx); err != nil {
-		log.Fatal(err)
+		logger.Error("Failed to shutdown server gracefully", "error", err)
+		os.Exit(1)
 	}
 }
