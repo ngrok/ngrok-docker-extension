@@ -4,8 +4,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-
-	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 func (h *Handler) RemoveTunnel(ctx echo.Context) error {
@@ -15,12 +13,7 @@ func (h *Handler) RemoveTunnel(ctx echo.Context) error {
 	}
 	h.logger.Info("Removing tunnel for container", "container", ctr)
 
-	session.Cache.Lock()
-	defer session.Cache.Unlock()
+	remainingTunnels := h.sessionManager.RemoveTunnel(ctr)
 
-	session.Cache.Tunnels[ctr].Endpoint.Close()
-
-	delete(session.Cache.Tunnels, ctr)
-
-	return ctx.JSON(http.StatusOK, session.Cache.Tunnels)
+	return ctx.JSON(http.StatusOK, remainingTunnels)
 }

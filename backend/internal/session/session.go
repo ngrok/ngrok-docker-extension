@@ -2,94 +2,113 @@ package session
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
-	"net/http"
 	"sync"
 
 	"golang.ngrok.com/ngrok/v2"
-
-	"github.com/labstack/echo/v4"
 )
 
-var NgrokAgent ngrok.Agent
-var NgrokAuthToken string
-var tunnels []ngrok.EndpointForwarder = nil
-var Cache ProgressCache = ProgressCache{
-	Tunnels: initCache(),
-}
-var logger *slog.Logger
-
-func SetLogger(l *slog.Logger) {
-	logger = l
+// Manager manages ngrok sessions and tunnels
+type Manager struct {
+	agent     ngrok.Agent
+	authToken string
+	tunnels   []ngrok.EndpointForwarder
+	cache     ProgressCache
+	logger    *slog.Logger
 }
 
-func StartNgrokSession() {
-	if NgrokAgent != nil {
+// NewManager creates a new session manager
+func NewManager(logger *slog.Logger) *Manager {
+	return &Manager{
+		tunnels: make([]ngrok.EndpointForwarder, 0),
+		cache: ProgressCache{
+			Tunnels: make(map[string]Tunnel),
+		},
+		logger: logger,
+	}
+}
+
+// StartNgrokSession starts a new ngrok session
+func (m *Manager) StartNgrokSession() {
+	if m.agent != nil {
 		return
 	}
 
-	logger.Info("Starting ngrok agent")
+	m.logger.Info("Starting ngrok agent")
 
 	agent, err := ngrok.NewAgent(
-		ngrok.WithAuthtoken(NgrokAuthToken),
-		ngrok.WithLogger(logger),
+		ngrok.WithAuthtoken(m.authToken),
+		ngrok.WithLogger(m.logger),
 		ngrok.WithEventHandler(func(event ngrok.Event) {
 			switch e := event.(type) {
 			case *ngrok.EventAgentConnectSucceeded:
-				logger.Info("Connected to ngrok server")
+				m.logger.Info("Connected to ngrok server")
 			case *ngrok.EventAgentDisconnected:
-				logger.Info("Disconnected from ngrok server")
+				m.logger.Info("Disconnected from ngrok server")
 				if e.Error != nil {
-					logger.Error("Disconnect error", "error", e.Error)
+					m.logger.Error("Disconnect error", "error", e.Error)
 				}
 			}
 		}),
 	)
 	if err != nil {
-		logger.Error("Failed to create ngrok agent", "error", err)
+		m.logger.Error("Failed to create ngrok agent", "error", err)
 		return
 	}
 
-	NgrokAgent = agent
+	m.agent = agent
 }
 
-func StartTunnel(ctx context.Context, port string) (ngrok.EndpointForwarder, error) {
-	if NgrokAgent == nil {
-		StartNgrokSession()
+// StartTunnel starts a new tunnel for the specified port
+func (m *Manager) StartTunnel(ctx context.Context, port string) (ngrok.EndpointForwarder, error) {
+	if m.agent == nil {
+		m.StartNgrokSession()
+	}
+
+	if m.agent == nil {
+		return nil, fmt.Errorf("failed to create ngrok agent")
 	}
 
 	// Create upstream pointing to the Docker container
-	upstream := ngrok.WithUpstream("http://172.17.0.1:"+port)
-	
-	endpoint, err := NgrokAgent.Forward(ctx, upstream,
-		// HTTP endpoint with default options
-		// Add metadata if needed: ngrok.WithMetadata("container-tunnel")
-	)
-	
+	upstream := ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
+
+	endpoint, err := m.agent.Forward(ctx, upstream)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Add to tunnels slice for proper tracking
+	m.tunnels = append(m.tunnels, endpoint)
+
 	return endpoint, err
 }
 
-func SetAuthToken(token string) {
-	if token == NgrokAuthToken {
+// SetAuthToken sets the authentication token and restarts the session if needed
+func (m *Manager) SetAuthToken(token string) {
+	if token == m.authToken {
 		return
 	}
 
-	NgrokAuthToken = token
-	
-	if NgrokAgent != nil {
-		logger.Info("Closing ngrok agent, new AuthToken")
-		Cache.Tunnels = initCache()
+	m.authToken = token
 
-		for _, endpoint := range tunnels {
+	if m.agent != nil {
+		m.logger.Info("Closing ngrok agent, new AuthToken")
+		m.cache.Lock()
+		m.cache.Tunnels = make(map[string]Tunnel)
+		m.cache.Unlock()
+
+		for _, endpoint := range m.tunnels {
 			endpoint.Close()
 		}
-		tunnels = nil
+		m.tunnels = nil
 
-		NgrokAgent.Disconnect()
-		NgrokAgent = nil
+		m.agent.Disconnect()
+		m.agent = nil
 	}
 
-	StartNgrokSession()
+	m.StartNgrokSession()
 }
 
 type ProgressCache struct {
@@ -103,35 +122,57 @@ type Tunnel struct {
 	URL      string
 }
 
-// ActionsInProgress retrieves the list of active tunnels.
-func ActionsInProgress(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, Cache.Tunnels)
+// GetTunnels returns a copy of the current tunnels map
+func (m *Manager) GetTunnels() map[string]Tunnel {
+	m.cache.RLock()
+	defer m.cache.RUnlock()
+
+	// Return a copy to avoid race conditions
+	result := make(map[string]Tunnel)
+	for k, v := range m.cache.Tunnels {
+		result[k] = v
+	}
+	return result
 }
 
-func Add(key string, TunnelID, url string) {
-	Cache.Lock()
-	defer Cache.Unlock()
+// AddTunnel adds a tunnel to the cache
+func (m *Manager) AddTunnel(key string, tunnelID, url string, endpoint ngrok.EndpointForwarder) {
+	m.cache.Lock()
+	defer m.cache.Unlock()
 
-	Cache.Tunnels[key] = Tunnel{
-		TunnelID: TunnelID,
+	m.cache.Tunnels[key] = Tunnel{
+		Endpoint: endpoint,
+		TunnelID: tunnelID,
 		URL:      url,
 	}
 }
 
-func Delete(key string) {
+// RemoveTunnel removes a tunnel from the cache and closes the endpoint
+func (m *Manager) RemoveTunnel(key string) map[string]Tunnel {
+	m.cache.Lock()
+	defer m.cache.Unlock()
 
-	Cache.Lock()
-	defer Cache.Unlock()
+	// Close the endpoint if it exists
+	if tunnel, exists := m.cache.Tunnels[key]; exists {
+		if tunnel.Endpoint != nil {
+			tunnel.Endpoint.Close()
+		}
 
-	delete(Cache.Tunnels, key)
-}
-
-func initCache() map[string]Tunnel {
-	m := make(map[string]Tunnel)
-
-	if logger != nil {
-		logger.Debug("Initialized cache", "cache", m)
+		// Also remove from tunnels slice
+		for i, endpoint := range m.tunnels {
+			if endpoint == tunnel.Endpoint {
+				m.tunnels = append(m.tunnels[:i], m.tunnels[i+1:]...)
+				break
+			}
+		}
 	}
 
-	return m
+	delete(m.cache.Tunnels, key)
+
+	// Return a copy of the remaining tunnels
+	result := make(map[string]Tunnel)
+	for k, v := range m.cache.Tunnels {
+		result[k] = v
+	}
+	return result
 }

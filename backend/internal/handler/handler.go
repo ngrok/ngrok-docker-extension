@@ -14,22 +14,25 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/ngrok/ngrok-docker-extension/internal"
+	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 type Handler struct {
-	DockerClient func() (*client.Client, error)
-	logger       *slog.Logger
+	DockerClient   func() (*client.Client, error)
+	logger         *slog.Logger
+	sessionManager *session.Manager
 }
 
-func New(ctx context.Context, cliFactory func() (*client.Client, error), logger *slog.Logger) (*Handler, error) {
+func New(ctx context.Context, cliFactory func() (*client.Client, error), logger *slog.Logger, sessionManager *session.Manager) (*Handler, error) {
 	cli, err := cliFactory()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create docker client: %w", err)
 	}
 
 	h := &Handler{
-		DockerClient: cliFactory,
-		logger:       logger,
+		DockerClient:   cliFactory,
+		logger:         logger,
+		sessionManager: sessionManager,
 	}
 
 	if err := h.pullImagesIfNotPresent(ctx, cli); err != nil {

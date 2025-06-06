@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 func (h *Handler) SetupAuth(ctx echo.Context) error {
@@ -14,7 +13,7 @@ func (h *Handler) SetupAuth(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, "token is required")
 	}
 
-	session.SetAuthToken(token)
+	h.sessionManager.SetAuthToken(token)
 
 	return ctx.String(http.StatusOK, "")
 }
