@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -66,7 +67,11 @@ func main() {
 	cliFactory := func() (*client.Client, error) {
 		return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	}
-	h = handler.New(context.Background(), cliFactory, logger)
+	h, err = handler.New(context.Background(), cliFactory, logger)
+	if err != nil {
+		logger.Error("Failed to initialize handler", "error", fmt.Errorf("handler initialization failed: %w", err))
+		os.Exit(1)
+	}
 
 	router.GET("/auth", h.SetupAuth)
 	router.GET("/progress", session.ActionsInProgress)
