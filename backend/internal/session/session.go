@@ -6,71 +6,61 @@ import (
 	"sync"
 
 	"github.com/ngrok/ngrok-docker-extension/internal/log"
-	"golang.ngrok.com/ngrok"
-	"golang.ngrok.com/ngrok/config"
+	"golang.ngrok.com/ngrok/v2"
 
 	"github.com/labstack/echo/v4"
 )
 
-var NgrokRootSession *ngrok.Session
+var NgrokAgent ngrok.Agent
 var NgrokAuthToken string
-var tunnels []ngrok.Tunnel = nil
+var tunnels []ngrok.EndpointForwarder = nil
 var Cache ProgressCache = ProgressCache{
 	Tunnels: initCache(),
 }
 
 func StartNgrokSession() {
-	if NgrokRootSession != nil {
+	if NgrokAgent != nil {
 		return
 	}
 
-	log.Info("Starting ngrok session")
-	log.Info(NgrokAuthToken)
+	log.Info("Starting ngrok agent")
 
-	localSession, err := ngrok.Connect(
-		context.Background(),
+	agent, err := ngrok.NewAgent(
 		ngrok.WithAuthtoken(NgrokAuthToken),
-		ngrok.WithConnectHandler(func(ctx context.Context, sess ngrok.Session) {
-			log.Info("Connected to ngrok server")
-		}),
-		ngrok.WithDisconnectHandler(func(ctx context.Context, sess ngrok.Session, err error) {
-			userError := err != nil && err.Error() != "internal server error"
-			log.Info("Disconnected from ngrok server")
-
-			switch {
-			case err == nil:
-				// startedOnce = true
-
-			case err != nil && userError:
-				// s.sendStop(err)
+		ngrok.WithEventHandler(func(event ngrok.Event) {
+			switch e := event.(type) {
+			case *ngrok.EventAgentConnectSucceeded:
+				log.Info("Connected to ngrok server")
+			case *ngrok.EventAgentDisconnected:
+				log.Info("Disconnected from ngrok server")
+				if e.Error != nil {
+					log.Error("Disconnect error:", e.Error)
+				}
 			}
-			// sessUpdates <- err
 		}),
-		ngrok.WithConnectHandler(func(ctx context.Context, sess ngrok.Session) {
-			log.Info("tunnel session started")
-		}))
-
+	)
 	if err != nil {
-		log.Error("failed to connect to ngrok server: %v", err)
-	} else {
-		NgrokRootSession = &localSession
+		log.Error("failed to create ngrok agent:", err)
+		return
 	}
+
+	NgrokAgent = agent
 }
 
-func StartTunnel(ctx context.Context) (ngrok.Tunnel, error) {
-	if NgrokRootSession == nil {
+func StartTunnel(ctx context.Context, port string) (ngrok.EndpointForwarder, error) {
+	if NgrokAgent == nil {
 		StartNgrokSession()
 	}
 
-	tunConfig := config.HTTPEndpoint()
-
-	tunnel, err := (*NgrokRootSession).Listen(ctx, tunConfig)
-
-	if tunnel != nil {
-		tunnels = append(tunnels, tunnel)
-	}
-
-	return tunnel, err
+	// Create upstream pointing to the Docker container
+	upstream := ngrok.WithUpstream("http://172.17.0.1:"+port)
+	
+	endpoint, err := NgrokAgent.Forward(ctx, upstream,
+		// HTTP endpoint with default options
+		// Add metadata if needed: ngrok.WithMetadata("container-tunnel")
+	)
+	
+	return endpoint, err
 }
 
 func SetAuthToken(token string) {
@@ -79,19 +69,18 @@ func SetAuthToken(token string) {
 	}
 
 	NgrokAuthToken = token
-	if NgrokRootSession != nil {
-		log.Info("Closing ngrok session, new AuthToken")
-
+	
+	if NgrokAgent != nil {
+		log.Info("Closing ngrok agent, new AuthToken")
 		Cache.Tunnels = initCache()
 
-		for _, t := range tunnels {
-			t.Close()
+		for _, endpoint := range tunnels {
+			endpoint.Close()
 		}
-
 		tunnels = nil
 
-		(*NgrokRootSession).Close()
-		NgrokRootSession = nil
+		NgrokAgent.Disconnect()
+		NgrokAgent = nil
 	}
 
 	StartNgrokSession()
@@ -103,7 +92,7 @@ type ProgressCache struct {
 }
 
 type Tunnel struct {
-	Tunnel   ngrok.Tunnel
+	Endpoint ngrok.EndpointForwarder
 	TunnelID string
 	URL      string
 }

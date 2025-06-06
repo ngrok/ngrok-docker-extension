@@ -1,21 +1,17 @@
 package handler
 
 import (
-	"fmt"
-	"io"
-	"net"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"golang.ngrok.com/ngrok"
 
 	"github.com/ngrok/ngrok-docker-extension/internal/log"
 	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 func (h *Handler) StartTunnel(ctx echo.Context) error {
-	if session.NgrokRootSession == nil {
+	if session.NgrokAgent == nil {
 		session.StartNgrokSession()
 	}
 
@@ -33,44 +29,27 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 	}
 	log.Infof("port: %s", port)
 
-	tun, err := session.StartTunnel(ctxReq)
+	tun, err := session.StartTunnel(ctxReq, port)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Error("Failed to start tunnel:", err)
 		return err
 	}
 
-	go forwardTraffic(tun, port)
+	// No need to call forwardTraffic - EndpointForwarder handles this automatically
+	
+	tunnelURL := tun.URL().String()
+	tunnelID := tun.ID()
+	log.Infof("Tunnel created - ID: %s, URL: %s", tunnelID, tunnelURL)
 
 	session.Cache.Lock()
-	session.Cache.Tunnels[ctr] = session.Tunnel{Tunnel: tun, TunnelID: tun.ID(), URL: tun.URL()}
+	session.Cache.Tunnels[ctr] = session.Tunnel{Endpoint: tun, TunnelID: tunnelID, URL: tunnelURL}
 	session.Cache.Unlock()
 
-	return ctx.JSON(http.StatusCreated, map[string]interface{}{"TunnelID": tun.ID(), "URL": tun.URL()})
+	return ctx.JSON(http.StatusCreated, map[string]interface{}{"TunnelID": tunnelID, "URL": tunnelURL})
 }
 
-func forwardTraffic(tun ngrok.Tunnel, port string) {
-	for {
-		conn, err := tun.Accept()
-		if err != nil {
-			log.Error(err)
-			return
-		}
-		go handleRequest(conn, port)
-	}
-}
 
-func handleRequest(conn net.Conn, port string) {
-	defer conn.Close()
-	remote, err := net.Dial("tcp", "172.17.0.1:"+port)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	defer remote.Close()
-	go io.Copy(remote, conn)
-	io.Copy(conn, remote)
-}
 
 type StartTunnelLine struct {
 	Err  string    `json:"err"`

@@ -19,7 +19,7 @@ func (h *Handler) RemoveTunnel(ctx echo.Context) error {
 	session.Cache.Lock()
 	defer session.Cache.Unlock()
 
-	session.Cache.Tunnels[ctr].Tunnel.Close()
+	session.Cache.Tunnels[ctr].Endpoint.Close()
 
 	delete(session.Cache.Tunnels, ctr)
 
