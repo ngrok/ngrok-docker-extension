@@ -1,15 +1,12 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
 func (h *Handler) StartEndpoint(ctx echo.Context) error {
-	ctxReq := context.Background()
-
 	ctr := ctx.Param("container")
 	if ctr == "" {
 		return ctx.String(http.StatusBadRequest, "container is required")
@@ -22,7 +19,7 @@ func (h *Handler) StartEndpoint(ctx echo.Context) error {
 	}
 	h.logger.Info("Using port", "port", port)
 
-	tun, err := h.sessionManager.StartEndpoint(ctxReq, port)
+	tun, err := h.sessionManager.StartEndpoint(ctx.Request().Context(), port)
 
 	if err != nil {
 		h.logger.Error("Failed to start endpoint", "error", err)
