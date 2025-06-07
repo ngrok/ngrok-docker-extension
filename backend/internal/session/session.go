@@ -11,24 +11,26 @@ import (
 
 // Manager manages ngrok sessions and endpoints
 type Manager struct {
+	mu        sync.RWMutex              // protects all manager state
 	agent     ngrok.Agent
 	authToken string
-	cache     ProgressCache
+	endpoints map[string]Endpoint      // map of containers and active endpoints
 	logger    *slog.Logger
 }
 
 // NewManager creates a new session manager
 func NewManager(logger *slog.Logger) *Manager {
 	return &Manager{
-		cache: ProgressCache{
-			Endpoints: make(map[string]Endpoint),
-		},
-		logger: logger,
+		endpoints: make(map[string]Endpoint),
+		logger:    logger,
 	}
 }
 
 // StartNgrokSession starts a new ngrok session
 func (m *Manager) StartNgrokSession() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	
 	if m.agent != nil {
 		return nil
 	}
@@ -61,16 +63,30 @@ func (m *Manager) StartNgrokSession() error {
 
 // StartEndpoint starts a new endpoint for the specified port
 func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.EndpointForwarder, error) {
-	if m.agent == nil {
+	// Check if agent exists and create if needed
+	m.mu.RLock()
+	needsAgent := m.agent == nil
+	m.mu.RUnlock()
+	
+	if needsAgent {
 		if err := m.StartNgrokSession(); err != nil {
 			return nil, err
 		}
 	}
 
+	// Use agent to create endpoint (protected by read lock)
+	m.mu.RLock()
+	agent := m.agent
+	m.mu.RUnlock()
+	
+	if agent == nil {
+		return nil, fmt.Errorf("ngrok agent not available")
+	}
+
 	// Create upstream pointing to the Docker container
 	upstream := ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
 
-	endpoint, err := m.agent.Forward(ctx, upstream)
+	endpoint, err := agent.Forward(ctx, upstream)
 
 	if err != nil {
 		return nil, err
@@ -81,7 +97,9 @@ func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.Endpoin
 
 // SetAuthToken sets the authentication token and restarts the session if needed
 func (m *Manager) SetAuthToken(token string) error {
+	m.mu.Lock()
 	if token == m.authToken {
+		m.mu.Unlock()
 		return nil
 	}
 
@@ -89,24 +107,17 @@ func (m *Manager) SetAuthToken(token string) error {
 
 	if m.agent != nil {
 		m.logger.Info("Closing ngrok agent, new AuthToken")
-		m.cache.Lock()
 		// Close all endpoints before clearing the map
-		for _, endpoint := range m.cache.Endpoints {
+		for _, endpoint := range m.endpoints {
 			endpoint.Endpoint.Close()
 		}
-		m.cache.Endpoints = make(map[string]Endpoint)
-		m.cache.Unlock()
-
+		m.endpoints = make(map[string]Endpoint)
 		m.agent.Disconnect()
 		m.agent = nil
 	}
+	m.mu.Unlock()
 
 	return m.StartNgrokSession()
-}
-
-type ProgressCache struct {
-	sync.RWMutex
-	Endpoints map[string]Endpoint // map of containers and active endpoints
 }
 
 type Endpoint struct {
@@ -117,48 +128,46 @@ type Endpoint struct {
 
 // GetEndpoints returns a copy of the current endpoints map
 func (m *Manager) GetEndpoints() map[string]Endpoint {
-	m.cache.RLock()
-	defer m.cache.RUnlock()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
 	// Return a copy to avoid race conditions
 	result := make(map[string]Endpoint)
-	for k, v := range m.cache.Endpoints {
+	for k, v := range m.endpoints {
 		result[k] = v
 	}
 	return result
 }
 
-// AddEndpoint adds an endpoint to the cache
+// AddEndpoint adds an endpoint to the endpoints map
 func (m *Manager) AddEndpoint(key string, endpointID, url string, endpoint ngrok.EndpointForwarder) {
-	m.cache.Lock()
-	defer m.cache.Unlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	m.cache.Endpoints[key] = Endpoint{
+	m.endpoints[key] = Endpoint{
 		Endpoint:   endpoint,
 		EndpointID: endpointID,
 		URL:        url,
 	}
 }
 
-// RemoveEndpoint removes an endpoint from the cache and closes the endpoint
+// RemoveEndpoint removes an endpoint from the endpoints map and closes the endpoint
 func (m *Manager) RemoveEndpoint(key string) map[string]Endpoint {
-	m.cache.Lock()
-	defer m.cache.Unlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	// Close the endpoint if it exists
-	if endpoint, exists := m.cache.Endpoints[key]; exists {
+	if endpoint, exists := m.endpoints[key]; exists {
 		if endpoint.Endpoint != nil {
 			endpoint.Endpoint.Close()
 		}
-
-
 	}
 
-	delete(m.cache.Endpoints, key)
+	delete(m.endpoints, key)
 
 	// Return a copy of the remaining endpoints
 	result := make(map[string]Endpoint)
-	for k, v := range m.cache.Endpoints {
+	for k, v := range m.endpoints {
 		result[k] = v
 	}
 	return result
