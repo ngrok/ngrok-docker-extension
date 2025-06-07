@@ -95,6 +95,26 @@ func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.Endpoin
 	return endpoint, err
 }
 
+// closeSession closes the current ngrok session and cleans up all endpoints
+// Must be called with mutex held
+func (m *Manager) closeSession() {
+	if m.agent == nil {
+		return
+	}
+	
+	m.logger.Info("Closing ngrok session")
+	
+	// Close all endpoints before clearing the map
+	for _, endpoint := range m.endpoints {
+		endpoint.Endpoint.Close()
+	}
+	m.endpoints = make(map[string]Endpoint)
+	
+	// Disconnect and clear agent
+	m.agent.Disconnect()
+	m.agent = nil
+}
+
 // SetAuthToken sets the authentication token and restarts the session if needed
 func (m *Manager) SetAuthToken(token string) error {
 	m.mu.Lock()
@@ -104,20 +124,17 @@ func (m *Manager) SetAuthToken(token string) error {
 	}
 
 	m.authToken = token
-
-	if m.agent != nil {
-		m.logger.Info("Closing ngrok agent, new AuthToken")
-		// Close all endpoints before clearing the map
-		for _, endpoint := range m.endpoints {
-			endpoint.Endpoint.Close()
-		}
-		m.endpoints = make(map[string]Endpoint)
-		m.agent.Disconnect()
-		m.agent = nil
-	}
+	m.closeSession()
 	m.mu.Unlock()
 
 	return m.StartNgrokSession()
+}
+
+// Shutdown gracefully shuts down the session manager
+func (m *Manager) Shutdown() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.closeSession()
 }
 
 type Endpoint struct {
