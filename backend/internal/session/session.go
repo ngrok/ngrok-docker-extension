@@ -13,7 +13,6 @@ import (
 type Manager struct {
 	agent     ngrok.Agent
 	authToken string
-	endpoints []ngrok.EndpointForwarder
 	cache     ProgressCache
 	logger    *slog.Logger
 }
@@ -21,7 +20,6 @@ type Manager struct {
 // NewManager creates a new session manager
 func NewManager(logger *slog.Logger) *Manager {
 	return &Manager{
-		endpoints: make([]ngrok.EndpointForwarder, 0),
 		cache: ProgressCache{
 			Endpoints: make(map[string]Endpoint),
 		},
@@ -79,9 +77,6 @@ func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.Endpoin
 		return nil, err
 	}
 
-	// Add to endpoints slice for proper tracking
-	m.endpoints = append(m.endpoints, endpoint)
-
 	return endpoint, err
 }
 
@@ -96,13 +91,12 @@ func (m *Manager) SetAuthToken(token string) {
 	if m.agent != nil {
 		m.logger.Info("Closing ngrok agent, new AuthToken")
 		m.cache.Lock()
+		// Close all endpoints before clearing the map
+		for _, endpoint := range m.cache.Endpoints {
+			endpoint.Endpoint.Close()
+		}
 		m.cache.Endpoints = make(map[string]Endpoint)
 		m.cache.Unlock()
-
-		for _, endpoint := range m.endpoints {
-			endpoint.Close()
-		}
-		m.endpoints = nil
 
 		m.agent.Disconnect()
 		m.agent = nil
@@ -158,13 +152,7 @@ func (m *Manager) RemoveEndpoint(key string) map[string]Endpoint {
 			endpoint.Endpoint.Close()
 		}
 
-		// Also remove from endpoints slice
-		for i, ep := range m.endpoints {
-			if ep == endpoint.Endpoint {
-				m.endpoints = append(m.endpoints[:i], m.endpoints[i+1:]...)
-				break
-			}
-		}
+
 	}
 
 	delete(m.cache.Endpoints, key)
