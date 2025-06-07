@@ -13,7 +13,10 @@ func (h *Handler) SetupAuth(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, "token is required")
 	}
 
-	h.sessionManager.SetAuthToken(token)
+	if err := h.sessionManager.SetAuthToken(token); err != nil {
+		h.logger.Error("Failed to set auth token", "error", err)
+		return ctx.String(http.StatusUnauthorized, "Invalid authentication token")
+	}
 
 	return ctx.String(http.StatusOK, "")
 }

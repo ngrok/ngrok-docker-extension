@@ -28,9 +28,9 @@ func NewManager(logger *slog.Logger) *Manager {
 }
 
 // StartNgrokSession starts a new ngrok session
-func (m *Manager) StartNgrokSession() {
+func (m *Manager) StartNgrokSession() error {
 	if m.agent != nil {
-		return
+		return nil
 	}
 
 	m.logger.Info("Starting ngrok agent")
@@ -52,20 +52,19 @@ func (m *Manager) StartNgrokSession() {
 	)
 	if err != nil {
 		m.logger.Error("Failed to create ngrok agent", "error", err)
-		return
+		return fmt.Errorf("failed to create ngrok agent: %w", err)
 	}
 
 	m.agent = agent
+	return nil
 }
 
 // StartEndpoint starts a new endpoint for the specified port
 func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.EndpointForwarder, error) {
 	if m.agent == nil {
-		m.StartNgrokSession()
-	}
-
-	if m.agent == nil {
-		return nil, fmt.Errorf("failed to create ngrok agent")
+		if err := m.StartNgrokSession(); err != nil {
+			return nil, err
+		}
 	}
 
 	// Create upstream pointing to the Docker container
@@ -81,9 +80,9 @@ func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.Endpoin
 }
 
 // SetAuthToken sets the authentication token and restarts the session if needed
-func (m *Manager) SetAuthToken(token string) {
+func (m *Manager) SetAuthToken(token string) error {
 	if token == m.authToken {
-		return
+		return nil
 	}
 
 	m.authToken = token
@@ -102,7 +101,7 @@ func (m *Manager) SetAuthToken(token string) {
 		m.agent = nil
 	}
 
-	m.StartNgrokSession()
+	return m.StartNgrokSession()
 }
 
 type ProgressCache struct {
