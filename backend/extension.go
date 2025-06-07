@@ -83,13 +83,9 @@ func (ext *ngrokExtension) initRouter() error {
 	return nil
 }
 
-// initHandler creates and initializes the HTTP handler
+// initHandler creates the HTTP handler
 func (ext *ngrokExtension) initHandler() error {
-	var err error
-	ext.handler, err = handler.New(context.Background(), ext.cliFactory, ext.logger, ext.sessionManager)
-	if err != nil {
-		return fmt.Errorf("handler initialization failed: %w", err)
-	}
+	ext.handler = handler.New(ext.cliFactory, ext.logger, ext.sessionManager)
 	
 	// Setup routes
 	ext.router.GET("/auth", ext.handler.SetupAuth)
