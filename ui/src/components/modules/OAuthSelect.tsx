@@ -8,7 +8,7 @@ interface AuthSelectProps {
 
 export default function OAuthSelect({ ...props }: AuthSelectProps) {
   
-  const { containers, setContainers, setTunnels } = useNgrokContext();
+  const { containers, setContainers, setEndpoints } = useNgrokContext();
 
   const toggleOAuth = (event: SelectChangeEvent<HTMLInputElement>) => {
     console.log("toggle oAuth", event.target.value);

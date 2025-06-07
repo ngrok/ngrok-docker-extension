@@ -16,7 +16,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
-import { NgrokContainer, Tunnel, useNgrokContext } from "./NgrokContext";
+import { NgrokContainer, Endpoint, useNgrokContext } from "./NgrokContext";
 import { Settings } from "@mui/icons-material";
 import AuthSelector from "./modules/AuthSelector";
 
@@ -29,7 +29,7 @@ function useDockerDesktopClient() {
 }
 
 export default function ContainersGrid() {
-  const { containers, setContainers, tunnels, setTunnels } = useNgrokContext();
+  const { containers, setContainers, endpoints, setEndpoints } = useNgrokContext();
   const [rows, setRows] = useState<NgrokContainer[]>(Object.values(containers));
 
   const columns: DataGridColumnType = [
@@ -97,7 +97,7 @@ export default function ContainersGrid() {
       type: "string",
       flex: 1,
       renderCell: (params) => {
-        if (!tunnels[params.row.id]) {
+        if (!endpoints[params.row.id]) {
           return;
         }
 
@@ -114,14 +114,14 @@ export default function ContainersGrid() {
                 <ContentCopyIcon
                   fontSize="small"
                   onClick={() => {
-                    navigator.clipboard.writeText(tunnels[params.row.id].URL);
+                    navigator.clipboard.writeText(endpoints[params.row.id].URL);
                     ddClient.desktopUI.toast.success("URL copied to clipboard");
                   }}
                 />
               </Tooltip>
             </Grid>
             <Grid item>
-              <Typography noWrap={true}>{tunnels[params.row.id].URL}</Typography>
+              <Typography noWrap={true}>{endpoints[params.row.id].URL}</Typography>
             </Grid>
           </Grid>
         );
@@ -136,7 +136,7 @@ export default function ContainersGrid() {
       maxWidth: 100,
       flex: 1,
       getActions: (params: GridRowParams<NgrokContainer>) => {
-        if (startingTunnel[params.row.id]) {
+        if (startingEndpoint[params.row.id]) {
           return [
             <GridActionsCellItem
               className="circular-progress"
@@ -172,7 +172,7 @@ export default function ContainersGrid() {
         // @ts-ignore
         let actions: GridActionsCellItem[] = [];
 
-        if (tunnels[params.row.id]?.URL && containers[params.row.id].http) {
+        if (endpoints[params.row.id]?.URL && containers[params.row.id].http) {
           actions.push(
             <GridActionsCellItem
               key={"action_open_browser_" + params.row.id}
@@ -180,17 +180,17 @@ export default function ContainersGrid() {
                 <Tooltip title="Open in browser">{<LanguageIcon />}</Tooltip>
               }
               label="Open in browser"
-              onClick={handleOpenTunnel(tunnels[params.row.id].URL)}
+              onClick={handleOpenEndpoint(endpoints[params.row.id].URL)}
               disabled={
-                tunnels[params.row.id].URL === undefined
+                endpoints[params.row.id].URL === undefined
               }
             />
           );
         }
 
         if (
-          tunnels[params.row.id] === undefined ||
-          tunnels[params.row.id].URL === undefined
+          endpoints[params.row.id] === undefined ||
+          endpoints[params.row.id].URL === undefined
         ) {
           actions.push(
             <GridActionsCellItem
@@ -202,24 +202,24 @@ export default function ContainersGrid() {
               }
               onClick={handleStart(params.row)}
               label="Publish on the internet"
-              disabled={startingTunnel[params.row.id]}
+              disabled={startingEndpoint[params.row.id]}
             />
           );
           // actions.push(
           //   <GridActionsCellItem
           //     key={"action_config_" + params.row.id}
           //     icon={
-          //       <Tooltip title="Configure ngrok tunnel">
+          //       <Tooltip title="Configure ngrok endpoint">
           //         {<Settings />}
           //       </Tooltip>
           //     }
           //     onClick={handleOpen(params.row)}
-          //     label="Configure ngrok tunnel"
-          //     disabled={startingTunnel[params.row.id]}
+          //     label="Configure ngrok endpoint"
+          //     disabled={startingEndpoint[params.row.id]}
           //   />
           // );
         } else {
-          if (tunnels[params.row.id]) {
+          if (endpoints[params.row.id]) {
             actions.push(
               <GridActionsCellItem
                 key={"action_stop_publishing_" + params.row.id}
@@ -229,10 +229,10 @@ export default function ContainersGrid() {
                   </Tooltip>
                 }
                 label="Stop publishing on the internet"
-                onClick={handleStopTunnel(params.row.id)}
+                onClick={handleStopEndpoint(params.row.id)}
                 disabled={
-                  tunnels[params.row.id]?.URL === undefined ||
-                  stoppingTunnel
+                  endpoints[params.row.id]?.URL === undefined ||
+                  stoppingEndpoint
                 }
               />
             );
@@ -263,31 +263,31 @@ export default function ContainersGrid() {
   };
   const handleClose = () => setOpen(false);
 
-  const handleOpenTunnel = (url: string) => () => {
+  const handleOpenEndpoint = (url: string) => () => {
     ddClient.host.openExternal(url);
   };
 
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [alertDialogMsg, setAlertDialogMsg] = useState<string>("");
 
-  const [stoppingTunnel, setStoppingTunnel] = useState<boolean>(false);
+  const [stoppingEndpoint, setStoppingEndpoint] = useState<boolean>(false);
 
-  const handleStopTunnel = (containerName: string) => () => {
-    setStoppingTunnel(true);
+  const handleStopEndpoint = (containerName: string) => () => {
+    setStoppingEndpoint(true);
 
     ddClient.extension.vm?.service
       ?.delete(`/remove/${containerName}`)
       .then(async (resp) => {
-        const response = resp as Record<string, Tunnel>;
-        updateTunnels(response)
-        ddClient.desktopUI.toast.success("Tunnel stopped successfully");
+        const response = resp as Record<string, Endpoint>;
+        updateEndpoints(response)
+        ddClient.desktopUI.toast.success("Endpoint stopped successfully");
       })
       .catch((error) => {
         console.log(error);
-        ddClient.desktopUI.toast.error(`Failed stopping tunnel: ${error}`);
+        ddClient.desktopUI.toast.error(`Failed stopping endpoint: ${error}`);
       })
       .finally(() => {
-        setStoppingTunnel(false);
+        setStoppingEndpoint(false);
       });
   };
 
@@ -298,29 +298,29 @@ export default function ContainersGrid() {
   }, [containers]);
 
   useEffect(() => {
-  }, [tunnels]);
+  }, [endpoints]);
 
-  const [startingTunnel, setStartingTunnel] = useState<Record<string, boolean>>(
+  const [startingEndpoint, setStartingEndpoint] = useState<Record<string, boolean>>(
     {}
   );
 
   const handleStart = (row: NgrokContainer) => async () => {
     console.log(
-      `Starting tunnel for container ${row.Name} on port ${row.Port.PublicPort}...`
+      `Starting endpoint for container ${row.Name} on port ${row.Port.PublicPort}...`
     );
 
-    setStartingTunnel({...startingTunnel, [row.id]:true});
+    setStartingEndpoint({...startingEndpoint, [row.id]:true});
     
     try {
-      const tunnel:any = await ddClient.extension.vm?.service?.post(
+      const endpoint:any = await ddClient.extension.vm?.service?.post(
         `/start/${row.id}?port=${row.Port.PublicPort}&oauth=${row.oauth}&protocol=${row.tcp?'tcp':'http'}`,
         {...row}
       );
 
-      setTunnels({...tunnels, [row.id]:tunnel});
+      setEndpoints({...endpoints, [row.id]:endpoint});
 
       ddClient.desktopUI.toast.success(
-        `Tunnel started for container ${row.Name} on port ${row.Port.PublicPort} at ${tunnel.URL}`
+        `Endpoint started for container ${row.Name} on port ${row.Port.PublicPort} at ${endpoint.URL}`
       );
     } catch (error: any) {
       console.log(error);
@@ -328,7 +328,7 @@ export default function ContainersGrid() {
       setAlertDialogMsg(errMsg);
       setShowAlertDialog(true);
     } finally {
-      setStartingTunnel({...startingTunnel, [row.id]:false});
+      setStartingEndpoint({...startingEndpoint, [row.id]:false});
     }
   };
 
@@ -393,7 +393,7 @@ export default function ContainersGrid() {
   >
     <Box sx={style}>
       <Typography id="modal-modal-title" variant="h6" component="h2">
-        ngrok tunnel config {selectedContainer?.Name}
+        ngrok endpoint config {selectedContainer?.Name}
       </Typography>
       <div id="modal-modal-description">
         <div style={{marginTop:"1em"}}><strong>Protocol:</strong> HTTP <Switch aria-label="HTTP TCP Switch" onChange={toggleProtocol} checked={selectedContainer?.tcp} /> TCP</div>
@@ -405,8 +405,8 @@ export default function ContainersGrid() {
     </Grid>
   );
 
-  function updateTunnels(loaded: Record<string, Tunnel>) {
-    setTunnels(loaded);
-    localStorage.setItem("tunnels", JSON.stringify(loaded));
-  }
+  function updateEndpoints(loaded: Record<string, Endpoint>) {
+  setEndpoints(loaded);
+  localStorage.setItem("endpoints", JSON.stringify(loaded));
+}
 }

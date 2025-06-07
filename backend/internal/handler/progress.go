@@ -8,6 +8,6 @@ import (
 
 // ActionsInProgress handles the /progress endpoint
 func (h *Handler) ActionsInProgress(ctx echo.Context) error {
-	tunnels := h.sessionManager.GetTunnels()
-	return ctx.JSON(http.StatusOK, tunnels)
+	endpoints := h.sessionManager.GetEndpoints()
+	return ctx.JSON(http.StatusOK, endpoints)
 }

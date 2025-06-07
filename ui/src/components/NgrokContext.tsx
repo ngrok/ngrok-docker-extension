@@ -24,7 +24,7 @@ export interface DockerPort {
   Type: string;
 }
 
-export interface Tunnel {
+export interface Endpoint {
   ContainerID: string;
   URL: string;
 }
@@ -42,8 +42,8 @@ interface IngrokContext {
   containers: Record<string,NgrokContainer>;
   setContainers: (containers: Record<string, NgrokContainer>) => void;
 
-  tunnels: Record<string,Tunnel>;
-  setTunnels: (tunnels: Record<string, Tunnel>) => void;
+  endpoints: Record<string,Endpoint>;
+  setEndpoints: (endpoints: Record<string, Endpoint>) => void;
 }
 
 const NgrokContext = createContext<IngrokContext>({
@@ -51,8 +51,8 @@ const NgrokContext = createContext<IngrokContext>({
   setAuthToken: () => null,
   containers: {},
   setContainers: () => null,
-  tunnels: {},
-  setTunnels: () => null,
+  endpoints: {},
+  setEndpoints: () => null,
 });
 
 export function NgrokContextProvider({
@@ -68,8 +68,8 @@ export function NgrokContextProvider({
     localStorage.getItem("containers") ? JSON.parse(localStorage.getItem("containers") ?? "") : {}
   );
 
-  const [tunnels, setTunnels] = useState(
-    localStorage.getItem("tunnels") ? JSON.parse(localStorage.getItem("tunnels") ?? "") : {}
+  const [endpoints, setEndpoints] = useState(
+    localStorage.getItem("endpoints") ? JSON.parse(localStorage.getItem("endpoints") ?? "") : {}
   );
 
   const getContainers = async () => {
@@ -79,8 +79,8 @@ export function NgrokContextProvider({
     });
 
     ddClient.extension.vm?.service?.get("/progress").then((result)=>{
-      // console.log('Loaded tunnels', result);
-      updateTunnels(result as Record<string, Tunnel>);
+      // console.log('Loaded endpoints', result);
+      updateEndpoints(result as Record<string, Endpoint>);
     });
   }
 
@@ -117,9 +117,9 @@ export function NgrokContextProvider({
     }
   }
   
-  function updateTunnels(loaded: Record<string, Tunnel>) {
-    setTunnels(loaded);
-    localStorage.setItem("tunnels", JSON.stringify(loaded));
+  function updateEndpoints(loaded: Record<string, Endpoint>) {
+    setEndpoints(loaded);
+    localStorage.setItem("endpoints", JSON.stringify(loaded));
   }
 
   const ddClient = useDockerDesktopClient();
@@ -181,8 +181,8 @@ export function NgrokContextProvider({
         setAuthToken,
         containers,
         setContainers,
-        tunnels,
-        setTunnels,
+        endpoints,
+        setEndpoints,
       }}
     >
       {children}

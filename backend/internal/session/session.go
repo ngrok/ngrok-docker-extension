@@ -9,11 +9,11 @@ import (
 	"golang.ngrok.com/ngrok/v2"
 )
 
-// Manager manages ngrok sessions and tunnels
+// Manager manages ngrok sessions and endpoints
 type Manager struct {
 	agent     ngrok.Agent
 	authToken string
-	tunnels   []ngrok.EndpointForwarder
+	endpoints []ngrok.EndpointForwarder
 	cache     ProgressCache
 	logger    *slog.Logger
 }
@@ -21,9 +21,9 @@ type Manager struct {
 // NewManager creates a new session manager
 func NewManager(logger *slog.Logger) *Manager {
 	return &Manager{
-		tunnels: make([]ngrok.EndpointForwarder, 0),
+		endpoints: make([]ngrok.EndpointForwarder, 0),
 		cache: ProgressCache{
-			Tunnels: make(map[string]Tunnel),
+			Endpoints: make(map[string]Endpoint),
 		},
 		logger: logger,
 	}
@@ -60,8 +60,8 @@ func (m *Manager) StartNgrokSession() {
 	m.agent = agent
 }
 
-// StartTunnel starts a new tunnel for the specified port
-func (m *Manager) StartTunnel(ctx context.Context, port string) (ngrok.EndpointForwarder, error) {
+// StartEndpoint starts a new endpoint for the specified port
+func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.EndpointForwarder, error) {
 	if m.agent == nil {
 		m.StartNgrokSession()
 	}
@@ -79,8 +79,8 @@ func (m *Manager) StartTunnel(ctx context.Context, port string) (ngrok.EndpointF
 		return nil, err
 	}
 
-	// Add to tunnels slice for proper tracking
-	m.tunnels = append(m.tunnels, endpoint)
+	// Add to endpoints slice for proper tracking
+	m.endpoints = append(m.endpoints, endpoint)
 
 	return endpoint, err
 }
@@ -96,13 +96,13 @@ func (m *Manager) SetAuthToken(token string) {
 	if m.agent != nil {
 		m.logger.Info("Closing ngrok agent, new AuthToken")
 		m.cache.Lock()
-		m.cache.Tunnels = make(map[string]Tunnel)
+		m.cache.Endpoints = make(map[string]Endpoint)
 		m.cache.Unlock()
 
-		for _, endpoint := range m.tunnels {
+		for _, endpoint := range m.endpoints {
 			endpoint.Close()
 		}
-		m.tunnels = nil
+		m.endpoints = nil
 
 		m.agent.Disconnect()
 		m.agent = nil
@@ -113,65 +113,65 @@ func (m *Manager) SetAuthToken(token string) {
 
 type ProgressCache struct {
 	sync.RWMutex
-	Tunnels map[string]Tunnel // map of containers and active tunnels
+	Endpoints map[string]Endpoint // map of containers and active endpoints
 }
 
-type Tunnel struct {
-	Endpoint ngrok.EndpointForwarder
-	TunnelID string
-	URL      string
+type Endpoint struct {
+	Endpoint    ngrok.EndpointForwarder
+	EndpointID  string
+	URL         string
 }
 
-// GetTunnels returns a copy of the current tunnels map
-func (m *Manager) GetTunnels() map[string]Tunnel {
+// GetEndpoints returns a copy of the current endpoints map
+func (m *Manager) GetEndpoints() map[string]Endpoint {
 	m.cache.RLock()
 	defer m.cache.RUnlock()
 
 	// Return a copy to avoid race conditions
-	result := make(map[string]Tunnel)
-	for k, v := range m.cache.Tunnels {
+	result := make(map[string]Endpoint)
+	for k, v := range m.cache.Endpoints {
 		result[k] = v
 	}
 	return result
 }
 
-// AddTunnel adds a tunnel to the cache
-func (m *Manager) AddTunnel(key string, tunnelID, url string, endpoint ngrok.EndpointForwarder) {
+// AddEndpoint adds an endpoint to the cache
+func (m *Manager) AddEndpoint(key string, endpointID, url string, endpoint ngrok.EndpointForwarder) {
 	m.cache.Lock()
 	defer m.cache.Unlock()
 
-	m.cache.Tunnels[key] = Tunnel{
-		Endpoint: endpoint,
-		TunnelID: tunnelID,
-		URL:      url,
+	m.cache.Endpoints[key] = Endpoint{
+		Endpoint:   endpoint,
+		EndpointID: endpointID,
+		URL:        url,
 	}
 }
 
-// RemoveTunnel removes a tunnel from the cache and closes the endpoint
-func (m *Manager) RemoveTunnel(key string) map[string]Tunnel {
+// RemoveEndpoint removes an endpoint from the cache and closes the endpoint
+func (m *Manager) RemoveEndpoint(key string) map[string]Endpoint {
 	m.cache.Lock()
 	defer m.cache.Unlock()
 
 	// Close the endpoint if it exists
-	if tunnel, exists := m.cache.Tunnels[key]; exists {
-		if tunnel.Endpoint != nil {
-			tunnel.Endpoint.Close()
+	if endpoint, exists := m.cache.Endpoints[key]; exists {
+		if endpoint.Endpoint != nil {
+			endpoint.Endpoint.Close()
 		}
 
-		// Also remove from tunnels slice
-		for i, endpoint := range m.tunnels {
-			if endpoint == tunnel.Endpoint {
-				m.tunnels = append(m.tunnels[:i], m.tunnels[i+1:]...)
+		// Also remove from endpoints slice
+		for i, ep := range m.endpoints {
+			if ep == endpoint.Endpoint {
+				m.endpoints = append(m.endpoints[:i], m.endpoints[i+1:]...)
 				break
 			}
 		}
 	}
 
-	delete(m.cache.Tunnels, key)
+	delete(m.cache.Endpoints, key)
 
-	// Return a copy of the remaining tunnels
-	result := make(map[string]Tunnel)
-	for k, v := range m.cache.Tunnels {
+	// Return a copy of the remaining endpoints
+	result := make(map[string]Endpoint)
+	for k, v := range m.cache.Endpoints {
 		result[k] = v
 	}
 	return result

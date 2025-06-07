@@ -6,14 +6,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h *Handler) RemoveTunnel(ctx echo.Context) error {
+func (h *Handler) RemoveEndpoint(ctx echo.Context) error {
 	ctr := ctx.Param("container")
 	if ctr == "" {
 		return ctx.String(http.StatusBadRequest, "container is required")
 	}
-	h.logger.Info("Removing tunnel for container", "container", ctr)
+	h.logger.Info("Removing endpoint for container", "container", ctr)
 
-	remainingTunnels := h.sessionManager.RemoveTunnel(ctr)
+	remainingEndpoints := h.sessionManager.RemoveEndpoint(ctr)
 
-	return ctx.JSON(http.StatusOK, remainingTunnels)
+	return ctx.JSON(http.StatusOK, remainingEndpoints)
 }

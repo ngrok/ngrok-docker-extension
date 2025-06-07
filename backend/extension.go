@@ -94,8 +94,8 @@ func (ext *ngrokExtension) initHandler() error {
 	// Setup routes
 	ext.router.GET("/auth", ext.handler.SetupAuth)
 	ext.router.GET("/progress", ext.handler.ActionsInProgress)
-	ext.router.POST("/start/:container", ext.handler.StartTunnel)
-	ext.router.DELETE("/remove/:container", ext.handler.RemoveTunnel)
+	ext.router.POST("/start/:container", ext.handler.StartEndpoint)
+	ext.router.DELETE("/remove/:container", ext.handler.RemoveEndpoint)
 	
 	return nil
 }

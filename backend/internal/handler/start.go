@@ -7,14 +7,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h *Handler) StartTunnel(ctx echo.Context) error {
+func (h *Handler) StartEndpoint(ctx echo.Context) error {
 	ctxReq := context.Background()
 
 	ctr := ctx.Param("container")
 	if ctr == "" {
 		return ctx.String(http.StatusBadRequest, "container is required")
 	}
-	h.logger.Info("Starting tunnel for container", "container", ctr)
+	h.logger.Info("Starting endpoint for container", "container", ctr)
 
 	port := ctx.QueryParam("port")
 	if port == "" {
@@ -22,18 +22,18 @@ func (h *Handler) StartTunnel(ctx echo.Context) error {
 	}
 	h.logger.Info("Using port", "port", port)
 
-	tun, err := h.sessionManager.StartTunnel(ctxReq, port)
+	tun, err := h.sessionManager.StartEndpoint(ctxReq, port)
 
 	if err != nil {
-		h.logger.Error("Failed to start tunnel", "error", err)
+		h.logger.Error("Failed to start endpoint", "error", err)
 		return err
 	}
 
-	tunnelURL := tun.URL().String()
-	tunnelID := tun.ID()
-	h.logger.Info("Tunnel created", "tunnelID", tunnelID, "url", tunnelURL)
+	endpointURL := tun.URL().String()
+	endpointID := tun.ID()
+	h.logger.Info("Endpoint created", "endpointID", endpointID, "url", endpointURL)
 
-	h.sessionManager.AddTunnel(ctr, tunnelID, tunnelURL, tun)
+	h.sessionManager.AddEndpoint(ctr, endpointID, endpointURL, tun)
 
-	return ctx.JSON(http.StatusCreated, map[string]interface{}{"TunnelID": tunnelID, "URL": tunnelURL})
+	return ctx.JSON(http.StatusCreated, map[string]interface{}{"EndpointID": endpointID, "URL": endpointURL})
 }

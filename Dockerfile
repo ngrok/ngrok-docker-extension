@@ -28,15 +28,15 @@ FROM alpine
 ARG DEVELOPMENT=false
 
 LABEL org.opencontainers.image.title="ngrok" \
-    org.opencontainers.image.description="Put your containers online with ngrok's ingress-as-a-service tunnels." \
+    org.opencontainers.image.description="Put your containers online with ngrok's ingress-as-a-service endpoints." \
     org.opencontainers.image.vendor="ngrok" \
     com.docker.desktop.extension.api.version="0.1.0" \
     com.docker.desktop.extension.icon="https://user-images.githubusercontent.com/550861/222650471-a1908709-8920-406b-a55d-b8231cd3a4a5.svg" \
     com.docker.extension.screenshots="[{\"alt\":\"containers\", \"url\":\"https://user-images.githubusercontent.com/550861/222644761-b30982aa-e81a-4546-9678-dadfc731e0fc.png\"},{\"alt\":\"settings\", \"url\":\"https://user-images.githubusercontent.com/550861/222644829-3b717704-5b58-455f-b729-dad4c96daf18.png\"}]" \
-    com.docker.extension.detailed-description="Use this extension to connect the containers that have published ports in Docker Desktop to the public internet using ngrok tunnels." \
+    com.docker.extension.detailed-description="Use this extension to connect the containers that have published ports in Docker Desktop to the public internet using ngrok endpoints." \
     com.docker.extension.publisher-url="https://ngrok.com" \
     com.docker.extension.additional-urls="[{\"title\":\"Docs\",\"url\":\"https://ngrok.com/docs\"}]" \
-    com.docker.extension.changelog="<ul><li>Support for HTTP tunnels</li><li>Multiple tunnels in single session</li></ul>" \
+    com.docker.extension.changelog="<ul><li>Support for HTTP endpoints</li><li>Multiple endpoints in single session</li></ul>" \
     com.docker.extension.categories="networking,utility-tools" \
     com.docker.extension.account-info="required"
 
