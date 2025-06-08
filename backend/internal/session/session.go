@@ -11,10 +11,10 @@ import (
 
 // Manager manages ngrok sessions and endpoints
 type Manager struct {
-	mu        sync.RWMutex              // protects all manager state
+	mu        sync.RWMutex // protects all manager state
 	agent     ngrok.Agent
 	authToken string
-	endpoints map[string]Endpoint      // map of containers and active endpoints
+	endpoints map[string]Endpoint // map of containers and active endpoints
 	logger    *slog.Logger
 }
 
@@ -30,7 +30,7 @@ func NewManager(logger *slog.Logger) *Manager {
 func (m *Manager) StartNgrokSession() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	if m.agent != nil {
 		return nil
 	}
@@ -67,7 +67,7 @@ func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.Endpoin
 	m.mu.RLock()
 	needsAgent := m.agent == nil
 	m.mu.RUnlock()
-	
+
 	if needsAgent {
 		if err := m.StartNgrokSession(); err != nil {
 			return nil, err
@@ -78,7 +78,7 @@ func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.Endpoin
 	m.mu.RLock()
 	agent := m.agent
 	m.mu.RUnlock()
-	
+
 	if agent == nil {
 		return nil, fmt.Errorf("ngrok agent not available")
 	}
@@ -86,7 +86,7 @@ func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.Endpoin
 	// Create upstream pointing to the Docker container
 	upstream := ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
 
-	endpoint, err := agent.Forward(ctx, upstream)
+	endpoint, err := agent.Forward(context.Background(), upstream)
 
 	if err != nil {
 		return nil, err
@@ -101,15 +101,15 @@ func (m *Manager) closeSession() {
 	if m.agent == nil {
 		return
 	}
-	
+
 	m.logger.Info("Closing ngrok session")
-	
+
 	// Close all endpoints before clearing the map
 	for _, endpoint := range m.endpoints {
 		endpoint.Endpoint.Close()
 	}
 	m.endpoints = make(map[string]Endpoint)
-	
+
 	// Disconnect and clear agent
 	m.agent.Disconnect()
 	m.agent = nil
@@ -138,9 +138,9 @@ func (m *Manager) Shutdown() {
 }
 
 type Endpoint struct {
-	Endpoint    ngrok.EndpointForwarder
-	EndpointID  string
-	URL         string
+	Endpoint   ngrok.EndpointForwarder
+	EndpointID string
+	URL        string
 }
 
 // GetEndpoints returns a copy of the current endpoints map

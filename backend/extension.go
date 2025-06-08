@@ -88,10 +88,10 @@ func (ext *ngrokExtension) initHandler() error {
 	ext.handler = handler.New(ext.cliFactory, ext.logger, ext.sessionManager)
 	
 	// Setup routes
-	ext.router.GET("/auth", ext.handler.SetupAuth)
+	ext.router.POST("/auth", ext.handler.SetupAuth)
 	ext.router.GET("/progress", ext.handler.ActionsInProgress)
-	ext.router.POST("/start/:container", ext.handler.StartEndpoint)
-	ext.router.DELETE("/remove/:container", ext.handler.RemoveEndpoint)
+	ext.router.POST("/start", ext.handler.StartEndpoint)
+	ext.router.POST("/remove", ext.handler.RemoveEndpoint)
 	
 	return nil
 }

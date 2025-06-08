@@ -25,8 +25,8 @@ export interface DockerPort {
 }
 
 export interface Endpoint {
-  ContainerID: string;
-  URL: string;
+  id: string;
+  url: string;
 }
 
 const client = createDockerDesktopClient();
@@ -78,9 +78,15 @@ export function NgrokContextProvider({
       updateContainers(loaded as DockerContainer[]);
     });
 
-    ddClient.extension.vm?.service?.get("/progress").then((result)=>{
+    ddClient.extension.vm?.service?.get("/progress").then((result: any)=>{
       // console.log('Loaded endpoints', result);
-      updateEndpoints(result as Record<string, Endpoint>);
+      const endpointsMap: Record<string, Endpoint> = {};
+      if (result.endpoints) {
+        result.endpoints.forEach((endpoint: Endpoint) => {
+          endpointsMap[endpoint.id] = endpoint;
+        });
+      }
+      updateEndpoints(endpointsMap);
     });
   }
 
@@ -125,7 +131,7 @@ export function NgrokContextProvider({
   const ddClient = useDockerDesktopClient();
   useEffect(() => {
     ddClient.extension.vm?.service
-      ?.get(`/auth?token=${authToken}`)
+      ?.post('/auth', { token: authToken })
       .then((result) => {
         localStorage.setItem("authToken", authToken);
       });
@@ -135,9 +141,9 @@ export function NgrokContextProvider({
   }, [authToken]);
 
   useEffect(() => {
-    // If the auth token already exists in the local storage, make a GET /auth request automatically to set up the auth
+    // If the auth token already exists in the local storage, make a POST /auth request automatically to set up the auth
     if (authToken !== null) {
-      ddClient.extension.vm?.service?.get(`/auth?token=${authToken}`);
+      ddClient.extension.vm?.service?.post('/auth', { token: authToken });
 
       getContainers();
     }

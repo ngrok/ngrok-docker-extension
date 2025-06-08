@@ -7,30 +7,38 @@ import (
 )
 
 func (h *Handler) StartEndpoint(ctx echo.Context) error {
-	ctr := ctx.Param("container")
-	if ctr == "" {
-		return ctx.String(http.StatusBadRequest, "container is required")
+	var req StartRequest
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
 	}
-	h.logger.Info("Starting endpoint for container", "container", ctr)
-
-	port := ctx.QueryParam("port")
-	if port == "" {
-		return ctx.String(http.StatusBadRequest, "port is required")
+	
+	if req.ContainerID == "" {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "containerId is required"})
 	}
-	h.logger.Info("Using port", "port", port)
+	if req.Port == "" {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "port is required"})
+	}
+	
+	h.logger.Info("Starting endpoint for container", "containerID", req.ContainerID)
+	h.logger.Info("Using port", "port", req.Port)
 
-	tun, err := h.sessionManager.StartEndpoint(ctx.Request().Context(), port)
+	tun, err := h.sessionManager.StartEndpoint(ctx.Request().Context(), req.Port)
 
 	if err != nil {
 		h.logger.Error("Failed to start endpoint", "error", err)
-		return err
+		return ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 	}
 
 	endpointURL := tun.URL().String()
 	endpointID := tun.ID()
 	h.logger.Info("Endpoint created", "endpointID", endpointID, "url", endpointURL)
 
-	h.sessionManager.AddEndpoint(ctr, endpointID, endpointURL, tun)
+	h.sessionManager.AddEndpoint(req.ContainerID, endpointID, endpointURL, tun)
 
-	return ctx.JSON(http.StatusCreated, map[string]interface{}{"EndpointID": endpointID, "URL": endpointURL})
+	endpoint := Endpoint{
+		ID:  endpointID,
+		URL: endpointURL,
+	}
+
+	return ctx.JSON(http.StatusCreated, StartResponse{Endpoint: endpoint})
 }

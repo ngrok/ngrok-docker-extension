@@ -114,14 +114,14 @@ export default function ContainersGrid() {
                 <ContentCopyIcon
                   fontSize="small"
                   onClick={() => {
-                    navigator.clipboard.writeText(endpoints[params.row.id].URL);
+                    navigator.clipboard.writeText(endpoints[params.row.id].url);
                     ddClient.desktopUI.toast.success("URL copied to clipboard");
                   }}
                 />
               </Tooltip>
             </Grid>
             <Grid item>
-              <Typography noWrap={true}>{endpoints[params.row.id].URL}</Typography>
+              <Typography noWrap={true}>{endpoints[params.row.id].url}</Typography>
             </Grid>
           </Grid>
         );
@@ -172,7 +172,7 @@ export default function ContainersGrid() {
         // @ts-ignore
         let actions: GridActionsCellItem[] = [];
 
-        if (endpoints[params.row.id]?.URL && containers[params.row.id].http) {
+        if (endpoints[params.row.id]?.url && containers[params.row.id].http) {
           actions.push(
             <GridActionsCellItem
               key={"action_open_browser_" + params.row.id}
@@ -180,9 +180,9 @@ export default function ContainersGrid() {
                 <Tooltip title="Open in browser">{<LanguageIcon />}</Tooltip>
               }
               label="Open in browser"
-              onClick={handleOpenEndpoint(endpoints[params.row.id].URL)}
+              onClick={handleOpenEndpoint(endpoints[params.row.id].url)}
               disabled={
-                endpoints[params.row.id].URL === undefined
+                endpoints[params.row.id].url === undefined
               }
             />
           );
@@ -190,7 +190,7 @@ export default function ContainersGrid() {
 
         if (
           endpoints[params.row.id] === undefined ||
-          endpoints[params.row.id].URL === undefined
+          endpoints[params.row.id].url === undefined
         ) {
           actions.push(
             <GridActionsCellItem
@@ -231,7 +231,7 @@ export default function ContainersGrid() {
                 label="Stop publishing on the internet"
                 onClick={handleStopEndpoint(params.row.id)}
                 disabled={
-                  endpoints[params.row.id]?.URL === undefined ||
+                  endpoints[params.row.id]?.url === undefined ||
                   stoppingEndpoint
                 }
               />
@@ -276,10 +276,15 @@ export default function ContainersGrid() {
     setStoppingEndpoint(true);
 
     ddClient.extension.vm?.service
-      ?.delete(`/remove/${containerName}`)
-      .then(async (resp) => {
-        const response = resp as Record<string, Endpoint>;
-        updateEndpoints(response)
+      ?.post('/remove', { containerId: containerName })
+      .then(async (resp: any) => {
+        const endpointsMap: Record<string, Endpoint> = {};
+        if (resp.remainingEndpoints) {
+          resp.remainingEndpoints.forEach((endpoint: Endpoint) => {
+            endpointsMap[endpoint.id] = endpoint;
+          });
+        }
+        updateEndpoints(endpointsMap);
         ddClient.desktopUI.toast.success("Endpoint stopped successfully");
       })
       .catch((error) => {
@@ -312,15 +317,18 @@ export default function ContainersGrid() {
     setStartingEndpoint({...startingEndpoint, [row.id]:true});
     
     try {
-      const endpoint:any = await ddClient.extension.vm?.service?.post(
-        `/start/${row.id}?port=${row.Port.PublicPort}&oauth=${row.oauth}&protocol=${row.tcp?'tcp':'http'}`,
-        {...row}
+      const response: any = await ddClient.extension.vm?.service?.post(
+        '/start',
+        { 
+          containerId: row.id, 
+          port: row.Port.PublicPort.toString() 
+        }
       );
 
-      setEndpoints({...endpoints, [row.id]:endpoint});
+      setEndpoints({...endpoints, [row.id]: response.endpoint});
 
       ddClient.desktopUI.toast.success(
-        `Endpoint started for container ${row.Name} on port ${row.Port.PublicPort} at ${endpoint.URL}`
+        `Endpoint started for container ${row.Name} on port ${row.Port.PublicPort} at ${response.endpoint.url}`
       );
     } catch (error: any) {
       console.log(error);

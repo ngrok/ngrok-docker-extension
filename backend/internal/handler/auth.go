@@ -8,15 +8,20 @@ import (
 
 func (h *Handler) SetupAuth(ctx echo.Context) error {
 	h.logger.Info("Setting up ngrok auth token")
-	token := ctx.QueryParam("token")
-	if token == "" {
-		return ctx.String(http.StatusBadRequest, "token is required")
+	
+	var req AuthRequest
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
+	}
+	
+	if req.Token == "" {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "token is required"})
 	}
 
-	if err := h.sessionManager.SetAuthToken(token); err != nil {
+	if err := h.sessionManager.SetAuthToken(req.Token); err != nil {
 		h.logger.Error("Failed to set auth token", "error", err)
-		return ctx.String(http.StatusUnauthorized, "Invalid authentication token")
+		return ctx.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid authentication token"})
 	}
 
-	return ctx.String(http.StatusOK, "")
+	return ctx.JSON(http.StatusOK, AuthResponse{})
 }

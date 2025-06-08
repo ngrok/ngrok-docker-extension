@@ -7,13 +7,17 @@ import (
 )
 
 func (h *Handler) RemoveEndpoint(ctx echo.Context) error {
-	ctr := ctx.Param("container")
-	if ctr == "" {
-		return ctx.String(http.StatusBadRequest, "container is required")
+	var req RemoveRequest
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
 	}
-	h.logger.Info("Removing endpoint for container", "container", ctr)
+	
+	if req.ContainerID == "" {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "containerId is required"})
+	}
+	h.logger.Info("Removing endpoint for container", "containerID", req.ContainerID)
 
-	remainingEndpoints := h.sessionManager.RemoveEndpoint(ctr)
-
-	return ctx.JSON(http.StatusOK, remainingEndpoints)
+	remainingEndpointsMap := h.sessionManager.RemoveEndpoint(req.ContainerID)
+	remainingEndpoints := convertEndpointsToSlice(remainingEndpointsMap)
+	return ctx.JSON(http.StatusOK, RemoveResponse{RemainingEndpoints: remainingEndpoints})
 }
