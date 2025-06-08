@@ -61,8 +61,18 @@ func (m *Manager) StartNgrokSession() error {
 	return nil
 }
 
-// StartEndpoint starts a new endpoint for the specified port
-func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.EndpointForwarder, error) {
+// EndpointConfig holds configuration options for creating an ngrok endpoint
+type EndpointConfig struct {
+	Binding        *string
+	URL            *string
+	PoolingEnabled *bool
+	TrafficPolicy  *string
+	Description    *string
+	Metadata       *string
+}
+
+// StartEndpoint starts a new endpoint for the specified port with optional configuration
+func (m *Manager) StartEndpoint(ctx context.Context, port string, config *EndpointConfig) (ngrok.EndpointForwarder, error) {
 	// Check if agent exists and create if needed
 	m.mu.RLock()
 	needsAgent := m.agent == nil
@@ -86,7 +96,30 @@ func (m *Manager) StartEndpoint(ctx context.Context, port string) (ngrok.Endpoin
 	// Create upstream pointing to the Docker container
 	upstream := ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
 
-	endpoint, err := agent.Forward(context.Background(), upstream)
+	// Build endpoint options from configuration
+	var opts []ngrok.EndpointOption
+	if config != nil {
+		if config.Binding != nil {
+			opts = append(opts, ngrok.WithBindings(*config.Binding))
+		}
+		if config.URL != nil {
+			opts = append(opts, ngrok.WithURL(*config.URL))
+		}
+		if config.PoolingEnabled != nil {
+			opts = append(opts, ngrok.WithPoolingEnabled(*config.PoolingEnabled))
+		}
+		if config.TrafficPolicy != nil {
+			opts = append(opts, ngrok.WithTrafficPolicy(*config.TrafficPolicy))
+		}
+		if config.Description != nil {
+			opts = append(opts, ngrok.WithDescription(*config.Description))
+		}
+		if config.Metadata != nil {
+			opts = append(opts, ngrok.WithMetadata(*config.Metadata))
+		}
+	}
+
+	endpoint, err := agent.Forward(context.Background(), upstream, opts...)
 
 	if err != nil {
 		return nil, err

@@ -1,5 +1,7 @@
 package handler
 
+
+
 // Auth Handler Types
 type AuthRequest struct {
 	Token string `json:"token"`
@@ -34,8 +36,14 @@ type RemoveResponse struct {
 
 // Start Handler Types
 type StartRequest struct {
-	ContainerID string `json:"containerId"`
-	Port        string `json:"port"`
+	ContainerID     string  `json:"containerId"`
+	Port            string  `json:"port"`
+	Binding         *string `json:"binding,omitempty"`
+	URL             *string `json:"url,omitempty"`
+	PoolingEnabled  *bool   `json:"poolingEnabled,omitempty"`
+	TrafficPolicy   *string `json:"trafficPolicy,omitempty"`
+	Description     *string `json:"description,omitempty"`
+	Metadata        *string `json:"metadata,omitempty"`
 }
 
 type StartResponse struct {

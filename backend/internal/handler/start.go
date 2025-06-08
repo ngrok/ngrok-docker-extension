@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 func (h *Handler) StartEndpoint(ctx echo.Context) error {
@@ -22,7 +23,17 @@ func (h *Handler) StartEndpoint(ctx echo.Context) error {
 	h.logger.Info("Starting endpoint for container", "containerID", req.ContainerID)
 	h.logger.Info("Using port", "port", req.Port)
 
-	tun, err := h.sessionManager.StartEndpoint(ctx.Request().Context(), req.Port)
+	// Build endpoint configuration from request
+	config := &session.EndpointConfig{
+		Binding:        req.Binding,
+		URL:            req.URL,
+		PoolingEnabled: req.PoolingEnabled,
+		TrafficPolicy:  req.TrafficPolicy,
+		Description:    req.Description,
+		Metadata:       req.Metadata,
+	}
+
+	tun, err := h.sessionManager.StartEndpoint(ctx.Request().Context(), req.Port, config)
 
 	if err != nil {
 		h.logger.Error("Failed to start endpoint", "error", err)
