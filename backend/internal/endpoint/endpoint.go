@@ -47,10 +47,8 @@ func (m *manager) ConfigureAgent(ctx context.Context, opts ...ngrok.AgentOption)
 	defer m.mu.Unlock()
 
 	// Close existing agent if present
-	if m.agent != nil {
-		if err := m.closeAgent(ctx); err != nil {
-			m.logger.Warn("Error closing existing agent", "error", err)
-		}
+	if err := m.closeAgent(ctx); err != nil {
+		m.logger.Warn("Error closing existing agent", "error", err)
 	}
 
 	m.logger.Info("Configuring ngrok agent")
@@ -166,21 +164,7 @@ func (m *manager) Shutdown(ctx context.Context) error {
 	defer m.mu.Unlock()
 
 	m.logger.Info("Shutting down endpoint manager")
-
-	// Close all endpoints
-	for containerID, endpoint := range m.endpoints {
-		if endpoint.Forwarder != nil {
-			endpoint.Forwarder.Close()
-		}
-		delete(m.endpoints, containerID)
-	}
-
-	// Close agent
-	if m.agent != nil {
-		return m.closeAgent(ctx)
-	}
-
-	return nil
+	return m.closeAgent(ctx)
 }
 
 // closeAgent closes the current agent and cleans up
@@ -192,17 +176,12 @@ func (m *manager) closeAgent(_ context.Context) error {
 
 	m.logger.Info("Closing ngrok agent")
 
-	// Close all endpoints before disconnecting agent
-	for containerID, endpoint := range m.endpoints {
-		if endpoint.Forwarder != nil {
-			endpoint.Forwarder.Close()
-		}
-		delete(m.endpoints, containerID)
-	}
-
-	// Disconnect agent
+	// Disconnect agent (this automatically closes all endpoints)
 	m.agent.Disconnect()
 	m.agent = nil
+
+	// Clear endpoints map since they're all closed
+	m.endpoints = make(map[string]*Endpoint)
 
 	return nil
 }
