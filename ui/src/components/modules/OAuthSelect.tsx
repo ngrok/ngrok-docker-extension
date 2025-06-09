@@ -1,4 +1,4 @@
-import { useState } from "react";
+
 import { MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { NgrokContainer, useNgrokContext } from "../NgrokContext";
 
@@ -8,7 +8,7 @@ interface AuthSelectProps {
 
 export default function OAuthSelect({ ...props }: AuthSelectProps) {
   
-  const { containers, setContainers, setEndpoints } = useNgrokContext();
+  const { containers, setContainers } = useNgrokContext();
 
   const toggleOAuth = (event: SelectChangeEvent<HTMLInputElement>) => {
     console.log("toggle oAuth", event.target.value);

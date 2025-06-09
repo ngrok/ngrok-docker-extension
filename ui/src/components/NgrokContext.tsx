@@ -134,7 +134,7 @@ export function NgrokContextProvider({
   useEffect(() => {
     ddClient.extension.vm?.service
       ?.post('/configure_agent', { token: authToken })
-      .then((result) => {
+      .then((_result) => {
         localStorage.setItem("authToken", authToken);
       });
     
@@ -167,7 +167,7 @@ export function NgrokContextProvider({
         ],
         {
           stream: {
-            async onOutput(data: any) {
+            async onOutput(_data: any) {
               await getContainers();
             },
             onClose(exitCode) {

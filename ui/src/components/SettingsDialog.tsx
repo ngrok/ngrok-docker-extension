@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import Button from "@mui/material/Button";
 import React, { useState } from "react";
-import SettingsIcon from "@mui/icons-material/Settings";
+
 import { useNgrokContext } from "./NgrokContext";
 
 export default function SettingsDialog() {
@@ -30,7 +30,7 @@ export default function SettingsDialog() {
     setTempAuthToken(event.target.value);
   };
 
-  const handleSave = (event: any) => {
+  const handleSave = (_event: any) => {
     setAuthToken(tempAuthToken);
     setOpen(false);
   };

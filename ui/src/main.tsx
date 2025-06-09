@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import CssBaseline from "@mui/material/CssBaseline";
-import { DockerMuiThemeProvider } from "@docker/docker-mui-theme";
+import { DockerMuiV6ThemeProvider } from "@docker/docker-mui-theme";
 
 import { App } from "./App";
 import { NgrokContextProvider } from "./components/NgrokContext";
@@ -13,11 +13,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       the `dockerDesktopTheme` class to your root <html> element to get
       some minimal Docker theming.
     */}
-    <DockerMuiThemeProvider>
+    <DockerMuiV6ThemeProvider>
       <CssBaseline />
       <NgrokContextProvider>
         <App />
       </NgrokContextProvider>
-    </DockerMuiThemeProvider>
+    </DockerMuiV6ThemeProvider>
   </React.StrictMode>
 );

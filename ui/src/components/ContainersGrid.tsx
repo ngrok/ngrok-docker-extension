@@ -5,9 +5,9 @@ import {
   GridActionsCellItem,
   GridActionsColDef,
   GridColDef,
-  gridStringOrNumberComparator,
+
 } from "@mui/x-data-grid";
-import { Box, CircularProgress, Grid, Modal, SelectChangeEvent, Switch, Tooltip, Typography } from "@mui/material";
+import { Box, CircularProgress, Grid, Modal, Switch, Tooltip, Typography } from "@mui/material";
 import { GridRowParams } from "@mui/x-data-grid/models/params/gridRowParams";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -17,7 +17,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
 import { NgrokContainer, Endpoint, useNgrokContext } from "./NgrokContext";
-import { Settings } from "@mui/icons-material";
+
 import AuthSelector from "./modules/AuthSelector";
 
 export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
@@ -37,7 +37,7 @@ export default function ContainersGrid() {
       field: "id",
       headerName: "ID",
       width: 90,
-      hide: true,
+
     },
     {
       field: "Name",
@@ -54,20 +54,14 @@ export default function ContainersGrid() {
       align: "left",
       maxWidth: 100,
       flex: 1,
-      sortComparator: (v1, v2, param1, param2) => {
-        console.log(v1, v2, param1, param2, rows);
-        // gridStringOrNumberComparator()
+      sortComparator: (_v1, _v2, _param1, _param2) => {
+        // TODO: Implement sorting logic if needed
         return 0;
-        // return gridStringOrNumberComparator(
-        //   v1,
-        //   v2,
-        //   param1.value.Port.PublicPort,
-        //   param2.value.Port.PublicPort,
         // );
       },
       renderCell: (params) => {
         return (
-          <Typography>
+          <Typography sx={{ margin: 0, padding: 0 }}>
             {params.row.Port.PublicPort}
           </Typography>
         );
@@ -91,7 +85,7 @@ export default function ContainersGrid() {
     // },
     {
       field: "url",
-      headerName: "URL",
+      headerName: "URL", 
       headerAlign: "left",
       align: "left",
       type: "string",
@@ -108,8 +102,9 @@ export default function ContainersGrid() {
             direction={"row"}
             spacing={1}
             justifyContent={"start"}
+            sx={{ margin: 0, padding: 0, height: '100%', alignItems: 'center' }}
           >
-            <Grid item>
+            <Grid item sx={{ margin: 0, padding: 0 }}>
               <Tooltip title="Copy URL">
                 <ContentCopyIcon
                   fontSize="small"
@@ -120,8 +115,10 @@ export default function ContainersGrid() {
                 />
               </Tooltip>
             </Grid>
-            <Grid item>
-              <Typography noWrap={true}>{endpoints[params.row.id].url}</Typography>
+            <Grid item sx={{ margin: 0, padding: 0 }}>
+              <Typography noWrap sx={{ margin: 0, padding: 0 }}>
+                {endpoints[params.row.id].url}
+              </Typography>
             </Grid>
           </Grid>
         );
@@ -257,10 +254,6 @@ export default function ContainersGrid() {
   
   const [selectedContainer, setSelectedContainer] = useState<NgrokContainer>();
   const [open, setOpen] = React.useState(false);
-  const handleOpen = (container: NgrokContainer) => async () => {
-    setSelectedContainer(container);
-    setOpen(true)
-  };
   const handleClose = () => setOpen(false);
 
   const handleOpenEndpoint = (url: string) => () => {
@@ -352,13 +345,7 @@ export default function ContainersGrid() {
     setContainers({...containers, [selectedContainer.id]:selectedContainer});
   }
 
-  const toggleOAuth = (event: SelectChangeEvent<HTMLInputElement>) => {
-    console.log("toggle oAuth", event.target.value);
-    if(!selectedContainer) return;
-    selectedContainer.oauth = event.target.value as string;
-    setSelectedContainer({...selectedContainer});
-    setContainers({...containers, [selectedContainer.id]:selectedContainer});
-  }
+
 
 
   return (
@@ -371,22 +358,38 @@ export default function ContainersGrid() {
       <DataGrid
         rows={rows || []}
         columns={columns}
-        pageSize={10}
-        rowsPerPageOptions={[10]}
+        initialState={{
+          pagination: {
+            paginationModel: { page: 0, pageSize: 10 },
+          },
+          columns: {
+            columnVisibilityModel: {
+              id: false,
+            },
+          },
+        }}
+        pageSizeOptions={[10]}
         checkboxSelection={false}
-        disableSelectionOnClick={true}
-        experimentalFeatures={{ newEditingApi: true }}
+        disableRowSelectionOnClick={true}
+
         sx={{
-          "&.MuiDataGrid-root--densityCompact .MuiDataGrid-cell": {
-            py: 1,
+          "& .MuiDataGrid-row": {
+            minHeight: '52px !important',
+            maxHeight: '52px !important'
           },
-          "&.MuiDataGrid-root--densityStandard .MuiDataGrid-cell": {
-            py: 1,
-          },
-          "&.MuiDataGrid-root--densityComfortable .MuiDataGrid-cell": {
-            py: 2,
+          "& .MuiDataGrid-columnHeader": {
+            '&[data-field="actions"]': {
+              justifyContent: 'flex-end !important'
+            }
           },
           "& .MuiDataGrid-cell": {
+            minHeight: '52px !important',
+            maxHeight: '52px !important',
+            display: 'flex !important',
+            alignItems: 'center !important',
+            '&[data-field="actions"]': {
+              justifyContent: 'flex-end !important'
+            },
             "& .MuiIconButton-root.circular-progress": {
               "&:hover": {
                 backgroundColor: "transparent",
