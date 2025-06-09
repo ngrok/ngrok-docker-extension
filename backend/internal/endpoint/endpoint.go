@@ -2,12 +2,15 @@ package endpoint
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"maps"
 
+	"github.com/ngrok/ngrok-docker-extension/internal/detectproto"
 	"golang.ngrok.com/ngrok/v2"
 )
 
@@ -98,9 +101,48 @@ func (m *manager) CreateEndpoint(ctx context.Context, containerID, port string, 
 		return nil, fmt.Errorf("no agent configured - call ConfigureAgent first")
 	}
 
-	// Create upstream pointing to the Docker container
-	upstream := ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
+	// Detect protocols on the port with 250ms timeout
+	detectCtx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
 
+	detection, err := detectproto.Detect(detectCtx, "172.17.0.1", port)
+	if err != nil {
+		m.logger.Warn("Protocol detection failed, using default",
+			"error", "err",
+			"containerID", containerID,
+			"port", port,
+			"upstream", "http",
+		)
+	} else {
+		m.logger.Info("Protocol detection complete",
+			"containerID", containerID,
+			"port", port,
+			"detected", fmt.Sprintf("tcp:%v http:%v https:%v tls:%v",
+				detection.TCP, detection.HTTP, detection.HTTPS, detection.TLS),
+			"upstream", "https")
+	}
+
+	// Create upstream and log based on detection results
+	var upstream *ngrok.Upstream
+
+	switch {
+	case detection != nil && detection.HTTPS:
+		// Service requires TLS - configure upstream with TLS and skip certificate verification
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         "172.17.0.1",
+		}
+		upstream = ngrok.WithUpstream(fmt.Sprintf("https://172.17.0.1:%s", port),
+			ngrok.WithUpstreamTLSClientConfig(tlsConfig))
+	case detection != nil:
+		// Default to HTTP upstream (covers HTTP, TCP, TLS cases)
+		upstream = ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
+	default:
+		// Detection failed - fallback to HTTP upstream
+		upstream = ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
+	}
+
+	// Always create HTTPS endpoint - prepend HTTPS URL option to user opts
 	forwarder, err := agent.Forward(context.Background(), upstream, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
