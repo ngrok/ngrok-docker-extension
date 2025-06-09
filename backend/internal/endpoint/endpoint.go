@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"sync"
 
+	"maps"
+
 	"golang.ngrok.com/ngrok/v2"
 )
 
@@ -152,9 +154,7 @@ func (m *manager) ListEndpoints() map[string]*Endpoint {
 
 	// Return a copy to avoid race conditions
 	result := make(map[string]*Endpoint)
-	for k, v := range m.endpoints {
-		result[k] = v
-	}
+	maps.Copy(result, m.endpoints)
 	return result
 }
 
