@@ -16,12 +16,12 @@ func (h *Handler) CreateEndpoint(ctx echo.Context) error {
 	if req.ContainerID == "" {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "containerId is required"})
 	}
-	if req.Port == "" {
-		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "port is required"})
+	if req.TargetPort == "" {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "targetPort is required"})
 	}
 	
 	h.logger.Info("Creating endpoint for container", "containerID", req.ContainerID)
-	h.logger.Info("Using port", "port", req.Port)
+	h.logger.Info("Using targetPort", "targetPort", req.TargetPort)
 
 	// Build endpoint options from request
 	var opts []ngrok.EndpointOption
@@ -44,15 +44,17 @@ func (h *Handler) CreateEndpoint(ctx echo.Context) error {
 		opts = append(opts, ngrok.WithMetadata(*req.Metadata))
 	}
 
-	endpoint, err := h.endpointManager.CreateEndpoint(ctx.Request().Context(), req.ContainerID, req.Port, opts...)
+	endpoint, err := h.endpointManager.CreateEndpoint(ctx.Request().Context(), req.ContainerID, req.TargetPort, opts...)
 	if err != nil {
 		h.logger.Error("Failed to create endpoint", "error", err)
 		return ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 	}
 
 	response := Endpoint{
-		ID:  endpoint.Forwarder.ID(),
-		URL: endpoint.Forwarder.URL().String(),
+		ID:          endpoint.Forwarder.ID(),
+		URL:         endpoint.Forwarder.URL().String(),
+		ContainerID: endpoint.ContainerID,
+		TargetPort:  endpoint.TargetPort,
 	}
 
 	return ctx.JSON(http.StatusCreated, CreateEndpointResponse{Endpoint: response})

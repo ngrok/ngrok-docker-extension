@@ -21,7 +21,7 @@ export function Header() {
             color="text.secondary"
             sx={{ mt: 1 }}
           >
-            Put your containers online with ngrok's ingress-as-a-service endpoints.
+            Put your containers online with ngrok's API Gateway.
           </Typography>
         </Grid>
         {authIsSetup && (

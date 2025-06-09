@@ -229,7 +229,7 @@ export default function ContainersGrid() {
                   </Tooltip>
                 }
                 label="Stop publishing on the internet"
-                onClick={handleRemoveEndpoint(params.row.id)}
+                onClick={handleRemoveEndpoint(params.row)}
                 disabled={
                   endpoints[params.row.id]?.url === undefined ||
                   removingEndpoint
@@ -272,11 +272,14 @@ export default function ContainersGrid() {
 
   const [removingEndpoint, setRemovingEndpoint] = useState<boolean>(false);
 
-  const handleRemoveEndpoint = (containerName: string) => () => {
+  const handleRemoveEndpoint = (row: any) => () => {
     setRemovingEndpoint(true);
 
     ddClient.extension.vm?.service
-      ?.post('/remove_endpoint', { containerId: containerName })
+      ?.post('/remove_endpoint', { 
+        containerId: row.ContainerId, 
+        targetPort: row.Port.PublicPort.toString() 
+      })
       .then(async (resp: any) => {
         const endpointsMap: Record<string, Endpoint> = {};
         if (resp.remainingEndpoints) {
@@ -320,8 +323,8 @@ export default function ContainersGrid() {
       const response: any = await ddClient.extension.vm?.service?.post(
         '/create_endpoint',
         { 
-          containerId: row.id, 
-          port: row.Port.PublicPort.toString() 
+          containerId: row.ContainerId, 
+          targetPort: row.Port.PublicPort.toString() 
         }
       );
 

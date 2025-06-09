@@ -28,8 +28,10 @@ func convertEndpointsToSlice(endpointsMap map[string]*endpoint.Endpoint) []Endpo
 	return slices.Collect(func(yield func(Endpoint) bool) {
 		for _, ep := range endpointsMap {
 			if !yield(Endpoint{
-				ID:  ep.Forwarder.ID(),
-				URL: ep.Forwarder.URL().String(),
+				ID:          ep.Forwarder.ID(),
+				URL:         ep.Forwarder.URL().String(),
+				ContainerID: ep.ContainerID,
+				TargetPort:  ep.TargetPort,
 			}) {
 				return
 			}

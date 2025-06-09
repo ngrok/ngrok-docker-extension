@@ -28,7 +28,7 @@ FROM alpine
 ARG DEVELOPMENT=false
 
 LABEL org.opencontainers.image.title="ngrok" \
-    org.opencontainers.image.description="Put your containers online with ngrok's ingress-as-a-service endpoints." \
+    org.opencontainers.image.description="Put your containers online with ngrok's API Gateway." \
     org.opencontainers.image.vendor="ngrok" \
     com.docker.desktop.extension.api.version="0.1.0" \
     com.docker.desktop.extension.icon="https://user-images.githubusercontent.com/550861/222650471-a1908709-8920-406b-a55d-b8231cd3a4a5.svg" \

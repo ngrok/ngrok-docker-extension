@@ -21,13 +21,16 @@ type ListEndpointsResponse struct {
 }
 
 type Endpoint struct {
-	ID  string `json:"id"`
-	URL string `json:"url"`
+	ID          string `json:"id"`
+	URL         string `json:"url"`
+	ContainerID string `json:"containerId"`
+	TargetPort  string `json:"targetPort"`
 }
 
 // Remove Endpoint Types
 type RemoveEndpointRequest struct {
 	ContainerID string `json:"containerId"`
+	TargetPort  string `json:"targetPort"`
 }
 
 type RemoveEndpointResponse struct {
@@ -37,7 +40,7 @@ type RemoveEndpointResponse struct {
 // Create Endpoint Types
 type CreateEndpointRequest struct {
 	ContainerID     string  `json:"containerId"`
-	Port            string  `json:"port"`
+	TargetPort      string  `json:"targetPort"`
 	Binding         *string `json:"binding,omitempty"`
 	URL             *string `json:"url,omitempty"`
 	PoolingEnabled  *bool   `json:"poolingEnabled,omitempty"`

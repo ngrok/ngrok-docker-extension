@@ -27,6 +27,8 @@ export interface DockerPort {
 export interface Endpoint {
   id: string;
   url: string;
+  containerId: string;
+  targetPort: string;
 }
 
 const client = createDockerDesktopClient();

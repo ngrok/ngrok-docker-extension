@@ -14,18 +14,23 @@ import (
 	"golang.ngrok.com/ngrok/v2"
 )
 
+// makeEndpointKey creates a composite key for endpoint storage
+func makeEndpointKey(containerID, targetPort string) string {
+	return fmt.Sprintf("%s:%s", containerID, targetPort)
+}
+
 // Endpoint represents an active ngrok endpoint forwarding to a container
 type Endpoint struct {
 	Forwarder   ngrok.EndpointForwarder
 	ContainerID string
-	Port        string
+	TargetPort  string
 }
 
 // Manager manages ngrok endpoints for Docker containers
 type Manager interface {
 	ConfigureAgent(ctx context.Context, opts ...ngrok.AgentOption) error
-	CreateEndpoint(ctx context.Context, containerID, port string, opts ...ngrok.EndpointOption) (*Endpoint, error)
-	RemoveEndpoint(ctx context.Context, containerID string) error
+	CreateEndpoint(ctx context.Context, containerID, targetPort string, opts ...ngrok.EndpointOption) (*Endpoint, error)
+	RemoveEndpoint(ctx context.Context, containerID, targetPort string) error
 	ListEndpoints() map[string]*Endpoint
 	Shutdown(ctx context.Context) error
 }
@@ -34,7 +39,7 @@ type Manager interface {
 type manager struct {
 	mu        sync.RWMutex
 	agent     ngrok.Agent
-	endpoints map[string]*Endpoint // containerID -> endpoint
+	endpoints map[string]*Endpoint // containerID:targetPort -> endpoint
 	logger    *slog.Logger
 }
 
@@ -83,13 +88,13 @@ func (m *manager) ConfigureAgent(ctx context.Context, opts ...ngrok.AgentOption)
 	return nil
 }
 
-// CreateEndpoint creates a new ngrok endpoint for the specified container and port
-func (m *manager) CreateEndpoint(ctx context.Context, containerID, port string, opts ...ngrok.EndpointOption) (*Endpoint, error) {
+// CreateEndpoint creates a new ngrok endpoint for the specified container and target port
+func (m *manager) CreateEndpoint(ctx context.Context, containerID, targetPort string, opts ...ngrok.EndpointOption) (*Endpoint, error) {
 	if containerID == "" {
 		return nil, fmt.Errorf("containerID cannot be empty")
 	}
-	if port == "" {
-		return nil, fmt.Errorf("port cannot be empty")
+	if targetPort == "" {
+		return nil, fmt.Errorf("targetPort cannot be empty")
 	}
 
 	// Ensure agent exists
@@ -105,18 +110,18 @@ func (m *manager) CreateEndpoint(ctx context.Context, containerID, port string, 
 	detectCtx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
 	defer cancel()
 
-	detection, err := detectproto.Detect(detectCtx, "172.17.0.1", port)
+	detection, err := detectproto.Detect(detectCtx, "172.17.0.1", targetPort)
 	if err != nil {
 		m.logger.Warn("Protocol detection failed, using default",
 			"error", "err",
 			"containerID", containerID,
-			"port", port,
+			"targetPort", targetPort,
 			"upstream", "http",
 		)
 	} else {
 		m.logger.Info("Protocol detection complete",
 			"containerID", containerID,
-			"port", port,
+			"targetPort", targetPort,
 			"detected", fmt.Sprintf("tcp:%v http:%v https:%v tls:%v",
 				detection.TCP, detection.HTTP, detection.HTTPS, detection.TLS),
 			"upstream", "https")
@@ -132,14 +137,14 @@ func (m *manager) CreateEndpoint(ctx context.Context, containerID, port string, 
 			InsecureSkipVerify: true,
 			ServerName:         "172.17.0.1",
 		}
-		upstream = ngrok.WithUpstream(fmt.Sprintf("https://172.17.0.1:%s", port),
+		upstream = ngrok.WithUpstream(fmt.Sprintf("https://172.17.0.1:%s", targetPort),
 			ngrok.WithUpstreamTLSClientConfig(tlsConfig))
 	case detection != nil:
 		// Default to HTTP upstream (covers HTTP, TCP, TLS cases)
-		upstream = ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
+		upstream = ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", targetPort))
 	default:
 		// Detection failed - fallback to HTTP upstream
-		upstream = ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", port))
+		upstream = ngrok.WithUpstream(fmt.Sprintf("http://172.17.0.1:%s", targetPort))
 	}
 
 	// Always create HTTPS endpoint - prepend HTTPS URL option to user opts
@@ -151,31 +156,33 @@ func (m *manager) CreateEndpoint(ctx context.Context, containerID, port string, 
 	endpoint := &Endpoint{
 		Forwarder:   forwarder,
 		ContainerID: containerID,
-		Port:        port,
+		TargetPort:  targetPort,
 	}
 
-	// Store the endpoint
+	// Store the endpoint using composite key
+	endpointKey := makeEndpointKey(containerID, targetPort)
 	m.mu.Lock()
-	m.endpoints[containerID] = endpoint
+	m.endpoints[endpointKey] = endpoint
 	m.mu.Unlock()
 
 	m.logger.Info("Endpoint created",
 		"containerID", containerID,
-		"port", port,
+		"targetPort", targetPort,
 		"url", forwarder.URL().String(),
 		"endpointID", forwarder.ID())
 
 	return endpoint, nil
 }
 
-// RemoveEndpoint removes and closes an endpoint for the specified container
-func (m *manager) RemoveEndpoint(ctx context.Context, containerID string) error {
+// RemoveEndpoint removes and closes an endpoint for the specified container and target port
+func (m *manager) RemoveEndpoint(ctx context.Context, containerID, targetPort string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	endpoint, exists := m.endpoints[containerID]
+	endpointKey := makeEndpointKey(containerID, targetPort)
+	endpoint, exists := m.endpoints[endpointKey]
 	if !exists {
-		return fmt.Errorf("no endpoint found for container %s", containerID)
+		return fmt.Errorf("no endpoint found for container %s on target port %s", containerID, targetPort)
 	}
 
 	// Close the endpoint
@@ -183,9 +190,9 @@ func (m *manager) RemoveEndpoint(ctx context.Context, containerID string) error 
 		endpoint.Forwarder.Close()
 	}
 
-	delete(m.endpoints, containerID)
+	delete(m.endpoints, endpointKey)
 
-	m.logger.Info("Endpoint removed", "containerID", containerID)
+	m.logger.Info("Endpoint removed", "containerID", containerID, "targetPort", targetPort)
 	return nil
 }
 

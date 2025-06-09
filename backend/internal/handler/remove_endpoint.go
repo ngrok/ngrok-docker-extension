@@ -15,9 +15,12 @@ func (h *Handler) RemoveEndpoint(ctx echo.Context) error {
 	if req.ContainerID == "" {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "containerId is required"})
 	}
-	h.logger.Info("Removing endpoint for container", "containerID", req.ContainerID)
+	if req.TargetPort == "" {
+		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "targetPort is required"})
+	}
+	h.logger.Info("Removing endpoint for container", "containerID", req.ContainerID, "targetPort", req.TargetPort)
 
-	if err := h.endpointManager.RemoveEndpoint(ctx.Request().Context(), req.ContainerID); err != nil {
+	if err := h.endpointManager.RemoveEndpoint(ctx.Request().Context(), req.ContainerID, req.TargetPort); err != nil {
 		h.logger.Error("Failed to remove endpoint", "error", err)
 		return ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 	}
