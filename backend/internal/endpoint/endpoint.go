@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log/slog"
+	"os"
 	"sync"
 	"time"
 
@@ -63,8 +64,15 @@ func (m *manager) ConfigureAgent(ctx context.Context, opts ...ngrok.AgentOption)
 
 	m.logger.Info("Configuring ngrok agent")
 
-	// Add manager's own logger and event handler to the options
+	// Get version from environment
+	version := os.Getenv("EXTENSION_VERSION")
+	if version == "" {
+		version = "unknown"
+	}
+
+	// Add manager's own logger, client info, and event handler to the options
 	agentOpts := append(opts,
+		ngrok.WithClientInfo("ngrok-docker-desktop-extension", version),
 		ngrok.WithLogger(m.logger),
 		ngrok.WithEventHandler(func(event ngrok.Event) {
 			switch e := event.(type) {

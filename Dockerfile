@@ -24,13 +24,17 @@ RUN npm run build
 
 FROM alpine
 
-# Build argument for development dependencies
+# Build arguments
+ARG VERSION=0.1.0
 ARG DEVELOPMENT=false
+
+# Make version available as environment variable
+ENV EXTENSION_VERSION="${VERSION}"
 
 LABEL org.opencontainers.image.title="ngrok" \
     org.opencontainers.image.description="Put your containers online with ngrok's API Gateway." \
     org.opencontainers.image.vendor="ngrok" \
-    com.docker.desktop.extension.api.version="0.1.0" \
+    com.docker.desktop.extension.api.version="${VERSION}" \
     com.docker.desktop.extension.icon="https://user-images.githubusercontent.com/550861/222650471-a1908709-8920-406b-a55d-b8231cd3a4a5.svg" \
     com.docker.extension.screenshots="[{\"alt\":\"containers\", \"url\":\"https://user-images.githubusercontent.com/550861/222644761-b30982aa-e81a-4546-9678-dadfc731e0fc.png\"},{\"alt\":\"settings\", \"url\":\"https://user-images.githubusercontent.com/550861/222644829-3b717704-5b58-455f-b729-dad4c96daf18.png\"}]" \
     com.docker.extension.detailed-description="Use this extension to connect the containers that have published ports in Docker Desktop to the public internet using ngrok endpoints." \
