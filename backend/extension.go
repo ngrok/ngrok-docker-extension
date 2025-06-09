@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/docker/docker/client"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -29,9 +28,6 @@ type ngrokExtension struct {
 	
 	// Ngrok endpoint management
 	endpointManager endpoint.Manager
-	
-	// Docker client factory
-	cliFactory func() (*client.Client, error)
 }
 
 // newNgrokExtension creates and initializes a new ngrok extension instance
@@ -40,9 +36,6 @@ func newNgrokExtension(socketPath string, logger *slog.Logger) (*ngrokExtension,
 		socketPath:      socketPath,
 		logger:          logger,
 		endpointManager: endpoint.NewManager(logger),
-		cliFactory: func() (*client.Client, error) {
-			return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-		},
 	}
 	
 	// Initialize components
@@ -82,7 +75,7 @@ func (ext *ngrokExtension) initRouter() error {
 
 // initHandler creates the HTTP handler
 func (ext *ngrokExtension) initHandler() error {
-	ext.handler = handler.New(ext.cliFactory, ext.logger, ext.endpointManager)
+	ext.handler = handler.New(ext.logger, ext.endpointManager)
 	
 	// Setup routes
 	ext.router.POST("/configure_agent", ext.handler.ConfigureAgent)

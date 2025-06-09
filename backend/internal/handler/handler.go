@@ -4,20 +4,16 @@ import (
 	"log/slog"
 	"slices"
 
-	"github.com/docker/docker/client"
-
 	"github.com/ngrok/ngrok-docker-extension/internal/endpoint"
 )
 
 type Handler struct {
-	DockerClient    func() (*client.Client, error)
 	logger          *slog.Logger
 	endpointManager endpoint.Manager
 }
 
-func New(cliFactory func() (*client.Client, error), logger *slog.Logger, endpointManager endpoint.Manager) *Handler {
+func New(logger *slog.Logger, endpointManager endpoint.Manager) *Handler {
 	return &Handler{
-		DockerClient:    cliFactory,
 		logger:          logger,
 		endpointManager: endpointManager,
 	}
