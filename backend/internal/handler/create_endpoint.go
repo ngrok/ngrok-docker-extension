@@ -7,8 +7,8 @@ import (
 	"golang.ngrok.com/ngrok/v2"
 )
 
-func (h *Handler) StartEndpoint(ctx echo.Context) error {
-	var req StartRequest
+func (h *Handler) CreateEndpoint(ctx echo.Context) error {
+	var req CreateEndpointRequest
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
 	}
@@ -20,7 +20,7 @@ func (h *Handler) StartEndpoint(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "port is required"})
 	}
 	
-	h.logger.Info("Starting endpoint for container", "containerID", req.ContainerID)
+	h.logger.Info("Creating endpoint for container", "containerID", req.ContainerID)
 	h.logger.Info("Using port", "port", req.Port)
 
 	// Build endpoint options from request
@@ -55,5 +55,5 @@ func (h *Handler) StartEndpoint(ctx echo.Context) error {
 		URL: endpoint.Forwarder.URL().String(),
 	}
 
-	return ctx.JSON(http.StatusCreated, StartResponse{Endpoint: response})
+	return ctx.JSON(http.StatusCreated, CreateEndpointResponse{Endpoint: response})
 }

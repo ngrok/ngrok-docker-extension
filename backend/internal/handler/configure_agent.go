@@ -7,10 +7,10 @@ import (
 	"golang.ngrok.com/ngrok/v2"
 )
 
-func (h *Handler) SetupAuth(ctx echo.Context) error {
-	h.logger.Info("Setting up ngrok auth token")
+func (h *Handler) ConfigureAgent(ctx echo.Context) error {
+	h.logger.Info("Configuring ngrok agent with auth token")
 	
-	var req AuthRequest
+	var req ConfigureAgentRequest
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
 	}
@@ -21,8 +21,8 @@ func (h *Handler) SetupAuth(ctx echo.Context) error {
 
 	if err := h.endpointManager.ConfigureAgent(ctx.Request().Context(), ngrok.WithAuthtoken(req.Token)); err != nil {
 		h.logger.Error("Failed to configure agent with auth token", "error", err)
-		return ctx.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid authentication token"})
+		return ctx.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid agent configuration token"})
 	}
 
-	return ctx.JSON(http.StatusOK, AuthResponse{})
+	return ctx.JSON(http.StatusOK, ConfigureAgentResponse{})
 }

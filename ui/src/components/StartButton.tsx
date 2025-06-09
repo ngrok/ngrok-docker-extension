@@ -9,7 +9,7 @@ import Popper from '@mui/material/Popper';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
 
-const options = ['Start TCP Endpoint', 'Start HTTP Endpoint', 'Rebase and merge'];
+const options = ['Create TCP Endpoint', 'Create HTTP Endpoint', 'Rebase and merge'];
 
 export default function SplitButton() {
   const [open, setOpen] = React.useState(false);

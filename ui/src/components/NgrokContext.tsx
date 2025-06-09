@@ -78,7 +78,7 @@ export function NgrokContextProvider({
       updateContainers(loaded as DockerContainer[]);
     });
 
-    ddClient.extension.vm?.service?.get("/progress").then((result: any)=>{
+    ddClient.extension.vm?.service?.get("/list_endpoints").then((result: any)=>{
       // console.log('Loaded endpoints', result);
       const endpointsMap: Record<string, Endpoint> = {};
       if (result.endpoints) {
@@ -131,7 +131,7 @@ export function NgrokContextProvider({
   const ddClient = useDockerDesktopClient();
   useEffect(() => {
     ddClient.extension.vm?.service
-      ?.post('/auth', { token: authToken })
+      ?.post('/configure_agent', { token: authToken })
       .then((result) => {
         localStorage.setItem("authToken", authToken);
       });

@@ -2,21 +2,21 @@ package handler
 
 
 
-// Auth Handler Types
-type AuthRequest struct {
+// Configure Agent Types
+type ConfigureAgentRequest struct {
 	Token string `json:"token"`
 }
 
-type AuthResponse struct {
+type ConfigureAgentResponse struct {
 	// Empty response body - success/failure communicated via HTTP status
 }
 
-// Progress Handler Types
-type ProgressRequest struct {
+// List Endpoints Types
+type ListEndpointsRequest struct {
 	// No input needed
 }
 
-type ProgressResponse struct {
+type ListEndpointsResponse struct {
 	Endpoints []Endpoint `json:"endpoints"`
 }
 
@@ -25,17 +25,17 @@ type Endpoint struct {
 	URL string `json:"url"`
 }
 
-// Remove Handler Types
-type RemoveRequest struct {
+// Remove Endpoint Types
+type RemoveEndpointRequest struct {
 	ContainerID string `json:"containerId"`
 }
 
-type RemoveResponse struct {
+type RemoveEndpointResponse struct {
 	RemainingEndpoints []Endpoint `json:"remainingEndpoints"`
 }
 
-// Start Handler Types
-type StartRequest struct {
+// Create Endpoint Types
+type CreateEndpointRequest struct {
 	ContainerID     string  `json:"containerId"`
 	Port            string  `json:"port"`
 	Binding         *string `json:"binding,omitempty"`
@@ -46,7 +46,7 @@ type StartRequest struct {
 	Metadata        *string `json:"metadata,omitempty"`
 }
 
-type StartResponse struct {
+type CreateEndpointResponse struct {
 	Endpoint Endpoint `json:"endpoint"`
 }
 

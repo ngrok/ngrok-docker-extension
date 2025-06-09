@@ -7,7 +7,7 @@ import (
 )
 
 func (h *Handler) RemoveEndpoint(ctx echo.Context) error {
-	var req RemoveRequest
+	var req RemoveEndpointRequest
 	if err := ctx.Bind(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
 	}
@@ -24,5 +24,5 @@ func (h *Handler) RemoveEndpoint(ctx echo.Context) error {
 
 	remainingEndpointsMap := h.endpointManager.ListEndpoints()
 	remainingEndpoints := convertEndpointsToSlice(remainingEndpointsMap)
-	return ctx.JSON(http.StatusOK, RemoveResponse{RemainingEndpoints: remainingEndpoints})
+	return ctx.JSON(http.StatusOK, RemoveEndpointResponse{RemainingEndpoints: remainingEndpoints})
 }

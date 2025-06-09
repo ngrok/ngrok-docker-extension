@@ -136,7 +136,7 @@ export default function ContainersGrid() {
       maxWidth: 100,
       flex: 1,
       getActions: (params: GridRowParams<NgrokContainer>) => {
-        if (startingEndpoint[params.row.id]) {
+        if (creatingEndpoint[params.row.id]) {
           return [
             <GridActionsCellItem
               className="circular-progress"
@@ -200,9 +200,9 @@ export default function ContainersGrid() {
                   {<PlayArrowIcon />}
                 </Tooltip>
               }
-              onClick={handleStart(params.row)}
+              onClick={handleCreateEndpoint(params.row)}
               label="Publish on the internet"
-              disabled={startingEndpoint[params.row.id]}
+              disabled={creatingEndpoint[params.row.id]}
             />
           );
           // actions.push(
@@ -215,7 +215,7 @@ export default function ContainersGrid() {
           //     }
           //     onClick={handleOpen(params.row)}
           //     label="Configure ngrok endpoint"
-          //     disabled={startingEndpoint[params.row.id]}
+          //     disabled={creatingEndpoint[params.row.id]}
           //   />
           // );
         } else {
@@ -229,10 +229,10 @@ export default function ContainersGrid() {
                   </Tooltip>
                 }
                 label="Stop publishing on the internet"
-                onClick={handleStopEndpoint(params.row.id)}
+                onClick={handleRemoveEndpoint(params.row.id)}
                 disabled={
                   endpoints[params.row.id]?.url === undefined ||
-                  stoppingEndpoint
+                  removingEndpoint
                 }
               />
             );
@@ -270,13 +270,13 @@ export default function ContainersGrid() {
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [alertDialogMsg, setAlertDialogMsg] = useState<string>("");
 
-  const [stoppingEndpoint, setStoppingEndpoint] = useState<boolean>(false);
+  const [removingEndpoint, setRemovingEndpoint] = useState<boolean>(false);
 
-  const handleStopEndpoint = (containerName: string) => () => {
-    setStoppingEndpoint(true);
+  const handleRemoveEndpoint = (containerName: string) => () => {
+    setRemovingEndpoint(true);
 
     ddClient.extension.vm?.service
-      ?.post('/remove', { containerId: containerName })
+      ?.post('/remove_endpoint', { containerId: containerName })
       .then(async (resp: any) => {
         const endpointsMap: Record<string, Endpoint> = {};
         if (resp.remainingEndpoints) {
@@ -285,14 +285,14 @@ export default function ContainersGrid() {
           });
         }
         updateEndpoints(endpointsMap);
-        ddClient.desktopUI.toast.success("Endpoint stopped successfully");
+        ddClient.desktopUI.toast.success("Endpoint removed successfully");
       })
       .catch((error) => {
         console.log(error);
-        ddClient.desktopUI.toast.error(`Failed stopping endpoint: ${error}`);
+        ddClient.desktopUI.toast.error(`Failed removing endpoint: ${error}`);
       })
       .finally(() => {
-        setStoppingEndpoint(false);
+        setRemovingEndpoint(false);
       });
   };
 
@@ -305,20 +305,20 @@ export default function ContainersGrid() {
   useEffect(() => {
   }, [endpoints]);
 
-  const [startingEndpoint, setStartingEndpoint] = useState<Record<string, boolean>>(
+  const [creatingEndpoint, setCreatingEndpoint] = useState<Record<string, boolean>>(
     {}
   );
 
-  const handleStart = (row: NgrokContainer) => async () => {
+  const handleCreateEndpoint = (row: NgrokContainer) => async () => {
     console.log(
-      `Starting endpoint for container ${row.Name} on port ${row.Port.PublicPort}...`
+      `Creating endpoint for container ${row.Name} on port ${row.Port.PublicPort}...`
     );
 
-    setStartingEndpoint({...startingEndpoint, [row.id]:true});
+    setCreatingEndpoint({...creatingEndpoint, [row.id]:true});
     
     try {
       const response: any = await ddClient.extension.vm?.service?.post(
-        '/start',
+        '/create_endpoint',
         { 
           containerId: row.id, 
           port: row.Port.PublicPort.toString() 
@@ -328,7 +328,7 @@ export default function ContainersGrid() {
       setEndpoints({...endpoints, [row.id]: response.endpoint});
 
       ddClient.desktopUI.toast.success(
-        `Endpoint started for container ${row.Name} on port ${row.Port.PublicPort} at ${response.endpoint.url}`
+        `Endpoint created for container ${row.Name} on port ${row.Port.PublicPort} at ${response.endpoint.url}`
       );
     } catch (error: any) {
       console.log(error);
@@ -336,7 +336,7 @@ export default function ContainersGrid() {
       setAlertDialogMsg(errMsg);
       setShowAlertDialog(true);
     } finally {
-      setStartingEndpoint({...startingEndpoint, [row.id]:false});
+      setCreatingEndpoint({...creatingEndpoint, [row.id]:false});
     }
   };
 
