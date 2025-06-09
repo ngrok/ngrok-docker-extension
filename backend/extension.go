@@ -35,10 +35,7 @@ type ngrokExtension struct {
 }
 
 // newNgrokExtension creates and initializes a new ngrok extension instance
-func newNgrokExtension(socketPath string) (*ngrokExtension, error) {
-	// Setup structured logger to output to stdout
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	
+func newNgrokExtension(socketPath string, logger *slog.Logger) (*ngrokExtension, error) {
 	ext := &ngrokExtension{
 		socketPath:      socketPath,
 		logger:          logger,

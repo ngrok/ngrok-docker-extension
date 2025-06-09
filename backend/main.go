@@ -13,10 +13,13 @@ func main() {
 	flag.StringVar(&socketPath, "socket", "/run/guest/ext.sock", "Unix domain socket to listen on")
 	flag.Parse()
 
+	// Setup structured logger to output to stdout
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
 	// Create the ngrok extension
-	ext, err := newNgrokExtension(socketPath)
+	ext, err := newNgrokExtension(socketPath, logger)
 	if err != nil {
-		slog.Error("Failed to initialize ngrok extension", "error", err)
+		logger.Error("Failed to initialize ngrok extension", "error", err)
 		os.Exit(1)
 	}
 
@@ -36,16 +39,16 @@ func main() {
 	// Wait for signal or extension error
 	select {
 	case <-quit:
-		slog.Info("Received interrupt signal, shutting down")
+		logger.Info("Received interrupt signal, shutting down")
 		cancel()
 		// Wait for graceful shutdown
 		if err := <-extensionErrChan; err != nil {
-			slog.Error("Extension shutdown error", "error", err)
+			logger.Error("Extension shutdown error", "error", err)
 			os.Exit(1)
 		}
 	case err := <-extensionErrChan:
 		if err != nil {
-			slog.Error("Extension error", "error", err)
+			logger.Error("Extension error", "error", err)
 			os.Exit(1)
 		}
 	}
