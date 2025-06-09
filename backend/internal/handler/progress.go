@@ -8,7 +8,7 @@ import (
 
 // ActionsInProgress handles the /progress endpoint
 func (h *Handler) ActionsInProgress(ctx echo.Context) error {
-	endpointsMap := h.sessionManager.GetEndpoints()
+	endpointsMap := h.endpointManager.ListEndpoints()
 	endpoints := convertEndpointsToSlice(endpointsMap)
 	return ctx.JSON(http.StatusOK, ProgressResponse{Endpoints: endpoints})
 }

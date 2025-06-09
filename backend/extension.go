@@ -13,8 +13,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"github.com/ngrok/ngrok-docker-extension/internal/endpoint"
 	"github.com/ngrok/ngrok-docker-extension/internal/handler"
-	"github.com/ngrok/ngrok-docker-extension/internal/session"
 )
 
 // ngrokExtension encapsulates all the state and functionality of the ngrok Docker extension
@@ -27,8 +27,8 @@ type ngrokExtension struct {
 	router *echo.Echo
 	handler *handler.Handler
 	
-	// Ngrok session management
-	sessionManager *session.Manager
+	// Ngrok endpoint management
+	endpointManager endpoint.Manager
 	
 	// Docker client factory
 	cliFactory func() (*client.Client, error)
@@ -40,9 +40,9 @@ func newNgrokExtension(socketPath string) (*ngrokExtension, error) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	
 	ext := &ngrokExtension{
-		socketPath:     socketPath,
-		logger:         logger,
-		sessionManager: session.NewManager(logger),
+		socketPath:      socketPath,
+		logger:          logger,
+		endpointManager: endpoint.NewManager(logger),
 		cliFactory: func() (*client.Client, error) {
 			return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 		},
@@ -85,7 +85,7 @@ func (ext *ngrokExtension) initRouter() error {
 
 // initHandler creates the HTTP handler
 func (ext *ngrokExtension) initHandler() error {
-	ext.handler = handler.New(ext.cliFactory, ext.logger, ext.sessionManager)
+	ext.handler = handler.New(ext.cliFactory, ext.logger, ext.endpointManager)
 	
 	// Setup routes
 	ext.router.POST("/auth", ext.handler.SetupAuth)
@@ -140,6 +140,11 @@ func (ext *ngrokExtension) Run(ctx context.Context) error {
 func (ext *ngrokExtension) shutdown() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	
+	// Shutdown endpoint manager first
+	if err := ext.endpointManager.Shutdown(shutdownCtx); err != nil {
+		ext.logger.Warn("Error shutting down endpoint manager", "error", err)
+	}
 	
 	if err := ext.router.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("failed to shutdown server gracefully: %w", err)

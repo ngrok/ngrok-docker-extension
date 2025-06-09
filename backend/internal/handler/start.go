@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ngrok/ngrok-docker-extension/internal/session"
+	"golang.ngrok.com/ngrok/v2"
 )
 
 func (h *Handler) StartEndpoint(ctx echo.Context) error {
@@ -23,33 +23,37 @@ func (h *Handler) StartEndpoint(ctx echo.Context) error {
 	h.logger.Info("Starting endpoint for container", "containerID", req.ContainerID)
 	h.logger.Info("Using port", "port", req.Port)
 
-	// Build endpoint configuration from request
-	config := &session.EndpointConfig{
-		Binding:        req.Binding,
-		URL:            req.URL,
-		PoolingEnabled: req.PoolingEnabled,
-		TrafficPolicy:  req.TrafficPolicy,
-		Description:    req.Description,
-		Metadata:       req.Metadata,
+	// Build endpoint options from request
+	var opts []ngrok.EndpointOption
+	if req.Binding != nil {
+		opts = append(opts, ngrok.WithBindings(*req.Binding))
+	}
+	if req.URL != nil {
+		opts = append(opts, ngrok.WithURL(*req.URL))
+	}
+	if req.PoolingEnabled != nil {
+		opts = append(opts, ngrok.WithPoolingEnabled(*req.PoolingEnabled))
+	}
+	if req.TrafficPolicy != nil {
+		opts = append(opts, ngrok.WithTrafficPolicy(*req.TrafficPolicy))
+	}
+	if req.Description != nil {
+		opts = append(opts, ngrok.WithDescription(*req.Description))
+	}
+	if req.Metadata != nil {
+		opts = append(opts, ngrok.WithMetadata(*req.Metadata))
 	}
 
-	tun, err := h.sessionManager.StartEndpoint(ctx.Request().Context(), req.Port, config)
-
+	endpoint, err := h.endpointManager.CreateEndpoint(ctx.Request().Context(), req.ContainerID, req.Port, opts...)
 	if err != nil {
-		h.logger.Error("Failed to start endpoint", "error", err)
+		h.logger.Error("Failed to create endpoint", "error", err)
 		return ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 	}
 
-	endpointURL := tun.URL().String()
-	endpointID := tun.ID()
-	h.logger.Info("Endpoint created", "endpointID", endpointID, "url", endpointURL)
-
-	h.sessionManager.AddEndpoint(req.ContainerID, endpointID, endpointURL, tun)
-
-	endpoint := Endpoint{
-		ID:  endpointID,
-		URL: endpointURL,
+	response := Endpoint{
+		ID:  endpoint.Forwarder.ID(),
+		URL: endpoint.Forwarder.URL().String(),
 	}
 
-	return ctx.JSON(http.StatusCreated, StartResponse{Endpoint: endpoint})
+	return ctx.JSON(http.StatusCreated, StartResponse{Endpoint: response})
 }

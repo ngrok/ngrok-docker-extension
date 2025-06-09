@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"golang.ngrok.com/ngrok/v2"
 )
 
 func (h *Handler) SetupAuth(ctx echo.Context) error {
@@ -18,8 +19,8 @@ func (h *Handler) SetupAuth(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "token is required"})
 	}
 
-	if err := h.sessionManager.SetAuthToken(req.Token); err != nil {
-		h.logger.Error("Failed to set auth token", "error", err)
+	if err := h.endpointManager.ConfigureAgent(ctx.Request().Context(), ngrok.WithAuthtoken(req.Token)); err != nil {
+		h.logger.Error("Failed to configure agent with auth token", "error", err)
 		return ctx.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid authentication token"})
 	}
 
