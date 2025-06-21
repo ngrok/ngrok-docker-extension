@@ -10,7 +10,7 @@ import { CircularProgress, Tooltip, Typography, Popover, Paper, Button, Stack } 
 import Grid2 from "@mui/material/Grid2";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-
+import SearchIcon from "@mui/icons-material/Search";
 import StopIcon from "@mui/icons-material/Stop";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -178,6 +178,20 @@ export default function ContainersGrid() {
               onClick={handleOpenEndpoint(isRunning.url)}
             />
           );
+
+          // Traffic inspector action (when running and HTTP/HTTPS)
+          if (isHttpEndpoint(isRunning.url)) {
+            actions.push(
+              <GridActionsCellItem
+                key={"action_traffic_inspector_" + params.row.id}
+                icon={
+                  <Tooltip title="View in traffic inspector"><SearchIcon /></Tooltip>
+                }
+                label="View in traffic inspector"
+                onClick={handleOpenTrafficInspector(isRunning.url)}
+              />
+            );
+          }
         }
 
         if (!hasConfiguration) {
@@ -251,6 +265,27 @@ export default function ContainersGrid() {
 
   const handleOpenEndpoint = (url: string) => () => {
     ddClient.host.openExternal(url);
+  };
+
+  const isHttpEndpoint = (url: string): boolean => {
+    return url.startsWith('http://') || url.startsWith('https://');
+  };
+
+  const extractHostname = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname;
+    } catch {
+      return '';
+    }
+  };
+
+  const handleOpenTrafficInspector = (url: string) => () => {
+    const hostname = extractHostname(url);
+    if (hostname) {
+      const inspectorUrl = `https://dashboard.ngrok.com/traffic-inspector?server-name=${hostname}`;
+      ddClient.host.openExternal(inspectorUrl);
+    }
   };
 
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
