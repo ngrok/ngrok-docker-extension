@@ -6,7 +6,7 @@ import {
   GridColDef,
 
 } from "@mui/x-data-grid";
-import { CircularProgress, Tooltip, Typography } from "@mui/material";
+import { CircularProgress, Tooltip, Typography, Popover, Paper, Button, Stack } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -46,6 +46,11 @@ export default function ContainersGrid() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [currentContainer, setCurrentContainer] = useState<NgrokContainer | null>(null);
   const [editingConfig, setEditingConfig] = useState<EndpointConfiguration | undefined>();
+  
+  // Delete confirmation popover state
+  const [deleteAnchorEl, setDeleteAnchorEl] = useState<HTMLElement | null>(null);
+  const [containerToDelete, setContainerToDelete] = useState<NgrokContainer | null>(null);
+  const deletePopoverOpen = Boolean(deleteAnchorEl);
 
   const columns: DataGridColumnType = [
     {
@@ -296,13 +301,29 @@ export default function ContainersGrid() {
     }
   };
 
-  const handleDeleteConfiguration = (container: NgrokContainer) => () => {
-    if (runningEndpoints[container.id]) {
+  const handleDeleteConfiguration = (container: NgrokContainer) => (event: React.MouseEvent<HTMLElement>) => {
+    setContainerToDelete(container);
+    setDeleteAnchorEl(event.currentTarget);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!containerToDelete) return;
+    
+    if (runningEndpoints[containerToDelete.id]) {
       // Stop running endpoint first
-      handleStopEndpoint(container)();
+      handleStopEndpoint(containerToDelete)();
     }
     // Remove configuration
-    deleteEndpointConfiguration(container.id);
+    deleteEndpointConfiguration(containerToDelete.id);
+    
+    // Close popover and reset state
+    setDeleteAnchorEl(null);
+    setContainerToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteAnchorEl(null);
+    setContainerToDelete(null);
   };
 
   const handleStartEndpoint = (container: NgrokContainer) => async () => {
@@ -431,6 +452,44 @@ export default function ContainersGrid() {
         targetPort={currentContainer?.Port.PublicPort.toString() || ''}
         isEditing={!!editingConfig}
       />
+      
+      <Popover
+        open={deletePopoverOpen}
+        anchorEl={deleteAnchorEl}
+        onClose={handleCancelDelete}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+      >
+        <Paper sx={{ p: 2, maxWidth: 300 }}>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Are you sure you want to delete this endpoint configuration?
+            {containerToDelete && runningEndpoints[containerToDelete.id] && (
+              <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+                This will also stop the running endpoint.
+              </Typography>
+            )}
+          </Typography>
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button onClick={handleCancelDelete} size="small">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmDelete} 
+              variant="contained" 
+              color="error" 
+              size="small"
+            >
+              Delete
+            </Button>
+          </Stack>
+        </Paper>
+      </Popover>
       
       <DataGrid
         rows={rows || []}
