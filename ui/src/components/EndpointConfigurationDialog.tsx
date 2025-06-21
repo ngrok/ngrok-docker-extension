@@ -10,18 +10,25 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Box,
-  IconButton,
   FormControl,
   FormLabel,
   RadioGroup,
   Radio,
   Button,
-  Typography
+  Typography,
+  Link,
+  FormHelperText,
+  Box
 } from "@mui/material";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { EndpointConfiguration } from "./NgrokContext";
+
+const client = createDockerDesktopClient();
+
+function useDockerDesktopClient() {
+  return client;
+}
 
 interface EndpointConfigurationDialogProps {
   open: boolean;
@@ -44,6 +51,7 @@ export default function EndpointConfigurationDialog({
   targetPort,
   isEditing
 }: EndpointConfigurationDialogProps) {
+  const ddClient = useDockerDesktopClient();
   const [config, setConfig] = useState<EndpointConfiguration>({
     id: initialConfig?.id || `${containerName}:${targetPort}`,
     containerId: initialConfig?.containerId || '',
@@ -98,6 +106,10 @@ export default function EndpointConfigurationDialog({
     setConfig({ ...config, metadata: event.target.value });
   };
 
+  const openExternalLink = (url: string) => {
+    ddClient.host.openExternal(url);
+  };
+
   const handleSave = () => {
     if (isEditing && onUpdate) {
       onUpdate(config);
@@ -121,56 +133,76 @@ export default function EndpointConfigurationDialog({
         />
         
         {/* Binding Field with Help Link */}
-        <Box display="flex" alignItems="center" gap={1}>
-          <FormControl fullWidth margin="normal">
-            <FormLabel>Binding</FormLabel>
-            <RadioGroup
-              value={config.binding || 'public'}
-              onChange={handleBindingChange}
-              row
+        <FormControl fullWidth margin="normal">
+          <FormLabel>Binding</FormLabel>
+          <RadioGroup
+            value={config.binding || 'public'}
+            onChange={handleBindingChange}
+            row
+          >
+            <FormControlLabel value="public" control={<Radio />} label="Public" />
+            <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+            <FormControlLabel value="kubernetes" control={<Radio />} label="Kubernetes" />
+          </RadioGroup>
+          <FormHelperText>
+            Choose where your endpoint is accessible from. 
+            <Link 
+              component="button"
+              variant="inherit"
+              onClick={() => openExternalLink("https://ngrok.com/docs/universal-gateway/bindings/")}
+              sx={{ textDecoration: 'underline', cursor: 'pointer' }}
             >
-              <FormControlLabel value="public" control={<Radio />} label="Public" />
-              <FormControlLabel value="internal" control={<Radio />} label="Internal" />
-              <FormControlLabel value="kubernetes" control={<Radio />} label="Kubernetes" />
-            </RadioGroup>
-          </FormControl>
-          <IconButton href="https://ngrok.com/docs/universal-gateway/bindings/" target="_blank">
-            <HelpOutlineIcon />
-          </IconButton>
-        </Box>
+              Learn more
+            </Link>
+          </FormHelperText>
+        </FormControl>
         
         {/* Pooling Enabled Toggle with Help Link */}
-        <Box display="flex" alignItems="center" gap={1}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={config.poolingEnabled || false}
-                onChange={handlePoolingChange}
-              />
-            }
-            label="Pooling Enabled"
-          />
-          <IconButton href="https://ngrok.com/docs/universal-gateway/endpoint-pooling/" target="_blank">
-            <HelpOutlineIcon />
-          </IconButton>
-        </Box>
+        <FormControl fullWidth margin="normal">
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <FormLabel>Pooling Enabled</FormLabel>
+            <Switch
+              checked={config.poolingEnabled || false}
+              onChange={handlePoolingChange}
+            />
+          </Box>
+          <FormHelperText>
+            Distribute traffic across multiple endpoints for high availability. 
+            <Link 
+              component="button"
+              variant="inherit"
+              onClick={() => openExternalLink("https://ngrok.com/docs/universal-gateway/endpoint-pooling/")}
+              sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              Learn more
+            </Link>
+          </FormHelperText>
+        </FormControl>
         
         {/* Traffic Policy Field with Help Link */}
-        <Box display="flex" alignItems="center" gap={1}>
-          <TextField
-            label="Traffic Policy"
-            placeholder="inbound:&#10;  - type: oauth&#10;    config:&#10;      provider: google"
-            value={config.trafficPolicy || ''}
-            onChange={handleTrafficPolicyChange}
-            multiline
-            rows={4}
-            fullWidth
-            margin="normal"
-          />
-          <IconButton href="https://ngrok.com/docs/traffic-policy/" target="_blank">
-            <HelpOutlineIcon />
-          </IconButton>
-        </Box>
+        <TextField
+          label="Traffic Policy"
+          placeholder="inbound:&#10;  - type: oauth&#10;    config:&#10;      provider: google"
+          value={config.trafficPolicy || ''}
+          onChange={handleTrafficPolicyChange}
+          helperText={
+            <>
+              Define rules for traffic handling like authentication, rate limiting, etc. 
+              <Link 
+                component="button"
+                variant="inherit"
+                onClick={() => openExternalLink("https://ngrok.com/docs/traffic-policy/")}
+                sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                View documentation
+              </Link>
+            </>
+          }
+          multiline
+          rows={4}
+          fullWidth
+          margin="normal"
+        />
         
         {/* Progressive Disclosure for Description */}
         <Accordion>
