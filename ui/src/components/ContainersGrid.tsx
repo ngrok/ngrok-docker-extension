@@ -131,7 +131,7 @@ export default function ContainersGrid() {
       type: "actions",
       headerAlign: "right",
       align: "right",
-      maxWidth: 100,
+      minWidth: 200,
       flex: 1,
       getActions: (params: any) => {
         if (creatingEndpoint[params.row.id]) {
