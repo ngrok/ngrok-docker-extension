@@ -166,7 +166,7 @@ export default function ContainersGrid() {
         const hasConfiguration = endpointConfigurations[params.row.id];
         const isRunning = runningEndpoints[params.row.id];
 
-        // Browser and copy actions (when running)
+        // Browser action (when running)
         if (isRunning) {
           actions.push(
             <GridActionsCellItem
@@ -176,16 +176,6 @@ export default function ContainersGrid() {
               }
               label="Open in browser"
               onClick={handleOpenEndpoint(isRunning.url)}
-            />
-          );
-          actions.push(
-            <GridActionsCellItem
-              key={"action_copy_url_" + params.row.id}
-              icon={
-                <Tooltip title="Copy URL"><ContentCopyIcon /></Tooltip>
-              }
-              label="Copy URL"
-              onClick={handleCopyUrl(isRunning.url)}
             />
           );
         }
@@ -279,10 +269,6 @@ export default function ContainersGrid() {
   );
 
   // New handler functions for configuration workflow
-  const handleCopyUrl = (url: string) => () => {
-    navigator.clipboard.writeText(url);
-    ddClient.desktopUI.toast.success("URL copied to clipboard");
-  };
 
   const handleCreateConfiguration = (container: NgrokContainer) => () => {
     setCurrentContainer(container);
