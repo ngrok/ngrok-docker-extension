@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useEffect, useState } from "react";
 import {
   DataGrid,
@@ -7,8 +6,8 @@ import {
   GridColDef,
 
 } from "@mui/x-data-grid";
-import { Box, CircularProgress, Grid, Modal, Switch, Tooltip, Typography } from "@mui/material";
-import { GridRowParams } from "@mui/x-data-grid/models/params/gridRowParams";
+import { CircularProgress, Tooltip, Typography } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DoNotDisturbIcon from "@mui/icons-material/DoNotDisturb";
@@ -17,8 +16,6 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
 import { NgrokContainer, Endpoint, useNgrokContext } from "./NgrokContext";
-
-import AuthSelector from "./modules/AuthSelector";
 
 export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
 
@@ -29,7 +26,7 @@ function useDockerDesktopClient() {
 }
 
 export default function ContainersGrid() {
-  const { containers, setContainers, endpoints, setEndpoints } = useNgrokContext();
+  const { containers, endpoints, setEndpoints } = useNgrokContext();
   const [rows, setRows] = useState<NgrokContainer[]>(Object.values(containers));
 
   const columns: DataGridColumnType = [
@@ -54,11 +51,7 @@ export default function ContainersGrid() {
       align: "left",
       maxWidth: 100,
       flex: 1,
-      sortComparator: (_v1, _v2, _param1, _param2) => {
-        // TODO: Implement sorting logic if needed
-        return 0;
-        // );
-      },
+      sortable: false,
       renderCell: (params) => {
         return (
           <Typography sx={{ margin: 0, padding: 0 }}>
@@ -67,22 +60,6 @@ export default function ContainersGrid() {
         );
       },
     },
-    // {
-    //   field: "protocol",
-    //   headerName: "Protocol",
-    //   headerAlign: "left",
-    //   align: "left",
-    //   maxWidth: 100,
-    //   flex: 1,
-    //   sortable: false,
-    //   renderCell: (params) => {
-    //     return (
-    //       <Typography>
-    //         {params.row.http ? "http" : "tcp"}
-    //       </Typography>
-    //     );
-    //   },
-    // },
     {
       field: "url",
       headerName: "URL", 
@@ -96,7 +73,7 @@ export default function ContainersGrid() {
         }
 
         return (
-          <Grid
+          <Grid2
             flex={1}
             container
             direction={"row"}
@@ -104,7 +81,7 @@ export default function ContainersGrid() {
             justifyContent={"start"}
             sx={{ margin: 0, padding: 0, height: '100%', alignItems: 'center' }}
           >
-            <Grid item sx={{ margin: 0, padding: 0 }}>
+            <Grid2 sx={{ margin: 0, padding: 0 }}>
               <Tooltip title="Copy URL">
                 <ContentCopyIcon
                   fontSize="small"
@@ -114,13 +91,13 @@ export default function ContainersGrid() {
                   }}
                 />
               </Tooltip>
-            </Grid>
-            <Grid item sx={{ margin: 0, padding: 0 }}>
+            </Grid2>
+            <Grid2 sx={{ margin: 0, padding: 0 }}>
               <Typography noWrap sx={{ margin: 0, padding: 0 }}>
                 {endpoints[params.row.id].url}
               </Typography>
-            </Grid>
-          </Grid>
+            </Grid2>
+          </Grid2>
         );
       },
     },
@@ -132,7 +109,7 @@ export default function ContainersGrid() {
       align: "right",
       maxWidth: 100,
       flex: 1,
-      getActions: (params: GridRowParams<NgrokContainer>) => {
+      getActions: (params: any) => {
         if (creatingEndpoint[params.row.id]) {
           return [
             <GridActionsCellItem
@@ -141,7 +118,7 @@ export default function ContainersGrid() {
               icon={
                 <>
                   <CircularProgress size={20} />
-                  {/* <Typography ml={2}>Loading...</Typography> */}
+
                 </>
               }
               label="Loading"
@@ -166,10 +143,9 @@ export default function ContainersGrid() {
           ];
         }
 
-        // @ts-ignore
-        let actions: GridActionsCellItem[] = [];
+        let actions: any[] = [];
 
-        if (endpoints[params.row.id]?.url && containers[params.row.id].http) {
+        if (endpoints[params.row.id]?.url) {
           actions.push(
             <GridActionsCellItem
               key={"action_open_browser_" + params.row.id}
@@ -202,19 +178,7 @@ export default function ContainersGrid() {
               disabled={creatingEndpoint[params.row.id]}
             />
           );
-          // actions.push(
-          //   <GridActionsCellItem
-          //     key={"action_config_" + params.row.id}
-          //     icon={
-          //       <Tooltip title="Configure ngrok endpoint">
-          //         {<Settings />}
-          //       </Tooltip>
-          //     }
-          //     onClick={handleOpen(params.row)}
-          //     label="Configure ngrok endpoint"
-          //     disabled={creatingEndpoint[params.row.id]}
-          //   />
-          // );
+
         } else {
           if (endpoints[params.row.id]) {
             actions.push(
@@ -241,20 +205,7 @@ export default function ContainersGrid() {
     },
   ];
 
-  const style = {
-    position: 'absolute' as 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-  };
-  
-  const [selectedContainer, setSelectedContainer] = useState<NgrokContainer>();
-  const [open, setOpen] = React.useState(false);
-  const handleClose = () => setOpen(false);
+
 
   const handleOpenEndpoint = (url: string) => () => {
     ddClient.host.openExternal(url);
@@ -298,9 +249,6 @@ export default function ContainersGrid() {
     setRows(Object.values(containers));
   }, [containers]);
 
-  useEffect(() => {
-  }, [endpoints]);
-
   const [creatingEndpoint, setCreatingEndpoint] = useState<Record<string, boolean>>(
     {}
   );
@@ -336,20 +284,8 @@ export default function ContainersGrid() {
     }
   };
 
-  const toggleProtocol = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("toggle protocol", event.target.checked);
-    if(!selectedContainer) return;
-    selectedContainer.tcp = event.target.checked;
-    selectedContainer.http = !event.target.checked;
-    setSelectedContainer({...selectedContainer});
-    setContainers({...containers, [selectedContainer.id]:selectedContainer});
-  }
-
-
-
-
   return (
-    <Grid container flex={1} height="calc(100vh - 200px)">
+    <Grid2 container flex={1} height="calc(100vh - 200px)">
       <AlertDialog
         open={showAlertDialog}
         msg={alertDialogMsg}
@@ -399,28 +335,11 @@ export default function ContainersGrid() {
           },
         }}
       />
-  <Modal
-    open={open}
-    onClose={handleClose}
-    aria-labelledby="modal-modal-title"
-    aria-describedby="modal-modal-description"
-  >
-    <Box sx={style}>
-      <Typography id="modal-modal-title" variant="h6" component="h2">
-        ngrok endpoint config {selectedContainer?.Name}
-      </Typography>
-      <div id="modal-modal-description">
-        <div style={{marginTop:"1em"}}><strong>Protocol:</strong> HTTP <Switch aria-label="HTTP TCP Switch" onChange={toggleProtocol} checked={selectedContainer?.tcp} /> TCP</div>
-        {selectedContainer?.http?
-        <AuthSelector container={selectedContainer}></AuthSelector>:null}
-      </div>
-    </Box>
-  </Modal>
-    </Grid>
+    </Grid2>
   );
 
   function updateEndpoints(loaded: Record<string, Endpoint>) {
-  setEndpoints(loaded);
-  localStorage.setItem("endpoints", JSON.stringify(loaded));
-}
+    setEndpoints(loaded);
+    localStorage.setItem("endpoints", JSON.stringify(loaded));
+  }
 }

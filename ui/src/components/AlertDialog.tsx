@@ -24,7 +24,7 @@ export default function AlertDialog({ ...props }: Props) {
       return;
     }
     return (
-      <Typography key={line} mb={1}>
+      <Typography key={line} sx={{ mb: 1 }}>
         {line}
       </Typography>
     );

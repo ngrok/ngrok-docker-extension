@@ -1,32 +1,31 @@
-import { Grid } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import ContainersGrid from "./components/ContainersGrid";
 import { Header } from "./components/Header";
 import AuthStepper from "./components/AuthStepper";
 import { useNgrokContext } from "./components/NgrokContext";
 
 export function App() {
-  const { authToken } = useNgrokContext();
-  const authIsSetup = authToken != "";
+  const { authIsSetup } = useNgrokContext();
 
   return (
     <>
       <Header />
-      <Grid
+      <Grid2
         container
         direction={"column"}
         spacing={2}
         textAlign={"center"}
         justifyContent={"center"}
-        mt={8}
+        sx={{ mt: 8 }}
       >
         {!authIsSetup ? (
           <AuthStepper />
         ) : (
-          <Grid mt={2}>
+          <Grid2 sx={{ mt: 2 }}>
             <ContainersGrid />
-          </Grid>
+          </Grid2>
         )}
-      </Grid>
+      </Grid2>
     </>
   );
 }
