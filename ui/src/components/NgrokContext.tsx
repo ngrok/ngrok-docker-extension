@@ -19,6 +19,25 @@ export interface DockerPort {
   Type: string;
 }
 
+export interface EndpointConfiguration {
+  id: string; // containerId:targetPort
+  containerId: string;
+  targetPort: string;
+  url?: string;
+  binding: 'public' | 'internal' | 'kubernetes';
+  poolingEnabled: boolean;
+  trafficPolicy?: string;
+  description?: string;
+  metadata?: string;
+}
+
+export interface RunningEndpoint {
+  id: string; // same as configuration id
+  url: string; // actual ngrok URL
+  containerId: string;
+  targetPort: string;
+}
+
 export interface Endpoint {
   id: string;
   url: string;
@@ -40,8 +59,20 @@ interface NgrokContextType {
   containers: Record<string,NgrokContainer>;
   setContainers: (containers: Record<string, NgrokContainer>) => void;
 
+  // Legacy endpoints for backward compatibility
   endpoints: Record<string,Endpoint>;
   setEndpoints: (endpoints: Record<string, Endpoint>) => void;
+
+  // New separate state for configurations and running endpoints
+  endpointConfigurations: Record<string, EndpointConfiguration>;
+  setEndpointConfigurations: (configs: Record<string, EndpointConfiguration>) => void;
+  runningEndpoints: Record<string, RunningEndpoint>;
+  setRunningEndpoints: (endpoints: Record<string, RunningEndpoint>) => void;
+
+  // Configuration management methods
+  createEndpointConfiguration: (config: EndpointConfiguration) => void;
+  updateEndpointConfiguration: (id: string, config: EndpointConfiguration) => void;
+  deleteEndpointConfiguration: (id: string) => void;
 }
 
 const NgrokContext = createContext<NgrokContextType>({
@@ -52,6 +83,13 @@ const NgrokContext = createContext<NgrokContextType>({
   setContainers: () => null,
   endpoints: {},
   setEndpoints: () => null,
+  endpointConfigurations: {},
+  setEndpointConfigurations: () => null,
+  runningEndpoints: {},
+  setRunningEndpoints: () => null,
+  createEndpointConfiguration: () => null,
+  updateEndpointConfiguration: () => null,
+  deleteEndpointConfiguration: () => null,
 });
 
 export function NgrokContextProvider({
@@ -72,6 +110,13 @@ export function NgrokContextProvider({
     localStorage.getItem("endpoints") ? JSON.parse(localStorage.getItem("endpoints") ?? "") : {}
   );
 
+  // New state for endpoint configurations and running endpoints
+  const [endpointConfigurations, setEndpointConfigurations] = useState<Record<string, EndpointConfiguration>>(
+    localStorage.getItem("endpointConfigurations") ? JSON.parse(localStorage.getItem("endpointConfigurations") ?? "{}") : {}
+  );
+
+  const [runningEndpoints, setRunningEndpoints] = useState<Record<string, RunningEndpoint>>({});
+
   const getContainers = async () => {
     ddClient.docker.listContainers().then((loaded)=>{
       // console.log("Loaded containers", loaded);
@@ -81,12 +126,22 @@ export function NgrokContextProvider({
     ddClient.extension.vm?.service?.get("/list_endpoints").then((result: any)=>{
       // console.log('Loaded endpoints', result);
       const endpointsMap: Record<string, Endpoint> = {};
+      const runningEndpointsMap: Record<string, RunningEndpoint> = {};
+      
       if (result.endpoints) {
         result.endpoints.forEach((endpoint: Endpoint) => {
           endpointsMap[endpoint.id] = endpoint;
+          // Also populate running endpoints
+          runningEndpointsMap[endpoint.id] = {
+            id: endpoint.id,
+            url: endpoint.url,
+            containerId: endpoint.containerId,
+            targetPort: endpoint.targetPort
+          };
         });
       }
       updateEndpoints(endpointsMap);
+      updateRunningEndpoints(runningEndpointsMap);
     });
   }
 
@@ -124,6 +179,30 @@ export function NgrokContextProvider({
     setEndpoints(loaded);
     localStorage.setItem("endpoints", JSON.stringify(loaded));
   }
+
+  // Configuration management functions
+  const createEndpointConfiguration = (config: EndpointConfiguration) => {
+    const newConfigs = { ...endpointConfigurations, [config.id]: config };
+    setEndpointConfigurations(newConfigs);
+    localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
+  };
+
+  const updateEndpointConfiguration = (id: string, config: EndpointConfiguration) => {
+    const newConfigs = { ...endpointConfigurations, [id]: config };
+    setEndpointConfigurations(newConfigs);
+    localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
+  };
+
+  const deleteEndpointConfiguration = (id: string) => {
+    const newConfigs = { ...endpointConfigurations };
+    delete newConfigs[id];
+    setEndpointConfigurations(newConfigs);
+    localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
+  };
+
+  const updateRunningEndpoints = (loaded: Record<string, RunningEndpoint>) => {
+    setRunningEndpoints(loaded);
+  };
 
   const ddClient = useDockerDesktopClient();
   useEffect(() => {
@@ -188,6 +267,13 @@ export function NgrokContextProvider({
         setContainers,
         endpoints,
         setEndpoints,
+        endpointConfigurations,
+        setEndpointConfigurations,
+        runningEndpoints,
+        setRunningEndpoints,
+        createEndpointConfiguration,
+        updateEndpointConfiguration,
+        deleteEndpointConfiguration,
       }}
     >
       {children}
