@@ -5,15 +5,24 @@ import {
   DialogContentText,
   DialogTitle,
   TextField,
+  Link,
 } from "@mui/material";
 import Button from "@mui/material/Button";
 import React, { useState } from "react";
+import { createDockerDesktopClient } from "@docker/extension-api-client";
 
 import { useNgrokContext } from "./NgrokContext";
+
+const client = createDockerDesktopClient();
+
+function useDockerDesktopClient() {
+  return client;
+}
 
 export default function SettingsDialog() {
   const { authToken, setAuthToken } = useNgrokContext();
   const [tempAuthToken, setTempAuthToken] = useState(authToken);
+  const ddClient = useDockerDesktopClient();
 
   const [open, setOpen] = React.useState(false);
 
@@ -44,7 +53,19 @@ export default function SettingsDialog() {
         <DialogTitle>Settings</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Paste your Authtoken to authenticate your ngrok agent.<br/>You only have to do this once.
+            Paste your Authtoken to authenticate your ngrok agent. You only have to do this once.{' '}
+            <Link
+              component="button"
+              variant="inherit"
+              onClick={() => {
+                ddClient.host.openExternal(
+                  "https://dashboard.ngrok.com/get-started/your-authtoken"
+                );
+              }}
+              sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              Get authtoken from dashboard
+            </Link>
           </DialogContentText>
           <TextField
             autoFocus
