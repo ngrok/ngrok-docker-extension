@@ -37,6 +37,7 @@ interface EndpointConfigurationDialogProps {
   onUpdate?: (config: EndpointConfiguration) => void;
   initialConfig?: EndpointConfiguration;
   containerName: string;
+  containerImage: string;
   targetPort: string;
   isEditing: boolean; // determines button text and behavior
 }
@@ -48,6 +49,7 @@ export default function EndpointConfigurationDialog({
   onUpdate,
   initialConfig,
   containerName,
+  containerImage,
   targetPort,
   isEditing
 }: EndpointConfigurationDialogProps) {
@@ -110,6 +112,49 @@ export default function EndpointConfigurationDialog({
     ddClient.host.openExternal(url);
   };
 
+  const getUrlPlaceholder = (binding: string) => {
+    switch (binding) {
+      case 'internal':
+        return 'ex. https://example.internal';
+      case 'kubernetes':
+        return 'ex. http://myapp.prod';
+      case 'public':
+      default:
+        return 'ex. https://example.ngrok.app';
+    }
+  };
+
+  const getUrlHelpText = (binding: string) => {
+    switch (binding) {
+      case 'internal':
+        return {
+          text: 'Must use the .internal TLD and specify a port.',
+          docUrl: 'https://ngrok.com/docs/universal-gateway/internal-endpoints/'
+        };
+      case 'kubernetes':
+        return {
+          text: 'Accessible only in clusters where you run the ngrok Kubernetes Operator',
+          docUrl: 'https://ngrok.com/docs/universal-gateway/kubernetes-endpoints/'
+        };
+      case 'public':
+      default:
+        return {
+          text: 'Accessible to clients on the internet.',
+          docUrl: 'https://ngrok.com/docs/universal-gateway/public-endpoints/'
+        };
+    }
+  };
+
+  const getDefaultDescription = () => {
+    const imageShort = containerImage.split(':')[0].split('/').pop() || containerImage;
+    return `ex. ${imageShort} docker desktop endpoint`;
+  };
+
+  const getDefaultMetadata = () => {
+    const imageShort = containerImage.split(':')[0].split('/').pop() || containerImage;
+    return `ex. {"container": "${containerName}", "image": "${imageShort}", "port": "${targetPort}", "env": "docker-desktop"}`;
+  };
+
   const handleSave = () => {
     if (isEditing && onUpdate) {
       onUpdate(config);
@@ -119,21 +164,20 @@ export default function EndpointConfigurationDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Configure Endpoint for {containerName}:{targetPort}</DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        <Box>
+          <Typography variant="h6" component="div">
+            Configure Endpoint for {containerName}:{targetPort}
+          </Typography>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {containerImage}
+          </Typography>
+        </Box>
+      </DialogTitle>
       <DialogContent>
-        {/* URL Field */}
-        <TextField
-          label="URL"
-          placeholder="https://myapp.ngrok.io:8080"
-          value={config.url || ''}
-          onChange={handleUrlChange}
-          fullWidth
-          margin="normal"
-        />
-        
         {/* Binding Field with Help Link */}
-        <FormControl fullWidth margin="normal">
+        <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
           <FormLabel>Binding</FormLabel>
           <RadioGroup
             value={config.binding || 'public'}
@@ -145,7 +189,7 @@ export default function EndpointConfigurationDialog({
             <FormControlLabel value="kubernetes" control={<Radio />} label="Kubernetes" />
           </RadioGroup>
           <FormHelperText>
-            Choose where your endpoint is accessible from. 
+            Choose where your endpoint is accessible from.{' '}
             <Link 
               component="button"
               variant="inherit"
@@ -157,8 +201,32 @@ export default function EndpointConfigurationDialog({
           </FormHelperText>
         </FormControl>
         
+        {/* URL Field with Dynamic Help Text */}
+        <TextField
+          label="URL"
+          placeholder={getUrlPlaceholder(config.binding || 'public')}
+          value={config.url || ''}
+          onChange={handleUrlChange}
+          helperText={
+            <>
+              {getUrlHelpText(config.binding || 'public').text}{' '}
+              <Link 
+                component="button"
+                variant="inherit"
+                onClick={() => openExternalLink(getUrlHelpText(config.binding || 'public').docUrl)}
+                sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                Learn more
+              </Link>
+            </>
+          }
+          fullWidth
+          margin="normal"
+          sx={{ mb: 3 }}
+        />
+        
         {/* Pooling Enabled Toggle with Help Link */}
-        <FormControl fullWidth margin="normal">
+        <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <FormLabel>Pooling Enabled</FormLabel>
             <Switch
@@ -167,7 +235,7 @@ export default function EndpointConfigurationDialog({
             />
           </Box>
           <FormHelperText>
-            Distribute traffic across multiple endpoints for high availability. 
+            Distribute traffic across multiple endpoints for high availability.{' '}
             <Link 
               component="button"
               variant="inherit"
@@ -182,19 +250,19 @@ export default function EndpointConfigurationDialog({
         {/* Traffic Policy Field with Help Link */}
         <TextField
           label="Traffic Policy"
-          placeholder="inbound:&#10;  - type: oauth&#10;    config:&#10;      provider: google"
+          placeholder="ex.&#10;on_http_request:&#10;  - actions:&#10;    config:&#10;      provider: google"
           value={config.trafficPolicy || ''}
           onChange={handleTrafficPolicyChange}
           helperText={
             <>
-              Define rules for traffic handling like authentication, rate limiting, etc. 
+              Define rules for traffic handling like authentication, rate limiting, etc.{' '}
               <Link 
                 component="button"
                 variant="inherit"
                 onClick={() => openExternalLink("https://ngrok.com/docs/traffic-policy/")}
                 sx={{ textDecoration: 'underline', cursor: 'pointer' }}
               >
-                View documentation
+                Learn more
               </Link>
             </>
           }
@@ -202,17 +270,18 @@ export default function EndpointConfigurationDialog({
           rows={4}
           fullWidth
           margin="normal"
+          sx={{ mb: 3 }}
         />
         
         {/* Progressive Disclosure for Description */}
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography>Advanced Options</Typography>
+            <Typography color="text.secondary">Advanced Options</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <TextField
               label="Description"
-              placeholder="Development API endpoint"
+              placeholder={getDefaultDescription()}
               value={config.description || ''}
               onChange={handleDescriptionChange}
               fullWidth
@@ -220,7 +289,7 @@ export default function EndpointConfigurationDialog({
             />
             <TextField
               label="Metadata"
-              placeholder='{"environment": "dev", "team": "backend"}'
+              placeholder={getDefaultMetadata()}
               value={config.metadata || ''}
               onChange={handleMetadataChange}
               fullWidth
@@ -231,7 +300,7 @@ export default function EndpointConfigurationDialog({
       </DialogContent>
       
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} variant="text">Cancel</Button>
         {isEditing ? (
           <Button onClick={handleSave} variant="contained">
             Update Configuration

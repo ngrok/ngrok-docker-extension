@@ -5,12 +5,14 @@ export interface NgrokContainer {
   id: string;
   ContainerId: string;
   Name: string;
+  Image: string;
   Port: DockerPort;
 }
 
 export interface DockerContainer {
   Id: string;
   Names: string[];
+  Image: string;
   Ports: DockerPort[];
 }
 
@@ -156,12 +158,16 @@ export function NgrokContextProvider({
               id: container_id,
               ContainerId: container.Id,
               Name: container.Names[0].substring(1),
+              Image: container.Image,
               Port: port,
             };
           }else{
             newContainers[container_id] = containers[container_id];
             if(newContainers[container_id].Name !== container.Names[0].substring(1)){
               newContainers[container_id].Name = container.Names[0].substring(1);
+            }
+            if(newContainers[container_id].Image !== container.Image){
+              newContainers[container_id].Image = container.Image;
             }
             if(newContainers[container_id].Port.PublicPort !== port.PublicPort){
               newContainers[container_id].Port = port;

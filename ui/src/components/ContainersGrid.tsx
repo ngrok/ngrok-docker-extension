@@ -435,6 +435,7 @@ export default function ContainersGrid() {
         onUpdate={handleConfigurationUpdate}
         initialConfig={editingConfig}
         containerName={currentContainer?.Name || ''}
+        containerImage={currentContainer?.Image || ''}
         targetPort={currentContainer?.Port.PublicPort.toString() || ''}
         isEditing={!!editingConfig}
       />
