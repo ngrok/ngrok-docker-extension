@@ -6,16 +6,21 @@ import {
   GridColDef,
 
 } from "@mui/x-data-grid";
-import { CircularProgress, Tooltip, Typography } from "@mui/material";
+import { CircularProgress, Tooltip, Typography, Popover, Paper, Button, Stack } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import DoNotDisturbIcon from "@mui/icons-material/DoNotDisturb";
+import SearchIcon from "@mui/icons-material/Search";
+import StopIcon from "@mui/icons-material/Stop";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
-import { NgrokContainer, Endpoint, useNgrokContext } from "./NgrokContext";
+import EndpointConfigurationDialog from "./EndpointConfigurationDialog";
+import { NgrokContainer, EndpointConfiguration, RunningEndpoint, useNgrokContext } from "./NgrokContext";
 
 export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
 
@@ -26,8 +31,26 @@ function useDockerDesktopClient() {
 }
 
 export default function ContainersGrid() {
-  const { containers, endpoints, setEndpoints } = useNgrokContext();
+  const { 
+    containers, 
+    endpointConfigurations,
+    runningEndpoints,
+    setRunningEndpoints,
+    createEndpointConfiguration,
+    updateEndpointConfiguration,
+    deleteEndpointConfiguration
+  } = useNgrokContext();
   const [rows, setRows] = useState<NgrokContainer[]>(Object.values(containers));
+
+  // Dialog state
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [currentContainer, setCurrentContainer] = useState<NgrokContainer | null>(null);
+  const [editingConfig, setEditingConfig] = useState<EndpointConfiguration | undefined>();
+  
+  // Delete confirmation popover state
+  const [deleteAnchorEl, setDeleteAnchorEl] = useState<HTMLElement | null>(null);
+  const [containerToDelete, setContainerToDelete] = useState<NgrokContainer | null>(null);
+  const deletePopoverOpen = Boolean(deleteAnchorEl);
 
   const columns: DataGridColumnType = [
     {
@@ -68,7 +91,8 @@ export default function ContainersGrid() {
       type: "string",
       flex: 1,
       renderCell: (params) => {
-        if (!endpoints[params.row.id]) {
+        const runningEndpoint = runningEndpoints[params.row.id];
+        if (!runningEndpoint) {
           return;
         }
 
@@ -86,7 +110,7 @@ export default function ContainersGrid() {
                 <ContentCopyIcon
                   fontSize="small"
                   onClick={() => {
-                    navigator.clipboard.writeText(endpoints[params.row.id].url);
+                    navigator.clipboard.writeText(runningEndpoint.url);
                     ddClient.desktopUI.toast.success("URL copied to clipboard");
                   }}
                 />
@@ -94,7 +118,7 @@ export default function ContainersGrid() {
             </Grid2>
             <Grid2 sx={{ margin: 0, padding: 0 }}>
               <Typography noWrap sx={{ margin: 0, padding: 0 }}>
-                {endpoints[params.row.id].url}
+                {runningEndpoint.url}
               </Typography>
             </Grid2>
           </Grid2>
@@ -107,7 +131,7 @@ export default function ContainersGrid() {
       type: "actions",
       headerAlign: "right",
       align: "right",
-      maxWidth: 100,
+      minWidth: 200,
       flex: 1,
       getActions: (params: any) => {
         if (creatingEndpoint[params.row.id]) {
@@ -115,12 +139,7 @@ export default function ContainersGrid() {
             <GridActionsCellItem
               className="circular-progress"
               key={"loading_" + params.row.id}
-              icon={
-                <>
-                  <CircularProgress size={20} />
-
-                </>
-              }
+              icon={<CircularProgress size={20} />}
               label="Loading"
               showInMenu={false}
             />,
@@ -135,7 +154,7 @@ export default function ContainersGrid() {
                 <Tooltip
                   title={`This container doesn't have a published port. Use docker run with the "-p" option to publish a port.`}
                 >
-                  {<InfoOutlinedIcon />}
+                  <InfoOutlinedIcon />
                 </Tooltip>
               }
               label="Info"
@@ -144,57 +163,94 @@ export default function ContainersGrid() {
         }
 
         let actions: any[] = [];
+        const hasConfiguration = endpointConfigurations[params.row.id];
+        const isRunning = runningEndpoints[params.row.id];
 
-        if (endpoints[params.row.id]?.url) {
+        // Browser action (when running)
+        if (isRunning) {
           actions.push(
             <GridActionsCellItem
               key={"action_open_browser_" + params.row.id}
               icon={
-                <Tooltip title="Open in browser">{<LanguageIcon />}</Tooltip>
+                <Tooltip title="Open in browser"><LanguageIcon /></Tooltip>
               }
               label="Open in browser"
-              onClick={handleOpenEndpoint(endpoints[params.row.id].url)}
-              disabled={
-                endpoints[params.row.id].url === undefined
-              }
-            />
-          );
-        }
-
-        if (
-          endpoints[params.row.id] === undefined ||
-          endpoints[params.row.id].url === undefined
-        ) {
-          actions.push(
-            <GridActionsCellItem
-              key={"action_publish_" + params.row.id}
-              icon={
-                <Tooltip title="Publish on the internet">
-                  {<PlayArrowIcon />}
-                </Tooltip>
-              }
-              onClick={handleCreateEndpoint(params.row)}
-              label="Publish on the internet"
-              disabled={creatingEndpoint[params.row.id]}
+              onClick={handleOpenEndpoint(isRunning.url)}
             />
           );
 
-        } else {
-          if (endpoints[params.row.id]) {
+          // Traffic inspector action (when running and HTTP/HTTPS)
+          if (isHttpEndpoint(isRunning.url)) {
             actions.push(
               <GridActionsCellItem
-                key={"action_stop_publishing_" + params.row.id}
+                key={"action_traffic_inspector_" + params.row.id}
                 icon={
-                  <Tooltip title="Stop publishing on the internet">
-                    {<DoNotDisturbIcon />}
-                  </Tooltip>
+                  <Tooltip title="View in traffic inspector"><SearchIcon /></Tooltip>
                 }
-                label="Stop publishing on the internet"
-                onClick={handleRemoveEndpoint(params.row)}
-                disabled={
-                  endpoints[params.row.id]?.url === undefined ||
-                  removingEndpoint
+                label="View in traffic inspector"
+                onClick={handleOpenTrafficInspector(isRunning.url)}
+              />
+            );
+          }
+        }
+
+        if (!hasConfiguration) {
+          // Show + button for new configuration
+          actions.push(
+            <GridActionsCellItem
+              key={"action_create_" + params.row.id}
+              icon={
+                <Tooltip title="Create endpoint"><AddIcon /></Tooltip>
+              }
+              onClick={handleCreateConfiguration(params.row)}
+              label="Create endpoint"
+            />
+          );
+        } else {
+          // Show edit, delete, and play/stop buttons
+          actions.push(
+            <GridActionsCellItem
+              key={"action_edit_" + params.row.id}
+              icon={
+                <Tooltip title="Edit endpoint"><EditIcon /></Tooltip>
+              }
+              onClick={handleEditConfiguration(params.row)}
+              label="Edit endpoint"
+            />
+          );
+          actions.push(
+            <GridActionsCellItem
+              key={"action_delete_" + params.row.id}
+              icon={
+                <Tooltip title="Delete endpoint"><DeleteIcon /></Tooltip>
+              }
+              onClick={handleDeleteConfiguration(params.row)}
+              label="Delete endpoint"
+            />
+          );
+
+          if (isRunning) {
+            actions.push(
+              <GridActionsCellItem
+                key={"action_stop_" + params.row.id}
+                icon={
+                  <Tooltip title="Stop endpoint"><StopIcon /></Tooltip>
                 }
+                onClick={handleStopEndpoint(params.row)}
+                label="Stop endpoint"
+                disabled={removingEndpoint}
+              />
+            );
+          } else {
+            actions.push(
+              <GridActionsCellItem
+                key={"action_start_" + params.row.id}
+                icon={
+                  <Tooltip title="Start endpoint"><PlayArrowIcon /></Tooltip>
+                }
+                onClick={handleStartEndpoint(params.row)}
+                label="Start endpoint"
+                disabled={creatingEndpoint[params.row.id]}
               />
             );
           }
@@ -211,37 +267,31 @@ export default function ContainersGrid() {
     ddClient.host.openExternal(url);
   };
 
+  const isHttpEndpoint = (url: string): boolean => {
+    return url.startsWith('http://') || url.startsWith('https://');
+  };
+
+  const extractHostname = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname;
+    } catch {
+      return '';
+    }
+  };
+
+  const handleOpenTrafficInspector = (url: string) => () => {
+    const hostname = extractHostname(url);
+    if (hostname) {
+      const inspectorUrl = `https://dashboard.ngrok.com/traffic-inspector?server-name=${hostname}`;
+      ddClient.host.openExternal(inspectorUrl);
+    }
+  };
+
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [alertDialogMsg, setAlertDialogMsg] = useState<string>("");
 
   const [removingEndpoint, setRemovingEndpoint] = useState<boolean>(false);
-
-  const handleRemoveEndpoint = (row: any) => () => {
-    setRemovingEndpoint(true);
-
-    ddClient.extension.vm?.service
-      ?.post('/remove_endpoint', { 
-        containerId: row.ContainerId, 
-        targetPort: row.Port.PublicPort.toString() 
-      })
-      .then(async (resp: any) => {
-        const endpointsMap: Record<string, Endpoint> = {};
-        if (resp.remainingEndpoints) {
-          resp.remainingEndpoints.forEach((endpoint: Endpoint) => {
-            endpointsMap[endpoint.id] = endpoint;
-          });
-        }
-        updateEndpoints(endpointsMap);
-        ddClient.desktopUI.toast.success("Endpoint removed successfully");
-      })
-      .catch((error) => {
-        console.log(error);
-        ddClient.desktopUI.toast.error(`Failed removing endpoint: ${error}`);
-      })
-      .finally(() => {
-        setRemovingEndpoint(false);
-      });
-  };
 
   const ddClient = useDockerDesktopClient();
 
@@ -253,26 +303,74 @@ export default function ContainersGrid() {
     {}
   );
 
-  const handleCreateEndpoint = (row: NgrokContainer) => async () => {
-    console.log(
-      `Creating endpoint for container ${row.Name} on port ${row.Port.PublicPort}...`
-    );
+  // New handler functions for configuration workflow
 
-    setCreatingEndpoint({...creatingEndpoint, [row.id]:true});
+  const handleCreateConfiguration = (container: NgrokContainer) => () => {
+    setCurrentContainer(container);
+    setEditingConfig(undefined);
+    setConfigDialogOpen(true);
+  };
+
+  const handleEditConfiguration = (container: NgrokContainer) => () => {
+    setCurrentContainer(container);
+    setEditingConfig(endpointConfigurations[container.id]);
+    setConfigDialogOpen(true);
+  };
+
+  const handleDeleteConfiguration = (container: NgrokContainer) => (event: React.MouseEvent<HTMLElement>) => {
+    setContainerToDelete(container);
+    setDeleteAnchorEl(event.currentTarget);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!containerToDelete) return;
+    
+    if (runningEndpoints[containerToDelete.id]) {
+      // Stop running endpoint first
+      handleStopEndpoint(containerToDelete)();
+    }
+    // Remove configuration
+    deleteEndpointConfiguration(containerToDelete.id);
+    
+    // Close popover and reset state
+    setDeleteAnchorEl(null);
+    setContainerToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteAnchorEl(null);
+    setContainerToDelete(null);
+  };
+
+  const handleStartEndpoint = (container: NgrokContainer, configOverride?: EndpointConfiguration) => async () => {
+    const config = configOverride || endpointConfigurations[container.id];
+    if (!config) return;
+
+    setCreatingEndpoint({...creatingEndpoint, [container.id]: true});
     
     try {
-      const response: any = await ddClient.extension.vm?.service?.post(
-        '/create_endpoint',
-        { 
-          containerId: row.ContainerId, 
-          targetPort: row.Port.PublicPort.toString() 
-        }
-      );
+      const response: any = await ddClient.extension.vm?.service?.post('/create_endpoint', {
+        containerId: container.ContainerId,
+        targetPort: container.Port.PublicPort.toString(),
+        url: config.url,
+        binding: config.binding,
+        poolingEnabled: config.poolingEnabled,
+        trafficPolicy: config.trafficPolicy,
+        description: config.description,
+        metadata: config.metadata,
+      });
 
-      setEndpoints({...endpoints, [row.id]: response.endpoint});
+      // Add to running endpoints
+      const runningEndpoint: RunningEndpoint = {
+        id: container.id,
+        url: response.endpoint.url,
+        containerId: container.ContainerId,
+        targetPort: container.Port.PublicPort.toString()
+      };
+      setRunningEndpoints({...runningEndpoints, [container.id]: runningEndpoint});
 
       ddClient.desktopUI.toast.success(
-        `Endpoint created for container ${row.Name} on port ${row.Port.PublicPort} at ${response.endpoint.url}`
+        `Endpoint started at ${response.endpoint.url}`
       );
     } catch (error: any) {
       console.log(error);
@@ -280,8 +378,76 @@ export default function ContainersGrid() {
       setAlertDialogMsg(errMsg);
       setShowAlertDialog(true);
     } finally {
-      setCreatingEndpoint({...creatingEndpoint, [row.id]:false});
+      setCreatingEndpoint({...creatingEndpoint, [container.id]: false});
     }
+  };
+
+  const handleStopEndpoint = (container: NgrokContainer) => async () => {
+    setRemovingEndpoint(true);
+    
+    try {
+      await ddClient.extension.vm?.service?.post('/remove_endpoint', {
+        containerId: container.ContainerId,
+        targetPort: container.Port.PublicPort.toString()
+      });
+
+      // Remove from running endpoints but keep configuration
+      const updatedRunningEndpoints = { ...runningEndpoints };
+      delete updatedRunningEndpoints[container.id];
+      setRunningEndpoints(updatedRunningEndpoints);
+
+      ddClient.desktopUI.toast.success("Endpoint stopped");
+    } catch (error: any) {
+      console.log(error);
+      let errMsg = error.error ? error.error : error.message.replaceAll(`"`, "").replaceAll("\\r", "");
+      setAlertDialogMsg(errMsg);
+      setShowAlertDialog(true);
+    } finally {
+      setRemovingEndpoint(false);
+    }
+  };
+
+  const handleConfigurationSave = (config: EndpointConfiguration, shouldStart: boolean) => {
+    if (!currentContainer) return;
+
+    // Ensure the config has the correct container info
+    const configWithContainerInfo: EndpointConfiguration = {
+      ...config,
+      id: currentContainer.id,
+      containerId: currentContainer.ContainerId,
+      targetPort: currentContainer.Port.PublicPort.toString(),
+    };
+
+    // Create new configuration and start if requested
+    createEndpointConfiguration(configWithContainerInfo);
+    
+    if (shouldStart) {
+      handleStartEndpoint(currentContainer)();
+    }
+
+    setConfigDialogOpen(false);
+    setCurrentContainer(null);
+    setEditingConfig(undefined);
+  };
+
+  const handleConfigurationUpdate = (config: EndpointConfiguration) => {
+    if (!currentContainer) return;
+
+    const wasRunning = !!runningEndpoints[currentContainer.id];
+    
+    // Update configuration
+    updateEndpointConfiguration(currentContainer.id, config);
+    
+    if (wasRunning) {
+      // Stop and restart with the new config (passed directly)
+      handleStopEndpoint(currentContainer)().then(() => {
+        handleStartEndpoint(currentContainer, config)();
+      });
+    }
+
+    setConfigDialogOpen(false);
+    setCurrentContainer(null);
+    setEditingConfig(undefined);
   };
 
   return (
@@ -291,6 +457,58 @@ export default function ContainersGrid() {
         msg={alertDialogMsg}
         onClose={() => setShowAlertDialog(false)}
       />
+      
+      <EndpointConfigurationDialog
+        open={configDialogOpen}
+        onClose={() => setConfigDialogOpen(false)}
+        onSave={handleConfigurationSave}
+        onUpdate={handleConfigurationUpdate}
+        initialConfig={editingConfig}
+        containerName={currentContainer?.Name || ''}
+        containerImage={currentContainer?.Image || ''}
+        targetPort={currentContainer?.Port.PublicPort.toString() || ''}
+        isEditing={!!editingConfig}
+        isRunning={!!(currentContainer && runningEndpoints[currentContainer.id])}
+      />
+      
+      <Popover
+        open={deletePopoverOpen}
+        anchorEl={deleteAnchorEl}
+        onClose={handleCancelDelete}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+      >
+        <Paper sx={{ p: 2, maxWidth: 300 }}>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Are you sure you want to delete this endpoint configuration?
+            {containerToDelete && runningEndpoints[containerToDelete.id] && (
+              <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+                This will also stop the running endpoint.
+              </Typography>
+            )}
+          </Typography>
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button onClick={handleCancelDelete} size="small">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmDelete} 
+              variant="contained" 
+              color="error" 
+              size="small"
+            >
+              Delete
+            </Button>
+          </Stack>
+        </Paper>
+      </Popover>
+      
       <DataGrid
         rows={rows || []}
         columns={columns}
@@ -337,9 +555,4 @@ export default function ContainersGrid() {
       />
     </Grid2>
   );
-
-  function updateEndpoints(loaded: Record<string, Endpoint>) {
-    setEndpoints(loaded);
-    localStorage.setItem("endpoints", JSON.stringify(loaded));
-  }
 }
