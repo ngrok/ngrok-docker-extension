@@ -236,28 +236,6 @@ export default function EndpointConfigurationDialog({
           sx={{ mb: 3 }}
         />
         
-        {/* Pooling Enabled Toggle with Help Link */}
-        <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between">
-            <FormLabel>Pooling Enabled</FormLabel>
-            <Switch
-              checked={config.poolingEnabled || false}
-              onChange={handlePoolingChange}
-            />
-          </Box>
-          <FormHelperText>
-            Distribute traffic across multiple endpoints for high availability.{' '}
-            <Link 
-              component="button"
-              variant="inherit"
-              onClick={() => openExternalLink("https://ngrok.com/docs/universal-gateway/endpoint-pooling/")}
-              sx={{ textDecoration: 'underline', cursor: 'pointer' }}
-            >
-              Learn more
-            </Link>
-          </FormHelperText>
-        </FormControl>
-        
         {/* Traffic Policy Field with Help Link */}
         <TextField
           label="Traffic Policy"
@@ -283,6 +261,28 @@ export default function EndpointConfigurationDialog({
           margin="normal"
           sx={{ mb: 3 }}
         />
+        
+        {/* Pooling Enabled Toggle with Help Link */}
+        <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <FormLabel>Pooling Enabled</FormLabel>
+            <Switch
+              checked={config.poolingEnabled || false}
+              onChange={handlePoolingChange}
+            />
+          </Box>
+          <FormHelperText>
+            Distribute traffic across multiple endpoints for high availability.{' '}
+            <Link 
+              component="button"
+              variant="inherit"
+              onClick={() => openExternalLink("https://ngrok.com/docs/universal-gateway/endpoint-pooling/")}
+              sx={{ textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              Learn more
+            </Link>
+          </FormHelperText>
+        </FormControl>
         
         {/* Progressive Disclosure for Description */}
         <Accordion>
