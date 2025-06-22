@@ -347,8 +347,8 @@ export default function ContainersGrid() {
     setContainerToDelete(null);
   };
 
-  const handleStartEndpoint = (container: NgrokContainer) => async () => {
-    const config = endpointConfigurations[container.id];
+  const handleStartEndpoint = (container: NgrokContainer, configOverride?: EndpointConfiguration) => async () => {
+    const config = configOverride || endpointConfigurations[container.id];
     if (!config) return;
 
     setCreatingEndpoint({...creatingEndpoint, [container.id]: true});
@@ -444,9 +444,9 @@ export default function ContainersGrid() {
     updateEndpointConfiguration(currentContainer.id, config);
     
     if (wasRunning) {
-      // Stop and restart with new config
+      // Stop and restart with the new config (passed directly)
       handleStopEndpoint(currentContainer)().then(() => {
-        handleStartEndpoint(currentContainer)();
+        handleStartEndpoint(currentContainer, config)();
       });
     }
 
