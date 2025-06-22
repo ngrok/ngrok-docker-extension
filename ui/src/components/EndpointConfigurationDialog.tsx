@@ -18,7 +18,8 @@ import {
   Typography,
   Link,
   FormHelperText,
-  Box
+  Box,
+  Alert
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -40,6 +41,7 @@ interface EndpointConfigurationDialogProps {
   containerImage: string;
   targetPort: string;
   isEditing: boolean; // determines button text and behavior
+  isRunning: boolean; // indicates if the endpoint is currently running
 }
 
 export default function EndpointConfigurationDialog({
@@ -51,7 +53,8 @@ export default function EndpointConfigurationDialog({
   containerName,
   containerImage,
   targetPort,
-  isEditing
+  isEditing,
+  isRunning
 }: EndpointConfigurationDialogProps) {
   const ddClient = useDockerDesktopClient();
   const [config, setConfig] = useState<EndpointConfiguration>({
@@ -187,6 +190,12 @@ export default function EndpointConfigurationDialog({
         </Box>
       </DialogTitle>
       <DialogContent>
+        {isEditing && isRunning && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Updating this endpoint's configuration will restart the running endpoint.
+          </Alert>
+        )}
+        
         {/* Binding Field with Help Link */}
         <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
           <FormLabel>Binding</FormLabel>

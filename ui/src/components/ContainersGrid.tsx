@@ -315,11 +315,6 @@ export default function ContainersGrid() {
     setCurrentContainer(container);
     setEditingConfig(endpointConfigurations[container.id]);
     setConfigDialogOpen(true);
-    
-    // Show notification if endpoint is running
-    if (runningEndpoints[container.id]) {
-      ddClient.desktopUI.toast.warning("Updating configuration will restart the running endpoint");
-    }
   };
 
   const handleDeleteConfiguration = (container: NgrokContainer) => (event: React.MouseEvent<HTMLElement>) => {
@@ -473,6 +468,7 @@ export default function ContainersGrid() {
         containerImage={currentContainer?.Image || ''}
         targetPort={currentContainer?.Port.PublicPort.toString() || ''}
         isEditing={!!editingConfig}
+        isRunning={!!(currentContainer && runningEndpoints[currentContainer.id])}
       />
       
       <Popover
