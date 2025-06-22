@@ -155,6 +155,17 @@ export default function EndpointConfigurationDialog({
     return `ex. {"container": "${containerName}", "image": "${imageShort}", "port": "${targetPort}", "env": "docker-desktop"}`;
   };
 
+  const getTrafficPolicyPlaceholder = (url: string) => {
+    const scheme = url ? url.split('://')[0].toLowerCase() : '';
+    
+    if (scheme === 'tcp' || scheme === 'tls') {
+      return `on_tcp_connect:\n  - actions:\n    - type: restrict-ips\n       config:\n         allow: ['1.2.3.4/32']`;
+    } else {
+      // Default for http/https or empty
+      return `on_http_request:\n  - actions:\n    - type: oauth\n       config:\n         provider: google`;
+    }
+  };
+
   const handleSave = () => {
     if (isEditing && onUpdate) {
       onUpdate(config);
@@ -250,7 +261,7 @@ export default function EndpointConfigurationDialog({
         {/* Traffic Policy Field with Help Link */}
         <TextField
           label="Traffic Policy"
-          placeholder="ex.&#10;on_http_request:&#10;  - actions:&#10;    config:&#10;      provider: google"
+          placeholder={getTrafficPolicyPlaceholder(config.url || '')}
           value={config.trafficPolicy || ''}
           onChange={handleTrafficPolicyChange}
           helperText={
@@ -267,7 +278,7 @@ export default function EndpointConfigurationDialog({
             </>
           }
           multiline
-          rows={4}
+          rows={5}
           fullWidth
           margin="normal"
           sx={{ mb: 3 }}
