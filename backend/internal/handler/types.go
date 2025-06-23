@@ -4,7 +4,8 @@ package handler
 
 // Configure Agent Types
 type ConfigureAgentRequest struct {
-	Token string `json:"token"`
+	Token      string `json:"token"`
+	ConnectURL string `json:"connectURL,omitempty"`
 }
 
 type ConfigureAgentResponse struct {

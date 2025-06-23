@@ -58,6 +58,9 @@ interface NgrokContextType {
   setAuthToken: (authToken: string) => void;
   authIsSetup: boolean;
 
+  connectURL: string;
+  setConnectURL: (connectURL: string) => void;
+
   containers: Record<string,NgrokContainer>;
   setContainers: (containers: Record<string, NgrokContainer>) => void;
 
@@ -81,6 +84,10 @@ const NgrokContext = createContext<NgrokContextType>({
   authToken: "",
   setAuthToken: () => null,
   authIsSetup: false,
+
+  connectURL: "",
+  setConnectURL: () => null,
+
   containers: {},
   setContainers: () => null,
   endpoints: {},
@@ -103,6 +110,10 @@ export function NgrokContextProvider({
     localStorage.getItem("authToken") ?? ""
   );
   const authIsSetup = authToken !== "";
+
+  const [connectURL, setConnectURL] = useState(
+    localStorage.getItem("connectURL") ?? ""
+  );
 
   const [containers, setContainers] = useState(
     localStorage.getItem("containers") ? JSON.parse(localStorage.getItem("containers") ?? "") : {}
@@ -214,14 +225,15 @@ export function NgrokContextProvider({
   useEffect(() => {
     if (authIsSetup) {
       ddClient.extension.vm?.service
-        ?.post('/configure_agent', { token: authToken })
+        ?.post('/configure_agent', { token: authToken, connectURL: connectURL })
         .then((_result) => {
           localStorage.setItem("authToken", authToken);
+          localStorage.setItem("connectURL", connectURL);
         });
       
       getContainers();
     }
-  }, [authToken, authIsSetup]);
+  }, [authToken, authIsSetup, connectURL]);
 
   useEffect(() => {
     // If the auth token already exists in the local storage, make a POST /auth request automatically to set up the auth
@@ -269,6 +281,10 @@ export function NgrokContextProvider({
         authToken,
         setAuthToken,
         authIsSetup,
+        
+        connectURL,
+        setConnectURL,
+        
         containers,
         setContainers,
         endpoints,
