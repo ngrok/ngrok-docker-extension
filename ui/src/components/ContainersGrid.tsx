@@ -17,6 +17,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import LaunchIcon from "@mui/icons-material/Launch";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
 import EndpointConfigurationDialog from "./EndpointConfigurationDialog";
@@ -193,6 +194,18 @@ export default function ContainersGrid() {
               />
             );
           }
+
+          // Dashboard action (when running)
+          actions.push(
+            <GridActionsCellItem
+              key={"action_dashboard_" + params.row.id}
+              icon={
+                <Tooltip title="View on ngrok dashboard"><LaunchIcon /></Tooltip>
+              }
+              label="View on ngrok dashboard"
+              onClick={handleOpenDashboard(isRunning.url)}
+            />
+          );
         }
 
         if (!hasConfiguration) {
@@ -287,6 +300,11 @@ export default function ContainersGrid() {
       const inspectorUrl = `https://dashboard.ngrok.com/traffic-inspector?server-name=${hostname}`;
       ddClient.host.openExternal(inspectorUrl);
     }
+  };
+
+  const handleOpenDashboard = (url: string) => () => {
+    const dashboardUrl = `https://dashboard.ngrok.com/endpoints?q=${encodeURIComponent(url)}`;
+    ddClient.host.openExternal(dashboardUrl);
   };
 
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
