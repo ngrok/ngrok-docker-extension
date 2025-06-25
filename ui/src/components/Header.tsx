@@ -1,10 +1,11 @@
-import { Typography } from "@mui/material";
+import { Typography, Box } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import SettingsDialog from "./SettingsDialog";
 import { useNgrokContext } from "./NgrokContext";
+import { AgentStatusIndicator } from "./AgentStatusIndicator";
 
 export function Header() {
-  const { authIsSetup } = useNgrokContext();
+  const { authIsSetup, agentStatus } = useNgrokContext();
 
   return (
     <>
@@ -24,11 +25,12 @@ export function Header() {
             Put your containers online with ngrok's API Gateway.
           </Typography>
         </Grid2>
-        {authIsSetup && (
-          <Grid2 justifyContent="right">
-            <SettingsDialog />
-          </Grid2>
-        )}
+        <Grid2 justifyContent="right" alignItems="flex-start">
+          <Box display="flex" alignItems="center" gap={2}>
+            <AgentStatusIndicator status={agentStatus} />
+            {authIsSetup && <SettingsDialog />}
+          </Box>
+        </Grid2>
       </Grid2>
     </>
   );

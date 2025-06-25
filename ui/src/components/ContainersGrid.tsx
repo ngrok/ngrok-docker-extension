@@ -21,6 +21,7 @@ import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
 import EndpointConfigurationDialog from "./EndpointConfigurationDialog";
 import { NgrokContainer, EndpointConfiguration, RunningEndpoint, useNgrokContext } from "./NgrokContext";
+import { statusService } from '../services/statusService';
 
 export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
 
@@ -369,6 +370,9 @@ export default function ContainersGrid() {
       };
       setRunningEndpoints({...runningEndpoints, [container.id]: runningEndpoint});
 
+      // Trigger immediate status check after successful endpoint creation
+      statusService.checkStatusNow();
+
       ddClient.desktopUI.toast.success(
         `Endpoint started at ${response.endpoint.url}`
       );
@@ -395,6 +399,9 @@ export default function ContainersGrid() {
       const updatedRunningEndpoints = { ...runningEndpoints };
       delete updatedRunningEndpoints[container.id];
       setRunningEndpoints(updatedRunningEndpoints);
+
+      // Trigger immediate status check after successful endpoint removal
+      statusService.checkStatusNow();
 
       ddClient.desktopUI.toast.success("Endpoint stopped");
     } catch (error: any) {

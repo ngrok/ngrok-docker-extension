@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
+import { statusService, AgentStatus } from '../services/statusService';
 
 export interface NgrokContainer {
   id: string;
@@ -78,6 +79,9 @@ interface NgrokContextType {
   createEndpointConfiguration: (config: EndpointConfiguration) => void;
   updateEndpointConfiguration: (id: string, config: EndpointConfiguration) => void;
   deleteEndpointConfiguration: (id: string) => void;
+
+  // Agent status
+  agentStatus: AgentStatus;
 }
 
 const NgrokContext = createContext<NgrokContextType>({
@@ -99,6 +103,10 @@ const NgrokContext = createContext<NgrokContextType>({
   createEndpointConfiguration: () => null,
   updateEndpointConfiguration: () => null,
   deleteEndpointConfiguration: () => null,
+  agentStatus: {
+    status: 'offline',
+    timestamp: new Date().toISOString()
+  },
 });
 
 export function NgrokContextProvider({
@@ -129,6 +137,11 @@ export function NgrokContextProvider({
   );
 
   const [runningEndpoints, setRunningEndpoints] = useState<Record<string, RunningEndpoint>>({});
+
+  const [agentStatus, setAgentStatus] = useState<AgentStatus>({
+    status: 'unknown',
+    timestamp: new Date().toISOString()
+  });
 
   const getContainers = async () => {
     ddClient.docker.listContainers().then((loaded)=>{
@@ -221,6 +234,18 @@ export function NgrokContextProvider({
     setRunningEndpoints(loaded);
   };
 
+  const handleStatusUpdate = useCallback((status: AgentStatus) => {
+    setAgentStatus(status);
+  }, []);
+
+  const handleStatusError = useCallback((error: Error) => {
+    console.error('Status polling error:', error);
+    setAgentStatus({
+      status: 'unknown',
+      timestamp: new Date().toISOString()
+    });
+  }, []);
+
   const ddClient = useDockerDesktopClient();
   useEffect(() => {
     if (authIsSetup) {
@@ -275,6 +300,13 @@ export function NgrokContextProvider({
     containersEvents();
   }, []);
 
+  useEffect(() => {
+    statusService.startPolling(handleStatusUpdate, handleStatusError);
+    return () => {
+      statusService.stopPolling();
+    };
+  }, [handleStatusUpdate, handleStatusError]);
+
   return (
     <NgrokContext.Provider
       value={{
@@ -296,6 +328,7 @@ export function NgrokContextProvider({
         createEndpointConfiguration,
         updateEndpointConfiguration,
         deleteEndpointConfiguration,
+        agentStatus,
       }}
     >
       {children}
