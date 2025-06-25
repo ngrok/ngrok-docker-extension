@@ -9,7 +9,13 @@ NO_COLOR   = \033[m
 build-extension: ## Build service image to be deployed as a desktop extension
 	docker buildx build --tag=$(IMAGE):$(TAG) . --load
 
+build-extension-dev: ## Build service image with development tools (includes curl)
+	docker buildx build --build-arg DEVELOPMENT=true --tag=$(IMAGE):$(TAG) . --load
+
 install-extension: build-extension ## Install the extension
+	docker extension install -f $(IMAGE):$(TAG)
+
+install-extension-dev: build-extension-dev ## Install the extension with development tools
 	docker extension install -f $(IMAGE):$(TAG)
 
 dev-up:
@@ -20,6 +26,9 @@ dev-reset:
 	docker extension dev reset $(IMAGE):$(TAG)
 
 update-extension: build-extension ## Update the extension
+	docker extension update -f $(IMAGE):$(TAG)
+
+update-extension-dev: build-extension-dev ## Update the extension with development tools
 	docker extension update -f $(IMAGE):$(TAG)
 
 prepare-buildx: ## Create buildx builder for multi-arch build, if not exists

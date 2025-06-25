@@ -1,14 +1,13 @@
-import * as React from "react";
 import { useEffect, useState } from "react";
 import {
   DataGrid,
   GridActionsCellItem,
   GridActionsColDef,
   GridColDef,
-  gridStringOrNumberComparator,
+
 } from "@mui/x-data-grid";
-import { Box, CircularProgress, Grid, Modal, SelectChangeEvent, Switch, Tooltip, Typography } from "@mui/material";
-import { GridRowParams } from "@mui/x-data-grid/models/params/gridRowParams";
+import { CircularProgress, Tooltip, Typography } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DoNotDisturbIcon from "@mui/icons-material/DoNotDisturb";
@@ -16,9 +15,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import AlertDialog from "./AlertDialog";
-import { NgrokContainer, Tunnel, useNgrokContext } from "./NgrokContext";
-import { Settings } from "@mui/icons-material";
-import AuthSelector from "./modules/AuthSelector";
+import { NgrokContainer, Endpoint, useNgrokContext } from "./NgrokContext";
 
 export type DataGridColumnType = (GridActionsColDef<NgrokContainer, any, any> | GridColDef<NgrokContainer, any, any>)[];
 
@@ -29,7 +26,7 @@ function useDockerDesktopClient() {
 }
 
 export default function ContainersGrid() {
-  const { containers, setContainers, tunnels, setTunnels } = useNgrokContext();
+  const { containers, endpoints, setEndpoints } = useNgrokContext();
   const [rows, setRows] = useState<NgrokContainer[]>(Object.values(containers));
 
   const columns: DataGridColumnType = [
@@ -37,7 +34,7 @@ export default function ContainersGrid() {
       field: "id",
       headerName: "ID",
       width: 90,
-      hide: true,
+
     },
     {
       field: "Name",
@@ -54,76 +51,53 @@ export default function ContainersGrid() {
       align: "left",
       maxWidth: 100,
       flex: 1,
-      sortComparator: (v1, v2, param1, param2) => {
-        console.log(v1, v2, param1, param2, rows);
-        // gridStringOrNumberComparator()
-        return 0;
-        // return gridStringOrNumberComparator(
-        //   v1,
-        //   v2,
-        //   param1.value.Port.PublicPort,
-        //   param2.value.Port.PublicPort,
-        // );
-      },
+      sortable: false,
       renderCell: (params) => {
         return (
-          <Typography>
+          <Typography sx={{ margin: 0, padding: 0 }}>
             {params.row.Port.PublicPort}
           </Typography>
         );
       },
     },
-    // {
-    //   field: "protocol",
-    //   headerName: "Protocol",
-    //   headerAlign: "left",
-    //   align: "left",
-    //   maxWidth: 100,
-    //   flex: 1,
-    //   sortable: false,
-    //   renderCell: (params) => {
-    //     return (
-    //       <Typography>
-    //         {params.row.http ? "http" : "tcp"}
-    //       </Typography>
-    //     );
-    //   },
-    // },
     {
       field: "url",
-      headerName: "URL",
+      headerName: "URL", 
       headerAlign: "left",
       align: "left",
       type: "string",
       flex: 1,
       renderCell: (params) => {
-        if (!tunnels[params.row.id]) {
+        if (!endpoints[params.row.id]) {
           return;
         }
 
         return (
-          <Grid
+          <Grid2
             flex={1}
             container
             direction={"row"}
             spacing={1}
             justifyContent={"start"}
+            sx={{ margin: 0, padding: 0, height: '100%', alignItems: 'center' }}
           >
-            <Grid item>
+            <Grid2 sx={{ margin: 0, padding: 0 }}>
               <Tooltip title="Copy URL">
                 <ContentCopyIcon
                   fontSize="small"
                   onClick={() => {
-                    navigator.clipboard.writeText(tunnels[params.row.id].URL);
+                    navigator.clipboard.writeText(endpoints[params.row.id].url);
                     ddClient.desktopUI.toast.success("URL copied to clipboard");
                   }}
                 />
               </Tooltip>
-            </Grid>
-            <Grid item>
-              <Typography noWrap={true}>{tunnels[params.row.id].URL}</Typography>
-            </Grid>
-          </Grid>
+            </Grid2>
+            <Grid2 sx={{ margin: 0, padding: 0 }}>
+              <Typography noWrap sx={{ margin: 0, padding: 0 }}>
+                {endpoints[params.row.id].url}
+              </Typography>
+            </Grid2>
+          </Grid2>
         );
       },
     },
@@ -135,8 +109,8 @@ export default function ContainersGrid() {
       align: "right",
       maxWidth: 100,
       flex: 1,
-      getActions: (params: GridRowParams<NgrokContainer>) => {
-        if (startingTunnel[params.row.id]) {
+      getActions: (params: any) => {
+        if (creatingEndpoint[params.row.id]) {
           return [
             <GridActionsCellItem
               className="circular-progress"
@@ -144,7 +118,7 @@ export default function ContainersGrid() {
               icon={
                 <>
                   <CircularProgress size={20} />
-                  {/* <Typography ml={2}>Loading...</Typography> */}
+
                 </>
               }
               label="Loading"
@@ -169,10 +143,9 @@ export default function ContainersGrid() {
           ];
         }
 
-        // @ts-ignore
-        let actions: GridActionsCellItem[] = [];
+        let actions: any[] = [];
 
-        if (tunnels[params.row.id]?.URL && containers[params.row.id].http) {
+        if (endpoints[params.row.id]?.url) {
           actions.push(
             <GridActionsCellItem
               key={"action_open_browser_" + params.row.id}
@@ -180,17 +153,17 @@ export default function ContainersGrid() {
                 <Tooltip title="Open in browser">{<LanguageIcon />}</Tooltip>
               }
               label="Open in browser"
-              onClick={handleOpenTunnel(tunnels[params.row.id].URL)}
+              onClick={handleOpenEndpoint(endpoints[params.row.id].url)}
               disabled={
-                tunnels[params.row.id].URL === undefined
+                endpoints[params.row.id].url === undefined
               }
             />
           );
         }
 
         if (
-          tunnels[params.row.id] === undefined ||
-          tunnels[params.row.id].URL === undefined
+          endpoints[params.row.id] === undefined ||
+          endpoints[params.row.id].url === undefined
         ) {
           actions.push(
             <GridActionsCellItem
@@ -200,26 +173,14 @@ export default function ContainersGrid() {
                   {<PlayArrowIcon />}
                 </Tooltip>
               }
-              onClick={handleStart(params.row)}
+              onClick={handleCreateEndpoint(params.row)}
               label="Publish on the internet"
-              disabled={startingTunnel[params.row.id]}
+              disabled={creatingEndpoint[params.row.id]}
             />
           );
-          // actions.push(
-          //   <GridActionsCellItem
-          //     key={"action_config_" + params.row.id}
-          //     icon={
-          //       <Tooltip title="Configure ngrok tunnel">
-          //         {<Settings />}
-          //       </Tooltip>
-          //     }
-          //     onClick={handleOpen(params.row)}
-          //     label="Configure ngrok tunnel"
-          //     disabled={startingTunnel[params.row.id]}
-          //   />
-          // );
+
         } else {
-          if (tunnels[params.row.id]) {
+          if (endpoints[params.row.id]) {
             actions.push(
               <GridActionsCellItem
                 key={"action_stop_publishing_" + params.row.id}
@@ -229,10 +190,10 @@ export default function ContainersGrid() {
                   </Tooltip>
                 }
                 label="Stop publishing on the internet"
-                onClick={handleStopTunnel(params.row.id)}
+                onClick={handleRemoveEndpoint(params.row)}
                 disabled={
-                  tunnels[params.row.id]?.URL === undefined ||
-                  stoppingTunnel
+                  endpoints[params.row.id]?.url === undefined ||
+                  removingEndpoint
                 }
               />
             );
@@ -244,50 +205,41 @@ export default function ContainersGrid() {
     },
   ];
 
-  const style = {
-    position: 'absolute' as 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-  };
-  
-  const [selectedContainer, setSelectedContainer] = useState<NgrokContainer>();
-  const [open, setOpen] = React.useState(false);
-  const handleOpen = (container: NgrokContainer) => async () => {
-    setSelectedContainer(container);
-    setOpen(true)
-  };
-  const handleClose = () => setOpen(false);
 
-  const handleOpenTunnel = (url: string) => () => {
+
+  const handleOpenEndpoint = (url: string) => () => {
     ddClient.host.openExternal(url);
   };
 
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [alertDialogMsg, setAlertDialogMsg] = useState<string>("");
 
-  const [stoppingTunnel, setStoppingTunnel] = useState<boolean>(false);
+  const [removingEndpoint, setRemovingEndpoint] = useState<boolean>(false);
 
-  const handleStopTunnel = (containerName: string) => () => {
-    setStoppingTunnel(true);
+  const handleRemoveEndpoint = (row: any) => () => {
+    setRemovingEndpoint(true);
 
     ddClient.extension.vm?.service
-      ?.delete(`/remove/${containerName}`)
-      .then(async (resp) => {
-        const response = resp as Record<string, Tunnel>;
-        updateTunnels(response)
-        ddClient.desktopUI.toast.success("Tunnel stopped successfully");
+      ?.post('/remove_endpoint', { 
+        containerId: row.ContainerId, 
+        targetPort: row.Port.PublicPort.toString() 
+      })
+      .then(async (resp: any) => {
+        const endpointsMap: Record<string, Endpoint> = {};
+        if (resp.remainingEndpoints) {
+          resp.remainingEndpoints.forEach((endpoint: Endpoint) => {
+            endpointsMap[endpoint.id] = endpoint;
+          });
+        }
+        updateEndpoints(endpointsMap);
+        ddClient.desktopUI.toast.success("Endpoint removed successfully");
       })
       .catch((error) => {
         console.log(error);
-        ddClient.desktopUI.toast.error(`Failed stopping tunnel: ${error}`);
+        ddClient.desktopUI.toast.error(`Failed removing endpoint: ${error}`);
       })
       .finally(() => {
-        setStoppingTunnel(false);
+        setRemovingEndpoint(false);
       });
   };
 
@@ -297,30 +249,30 @@ export default function ContainersGrid() {
     setRows(Object.values(containers));
   }, [containers]);
 
-  useEffect(() => {
-  }, [tunnels]);
-
-  const [startingTunnel, setStartingTunnel] = useState<Record<string, boolean>>(
+  const [creatingEndpoint, setCreatingEndpoint] = useState<Record<string, boolean>>(
     {}
   );
 
-  const handleStart = (row: NgrokContainer) => async () => {
+  const handleCreateEndpoint = (row: NgrokContainer) => async () => {
     console.log(
-      `Starting tunnel for container ${row.Name} on port ${row.Port.PublicPort}...`
+      `Creating endpoint for container ${row.Name} on port ${row.Port.PublicPort}...`
     );
 
-    setStartingTunnel({...startingTunnel, [row.id]:true});
+    setCreatingEndpoint({...creatingEndpoint, [row.id]:true});
     
     try {
-      const tunnel:any = await ddClient.extension.vm?.service?.post(
-        `/start/${row.id}?port=${row.Port.PublicPort}&oauth=${row.oauth}&protocol=${row.tcp?'tcp':'http'}`,
-        {...row}
+      const response: any = await ddClient.extension.vm?.service?.post(
+        '/create_endpoint',
+        { 
+          containerId: row.ContainerId, 
+          targetPort: row.Port.PublicPort.toString() 
+        }
       );
 
-      setTunnels({...tunnels, [row.id]:tunnel});
+      setEndpoints({...endpoints, [row.id]: response.endpoint});
 
       ddClient.desktopUI.toast.success(
-        `Tunnel started for container ${row.Name} on port ${row.Port.PublicPort} at ${tunnel.URL}`
+        `Endpoint created for container ${row.Name} on port ${row.Port.PublicPort} at ${response.endpoint.url}`
       );
     } catch (error: any) {
       console.log(error);
@@ -328,30 +280,12 @@ export default function ContainersGrid() {
       setAlertDialogMsg(errMsg);
       setShowAlertDialog(true);
     } finally {
-      setStartingTunnel({...startingTunnel, [row.id]:false});
+      setCreatingEndpoint({...creatingEndpoint, [row.id]:false});
     }
   };
 
-  const toggleProtocol = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("toggle protocol", event.target.checked);
-    if(!selectedContainer) return;
-    selectedContainer.tcp = event.target.checked;
-    selectedContainer.http = !event.target.checked;
-    setSelectedContainer({...selectedContainer});
-    setContainers({...containers, [selectedContainer.id]:selectedContainer});
-  }
-
-  const toggleOAuth = (event: SelectChangeEvent<HTMLInputElement>) => {
-    console.log("toggle oAuth", event.target.value);
-    if(!selectedContainer) return;
-    selectedContainer.oauth = event.target.value as string;
-    setSelectedContainer({...selectedContainer});
-    setContainers({...containers, [selectedContainer.id]:selectedContainer});
-  }
-
-
   return (
-    <Grid container flex={1} height="calc(100vh - 200px)">
+    <Grid2 container flex={1} height="calc(100vh - 200px)">
       <AlertDialog
         open={showAlertDialog}
         msg={alertDialogMsg}
@@ -360,22 +294,38 @@ export default function ContainersGrid() {
       <DataGrid
         rows={rows || []}
         columns={columns}
-        pageSize={10}
-        rowsPerPageOptions={[10]}
+        initialState={{
+          pagination: {
+            paginationModel: { page: 0, pageSize: 10 },
+          },
+          columns: {
+            columnVisibilityModel: {
+              id: false,
+            },
+          },
+        }}
+        pageSizeOptions={[10]}
         checkboxSelection={false}
-        disableSelectionOnClick={true}
-        experimentalFeatures={{ newEditingApi: true }}
+        disableRowSelectionOnClick={true}
+
         sx={{
-          "&.MuiDataGrid-root--densityCompact .MuiDataGrid-cell": {
-            py: 1,
+          "& .MuiDataGrid-row": {
+            minHeight: '52px !important',
+            maxHeight: '52px !important'
           },
-          "&.MuiDataGrid-root--densityStandard .MuiDataGrid-cell": {
-            py: 1,
-          },
-          "&.MuiDataGrid-root--densityComfortable .MuiDataGrid-cell": {
-            py: 2,
+          "& .MuiDataGrid-columnHeader": {
+            '&[data-field="actions"]': {
+              justifyContent: 'flex-end !important'
+            }
           },
           "& .MuiDataGrid-cell": {
+            minHeight: '52px !important',
+            maxHeight: '52px !important',
+            display: 'flex !important',
+            alignItems: 'center !important',
+            '&[data-field="actions"]': {
+              justifyContent: 'flex-end !important'
+            },
             "& .MuiIconButton-root.circular-progress": {
               "&:hover": {
                 backgroundColor: "transparent",
@@ -385,28 +335,11 @@ export default function ContainersGrid() {
           },
         }}
       />
-  <Modal
-    open={open}
-    onClose={handleClose}
-    aria-labelledby="modal-modal-title"
-    aria-describedby="modal-modal-description"
-  >
-    <Box sx={style}>
-      <Typography id="modal-modal-title" variant="h6" component="h2">
-        ngrok tunnel config {selectedContainer?.Name}
-      </Typography>
-      <div id="modal-modal-description">
-        <div style={{marginTop:"1em"}}><strong>Protocol:</strong> HTTP <Switch aria-label="HTTP TCP Switch" onChange={toggleProtocol} checked={selectedContainer?.tcp} /> TCP</div>
-        {selectedContainer?.http?
-        <AuthSelector container={selectedContainer}></AuthSelector>:null}
-      </div>
-    </Box>
-  </Modal>
-    </Grid>
+    </Grid2>
   );
 
-  function updateTunnels(loaded: Record<string, Tunnel>) {
-    setTunnels(loaded);
-    localStorage.setItem("tunnels", JSON.stringify(loaded));
+  function updateEndpoints(loaded: Record<string, Endpoint>) {
+    setEndpoints(loaded);
+    localStorage.setItem("endpoints", JSON.stringify(loaded));
   }
 }

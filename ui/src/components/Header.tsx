@@ -1,35 +1,35 @@
-import { Grid, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import SettingsDialog from "./SettingsDialog";
 import { useNgrokContext } from "./NgrokContext";
 
 export function Header() {
-  const { authToken } = useNgrokContext();
-  const authIsSetup = authToken != "";
+  const { authIsSetup } = useNgrokContext();
 
   return (
     <>
-      <Grid container justifyContent={"space-between"} direction={"row"}>
-        <Grid>
-          <Grid alignItems="center">
+      <Grid2 container justifyContent={"space-between"} direction={"row"}>
+        <Grid2>
+          <Grid2 alignItems="center">
             <Typography data-testid="heading" variant="h3" role="title">
               ngrok
             </Typography>
-          </Grid>
+          </Grid2>
           <Typography
             data-testid="subheading"
             variant="body1"
             color="text.secondary"
             sx={{ mt: 1 }}
           >
-            Put your containers online with ngrok's ingress-as-a-service tunnels.
+            Put your containers online with ngrok's API Gateway.
           </Typography>
-        </Grid>
+        </Grid2>
         {authIsSetup && (
-          <Grid justifyContent="right">
+          <Grid2 justifyContent="right">
             <SettingsDialog />
-          </Grid>
+          </Grid2>
         )}
-      </Grid>
+      </Grid2>
     </>
   );
 }

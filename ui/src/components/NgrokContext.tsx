@@ -6,11 +6,6 @@ export interface NgrokContainer {
   ContainerId: string;
   Name: string;
   Port: DockerPort;
-  
-  // v2 Options
-  tcp: boolean;
-  http: boolean;
-  oauth: string;
 }
 
 export interface DockerContainer {
@@ -24,9 +19,11 @@ export interface DockerPort {
   Type: string;
 }
 
-export interface Tunnel {
-  ContainerID: string;
-  URL: string;
+export interface Endpoint {
+  id: string;
+  url: string;
+  containerId: string;
+  targetPort: string;
 }
 
 const client = createDockerDesktopClient();
@@ -35,24 +32,26 @@ function useDockerDesktopClient() {
   return client;
 }
 
-interface IngrokContext {
+interface NgrokContextType {
   authToken: string;
   setAuthToken: (authToken: string) => void;
+  authIsSetup: boolean;
 
   containers: Record<string,NgrokContainer>;
   setContainers: (containers: Record<string, NgrokContainer>) => void;
 
-  tunnels: Record<string,Tunnel>;
-  setTunnels: (tunnels: Record<string, Tunnel>) => void;
+  endpoints: Record<string,Endpoint>;
+  setEndpoints: (endpoints: Record<string, Endpoint>) => void;
 }
 
-const NgrokContext = createContext<IngrokContext>({
+const NgrokContext = createContext<NgrokContextType>({
   authToken: "",
   setAuthToken: () => null,
+  authIsSetup: false,
   containers: {},
   setContainers: () => null,
-  tunnels: {},
-  setTunnels: () => null,
+  endpoints: {},
+  setEndpoints: () => null,
 });
 
 export function NgrokContextProvider({
@@ -63,13 +62,14 @@ export function NgrokContextProvider({
   const [authToken, setAuthToken] = useState(
     localStorage.getItem("authToken") ?? ""
   );
+  const authIsSetup = authToken !== "";
 
   const [containers, setContainers] = useState(
     localStorage.getItem("containers") ? JSON.parse(localStorage.getItem("containers") ?? "") : {}
   );
 
-  const [tunnels, setTunnels] = useState(
-    localStorage.getItem("tunnels") ? JSON.parse(localStorage.getItem("tunnels") ?? "") : {}
+  const [endpoints, setEndpoints] = useState(
+    localStorage.getItem("endpoints") ? JSON.parse(localStorage.getItem("endpoints") ?? "") : {}
   );
 
   const getContainers = async () => {
@@ -78,9 +78,15 @@ export function NgrokContextProvider({
       updateContainers(loaded as DockerContainer[]);
     });
 
-    ddClient.extension.vm?.service?.get("/progress").then((result)=>{
-      // console.log('Loaded tunnels', result);
-      updateTunnels(result as Record<string, Tunnel>);
+    ddClient.extension.vm?.service?.get("/list_endpoints").then((result: any)=>{
+      // console.log('Loaded endpoints', result);
+      const endpointsMap: Record<string, Endpoint> = {};
+      if (result.endpoints) {
+        result.endpoints.forEach((endpoint: Endpoint) => {
+          endpointsMap[endpoint.id] = endpoint;
+        });
+      }
+      updateEndpoints(endpointsMap);
     });
   }
 
@@ -96,13 +102,10 @@ export function NgrokContextProvider({
               ContainerId: container.Id,
               Name: container.Names[0].substring(1),
               Port: port,
-              tcp: false,
-              http: true,
-              oauth: "",
             };
           }else{
             newContainers[container_id] = containers[container_id];
-            if(newContainers[container_id].Name !== container.Names[0].substring(1,)){
+            if(newContainers[container_id].Name !== container.Names[0].substring(1)){
               newContainers[container_id].Name = container.Names[0].substring(1);
             }
             if(newContainers[container_id].Port.PublicPort !== port.PublicPort){
@@ -117,27 +120,28 @@ export function NgrokContextProvider({
     }
   }
   
-  function updateTunnels(loaded: Record<string, Tunnel>) {
-    setTunnels(loaded);
-    localStorage.setItem("tunnels", JSON.stringify(loaded));
+  function updateEndpoints(loaded: Record<string, Endpoint>) {
+    setEndpoints(loaded);
+    localStorage.setItem("endpoints", JSON.stringify(loaded));
   }
 
   const ddClient = useDockerDesktopClient();
   useEffect(() => {
-    ddClient.extension.vm?.service
-      ?.get(`/auth?token=${authToken}`)
-      .then((result) => {
-        localStorage.setItem("authToken", authToken);
-      });
-    
+    if (authIsSetup) {
+      ddClient.extension.vm?.service
+        ?.post('/configure_agent', { token: authToken })
+        .then((_result) => {
+          localStorage.setItem("authToken", authToken);
+        });
+      
       getContainers();
-    
-  }, [authToken]);
+    }
+  }, [authToken, authIsSetup]);
 
   useEffect(() => {
-    // If the auth token already exists in the local storage, make a GET /auth request automatically to set up the auth
-    if (authToken !== null) {
-      ddClient.extension.vm?.service?.get(`/auth?token=${authToken}`);
+    // If the auth token already exists in the local storage, make a POST /auth request automatically to set up the auth
+    if (authIsSetup) {
+      ddClient.extension.vm?.service?.post('/auth', { token: authToken });
 
       getContainers();
     }
@@ -159,7 +163,7 @@ export function NgrokContextProvider({
         ],
         {
           stream: {
-            async onOutput(data: any) {
+            async onOutput(_data: any) {
               await getContainers();
             },
             onClose(exitCode) {
@@ -179,10 +183,11 @@ export function NgrokContextProvider({
       value={{
         authToken,
         setAuthToken,
+        authIsSetup,
         containers,
         setContainers,
-        tunnels,
-        setTunnels,
+        endpoints,
+        setEndpoints,
       }}
     >
       {children}

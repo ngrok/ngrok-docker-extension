@@ -6,7 +6,7 @@ import StepContent from "@mui/material/StepContent";
 import Button from "@mui/material/Button";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import Typography from "@mui/material/Typography";
-import { Grid } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import SettingsDialog from "./SettingsDialog";
 
@@ -47,8 +47,8 @@ export default function AuthStepper() {
   };
 
   return (
-    <Grid container flex={1} alignItems={"center"} justifyContent={"center"}>
-      <Grid item xs={6}>
+    <Grid2 container flex={1} alignItems={"center"} justifyContent={"center"}>
+      <Grid2 size={6}>
         <Stepper activeStep={activeStep} orientation="vertical">
           {steps.map((step, index) => (
             <Step key={step.label}>
@@ -65,8 +65,8 @@ export default function AuthStepper() {
               </StepLabel>
 
               <StepContent>
-                <Typography mb={2} align={"left"}>{step.description}</Typography>
-                <Grid
+                <Typography sx={{ mb: 2 }} align={"left"}>{step.description}</Typography>
+                <Grid2
                   container
                   direction="row"
                   alignItems={"left"}
@@ -74,13 +74,13 @@ export default function AuthStepper() {
                   spacing={1}
                 >
                   {index !== 0 && (
-                    <Grid item>
+                    <Grid2>
                       <Button variant="outlined" disabled={index === 0} onClick={handleBack}>
                         Back
                       </Button>
-                    </Grid>
+                    </Grid2>
                   )}
-                  <Grid item>
+                  <Grid2>
                     {index === 0 && activeStep === 0 && (
                       <Button
                         endIcon={<OpenInNewRoundedIcon />}
@@ -94,16 +94,16 @@ export default function AuthStepper() {
                         Get Authtoken
                       </Button>
                     )}
-                  </Grid>
-                  <Grid item>
+                  </Grid2>
+                  <Grid2>
                     {index === 1 && activeStep === 1 && <SettingsDialog />}
-                  </Grid>
-                </Grid>
+                  </Grid2>
+                </Grid2>
               </StepContent>
             </Step>
           ))}
         </Stepper>
-      </Grid>
-    </Grid>
+      </Grid2>
+    </Grid2>
   );
 }

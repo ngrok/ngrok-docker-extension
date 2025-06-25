@@ -3,25 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"net"
-	"net/http"
+	"log/slog"
 	"os"
 	"os/signal"
-	"time"
-
-	"github.com/labstack/echo/v4/middleware"
-
-	"github.com/docker/docker/client"
-	"github.com/labstack/echo/v4"
-
-	"github.com/ngrok/ngrok-docker-extension/internal/handler"
-	"github.com/ngrok/ngrok-docker-extension/internal/log"
-	"github.com/ngrok/ngrok-docker-extension/internal/session"
-)
-
-var (
-	h *handler.Handler
-	// NgrokRootSession *ngrok.Session
 )
 
 func main() {
@@ -29,68 +13,43 @@ func main() {
 	flag.StringVar(&socketPath, "socket", "/run/guest/ext.sock", "Unix domain socket to listen on")
 	flag.Parse()
 
-	_ = os.RemoveAll(socketPath)
+	// Setup structured logger to output to stdout
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-	// Output to stdout instead of the default stderr
-	log.SetOutput(os.Stdout)
-
-	router := echo.New()
-	router.HTTPErrorHandler = func(err error, c echo.Context) {
-		log.Error("Error: %s", err)
-		c.JSON(http.StatusInternalServerError, err.Error())
-	}
-	router.HideBanner = true
-
-	logMiddleware := middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Skipper: middleware.DefaultSkipper,
-		Format: `{"time":"${time_rfc3339_nano}","id":"${id}",` +
-			`"host":"${host}","method":"${method}","uri":"${uri}","user_agent":"${user_agent}",` +
-			`"status":${status},"error":"${error}","latency":${latency},"latency_human":"${latency_human}"` +
-			`,"bytes_in":${bytes_in},"bytes_out":${bytes_out}}` + "\n",
-		CustomTimeFormat: "2006-01-02 15:04:05.00000",
-		Output:           os.Stdout,
-	})
-	router.Use(logMiddleware)
-
-	log.Infof("Starting listening on %s\n", socketPath)
-	ln, err := net.Listen("unix", socketPath)
+	// Create the ngrok extension
+	ext, err := newNgrokExtension(socketPath, logger)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("Failed to initialize ngrok extension", "error", err)
+		os.Exit(1)
 	}
-	router.Listener = ln
 
-	cliFactory := func() (*client.Client, error) {
-		return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	h = handler.New(context.Background(), cliFactory)
+	// Setup signal handling
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	router.GET("/auth", h.SetupAuth)
-	router.GET("/progress", session.ActionsInProgress)
-	router.POST("/start/:container", h.StartTunnel)
-	router.DELETE("/remove/:container", h.RemoveTunnel)
-
-	// Start server
-	go func() {
-		server := &http.Server{
-			Addr: "",
-		}
-
-		if err := router.StartServer(server); err != nil && err != http.ErrServerClosed {
-			log.Fatal("shutting down the server")
-		}
-	}()
-
-	// Wait for interrupt signal to gracefully shut down the server with a timeout of 10 seconds.
-	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
-	<-quit
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := router.Shutdown(ctx); err != nil {
-		log.Fatal(err)
+
+	// Start the extension in a goroutine
+	extensionErrChan := make(chan error, 1)
+	go func() {
+		extensionErrChan <- ext.Run(ctx)
+	}()
+
+	// Wait for signal or extension error
+	select {
+	case <-quit:
+		logger.Info("Received interrupt signal, shutting down")
+		cancel()
+		// Wait for graceful shutdown
+		if err := <-extensionErrChan; err != nil {
+			logger.Error("Extension shutdown error", "error", err)
+			os.Exit(1)
+		}
+	case err := <-extensionErrChan:
+		if err != nil {
+			logger.Error("Extension error", "error", err)
+			os.Exit(1)
+		}
 	}
 }

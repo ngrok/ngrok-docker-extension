@@ -1,4 +1,4 @@
-import * as React from "react";
+
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -24,7 +24,7 @@ export default function AlertDialog({ ...props }: Props) {
       return;
     }
     return (
-      <Typography key={line} mb={1}>
+      <Typography key={line} sx={{ mb: 1 }}>
         {line}
       </Typography>
     );

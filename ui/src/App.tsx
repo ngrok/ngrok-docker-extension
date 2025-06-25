@@ -1,42 +1,31 @@
-import { useEffect, useState } from "react";
-import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { Grid } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import ContainersGrid from "./components/ContainersGrid";
 import { Header } from "./components/Header";
 import AuthStepper from "./components/AuthStepper";
 import { useNgrokContext } from "./components/NgrokContext";
 
-// Note: This line relies on Docker Desktop's presence as a host application.
-// If you're running this React app in a browser, it won't work properly.
-const client = createDockerDesktopClient();
-
-function useDockerDesktopClient() {
-  return client;
-}
-
 export function App() {
-  const { authToken, containers} = useNgrokContext();
-  const authIsSetup = authToken != "";
+  const { authIsSetup } = useNgrokContext();
 
   return (
     <>
       <Header />
-      <Grid
+      <Grid2
         container
         direction={"column"}
         spacing={2}
         textAlign={"center"}
         justifyContent={"center"}
-        mt={8}
+        sx={{ mt: 8 }}
       >
         {!authIsSetup ? (
           <AuthStepper />
         ) : (
-          <Grid mt={2}>
+          <Grid2 sx={{ mt: 2 }}>
             <ContainersGrid />
-          </Grid>
+          </Grid2>
         )}
-      </Grid>
+      </Grid2>
     </>
   );
 }

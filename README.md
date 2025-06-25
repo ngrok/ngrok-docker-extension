@@ -17,7 +17,7 @@ To use the extension:
 1. Start the container(s) you want to expose in Docker Desktop.
 2. Click on the Ngrok icon in the Docker Desktop toolbar.
 3. Authenticate with Ngrok by clicking "Authenticate" and pasting in your authtoken from the [Ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken).
-4. Start a tunnel by clicking start icon in the Ngrok extension window.
+4. Start an endpoint by clicking start icon in the Ngrok extension window.
 5. You now have a public URL that you can share with anyone.
 
 ## Screenshots
