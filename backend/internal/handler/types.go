@@ -58,3 +58,11 @@ type CreateEndpointResponse struct {
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
+
+// Agent Status Types
+type AgentStatusResponse struct {
+	Status            string `json:"status"`
+	Timestamp         string `json:"timestamp"`
+	ConnectionLatency int64  `json:"connectionLatency"` // milliseconds
+	LastError         string `json:"lastError"`
+}

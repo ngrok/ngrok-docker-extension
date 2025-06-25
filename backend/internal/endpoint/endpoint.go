@@ -33,15 +33,33 @@ type Manager interface {
 	CreateEndpoint(ctx context.Context, containerID, targetPort string, opts ...ngrok.EndpointOption) (*Endpoint, error)
 	RemoveEndpoint(ctx context.Context, containerID, targetPort string) error
 	ListEndpoints() map[string]*Endpoint
+	GetCurrentStatus() StatusUpdate
 	Shutdown(ctx context.Context) error
+}
+
+type ConnectionStatus string
+
+const (
+	StatusOnline       ConnectionStatus = "online"
+	StatusOffline      ConnectionStatus = "offline"
+	StatusReconnecting ConnectionStatus = "reconnecting"
+	StatusUnknown      ConnectionStatus = "unknown"
+)
+
+type StatusUpdate struct {
+	Status            ConnectionStatus
+	Timestamp         time.Time
+	ConnectionLatency time.Duration
+	LastError         error
 }
 
 // manager implements the Manager interface
 type manager struct {
-	mu        sync.RWMutex
-	agent     ngrok.Agent
-	endpoints map[string]*Endpoint // containerID:targetPort -> endpoint
-	logger    *slog.Logger
+	mu          sync.RWMutex
+	agent       ngrok.Agent
+	endpoints   map[string]*Endpoint // containerID:targetPort -> endpoint
+	logger      *slog.Logger
+	agentStatus StatusUpdate
 }
 
 // NewManager creates a new endpoint manager
@@ -49,6 +67,10 @@ func NewManager(logger *slog.Logger) Manager {
 	return &manager{
 		endpoints: make(map[string]*Endpoint),
 		logger:    logger,
+		agentStatus: StatusUpdate{
+			Status:    StatusOffline,
+			Timestamp: time.Now(),
+		},
 	}
 }
 
@@ -78,11 +100,17 @@ func (m *manager) ConfigureAgent(ctx context.Context, opts ...ngrok.AgentOption)
 			switch e := event.(type) {
 			case *ngrok.EventAgentConnectSucceeded:
 				m.logger.Info("Connected to ngrok server")
+				m.updateConnectionStatus(StatusOnline, nil)
 			case *ngrok.EventAgentDisconnected:
 				m.logger.Info("Disconnected from ngrok server")
 				if e.Error != nil {
 					m.logger.Error("Disconnect error", "error", e.Error)
+					m.updateConnectionStatus(StatusReconnecting, e.Error)
+				} else {
+					m.updateConnectionStatus(StatusOffline, nil)
 				}
+			case *ngrok.EventAgentHeartbeatReceived:
+				m.updateConnectionLatency(e.Latency)
 			}
 		}))
 
@@ -243,4 +271,28 @@ func (m *manager) closeAgent(_ context.Context) error {
 	m.endpoints = make(map[string]*Endpoint)
 
 	return nil
+}
+
+func (m *manager) updateConnectionStatus(status ConnectionStatus, err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.agentStatus.Status = status
+	m.agentStatus.Timestamp = time.Now()
+	m.agentStatus.LastError = err
+}
+
+func (m *manager) updateConnectionLatency(latency time.Duration) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.agentStatus.Status == StatusOnline {
+		m.agentStatus.ConnectionLatency = latency
+	}
+}
+
+func (m *manager) GetCurrentStatus() StatusUpdate {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.agentStatus
 }
