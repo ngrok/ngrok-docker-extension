@@ -121,7 +121,7 @@ func (m *manager) CreateEndpoint(ctx context.Context, containerID, targetPort st
 	detection, err := detectproto.Detect(detectCtx, "172.17.0.1", targetPort)
 	if err != nil {
 		m.logger.Warn("Protocol detection failed, using default",
-			"error", "err",
+			"error", err,
 			"containerID", containerID,
 			"targetPort", targetPort,
 			"upstream", "http",
@@ -195,7 +195,9 @@ func (m *manager) RemoveEndpoint(ctx context.Context, containerID, targetPort st
 
 	// Close the endpoint
 	if endpoint.Forwarder != nil {
-		endpoint.Forwarder.Close()
+		if err := endpoint.Forwarder.Close(); err != nil {
+			return err
+		}
 	}
 
 	delete(m.endpoints, endpointKey)
