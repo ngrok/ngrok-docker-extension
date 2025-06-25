@@ -82,6 +82,7 @@ func (ext *ngrokExtension) initHandler() error {
 	ext.router.GET("/list_endpoints", ext.handler.ListEndpoints)
 	ext.router.POST("/create_endpoint", ext.handler.CreateEndpoint)
 	ext.router.POST("/remove_endpoint", ext.handler.RemoveEndpoint)
+	ext.router.GET("/agent_status", ext.handler.GetAgentStatus)
 	
 	return nil
 }

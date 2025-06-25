@@ -4,7 +4,8 @@ package handler
 
 // Configure Agent Types
 type ConfigureAgentRequest struct {
-	Token string `json:"token"`
+	Token      string `json:"token"`
+	ConnectURL string `json:"connectURL,omitempty"`
 }
 
 type ConfigureAgentResponse struct {
@@ -56,4 +57,12 @@ type CreateEndpointResponse struct {
 // Error Response (for HTTP error cases)
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+// Agent Status Types
+type AgentStatusResponse struct {
+	Status            string `json:"status"`
+	Timestamp         string `json:"timestamp"`
+	ConnectionLatency int64  `json:"connectionLatency"` // milliseconds
+	LastError         string `json:"lastError"`
 }

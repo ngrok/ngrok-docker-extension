@@ -19,9 +19,15 @@ func (h *Handler) ConfigureAgent(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "token is required"})
 	}
 
-	if err := h.endpointManager.ConfigureAgent(ctx.Request().Context(), ngrok.WithAuthtoken(req.Token)); err != nil {
-		h.logger.Error("Failed to configure agent with auth token", "error", err)
-		return ctx.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid agent configuration token"})
+	// Build agent options
+	agentOpts := []ngrok.AgentOption{ngrok.WithAuthtoken(req.Token)}
+	if req.ConnectURL != "" {
+		agentOpts = append(agentOpts, ngrok.WithAgentConnectURL(req.ConnectURL))
+	}
+
+	if err := h.endpointManager.ConfigureAgent(ctx.Request().Context(), agentOpts...); err != nil {
+		h.logger.Error("Failed to configure agent", "error", err, "connectURL", req.ConnectURL)
+		return ctx.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid agent configuration"})
 	}
 
 	return ctx.JSON(http.StatusOK, ConfigureAgentResponse{})
