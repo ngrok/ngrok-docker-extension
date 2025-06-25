@@ -422,7 +422,8 @@ export default function ContainersGrid() {
     createEndpointConfiguration(configWithContainerInfo);
     
     if (shouldStart) {
-      handleStartEndpoint(currentContainer)();
+      // Pass the config directly to avoid timing issues with context updates
+      handleStartEndpoint(currentContainer, configWithContainerInfo)();
     }
 
     setConfigDialogOpen(false);
