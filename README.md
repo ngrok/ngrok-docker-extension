@@ -2,6 +2,8 @@
 
 Get your local Docker containers on the internet using [Ngrok](https://ngrok.com/) with this Docker Desktop extension.
 
+> Perfer a terminal over GUI? The [ngrok Docker Image](https://hub.docker.com/r/ngrok/ngrok) is built for automation, scripting, and DevOps workflows. You can find the source and contribute on [GitHub](https://github.com/ngrok/docker-ngrok).
+
 ## Installation
 
 To install the extension:
