@@ -43,9 +43,7 @@ func newNgrokExtension(socketPath string, logger *slog.Logger) (*ngrokExtension,
 		return nil, fmt.Errorf("failed to initialize router: %w", err)
 	}
 	
-	if err := ext.initHandler(); err != nil {
-		return nil, fmt.Errorf("failed to initialize handler: %w", err)
-	}
+	ext.initHandler()
 	
 	return ext, nil
 }
@@ -74,17 +72,8 @@ func (ext *ngrokExtension) initRouter() error {
 }
 
 // initHandler creates the HTTP handler
-func (ext *ngrokExtension) initHandler() error {
-	ext.handler = handler.New(ext.logger, ext.endpointManager)
-	
-	// Setup routes
-	ext.router.POST("/configure_agent", ext.handler.ConfigureAgent)
-	ext.router.GET("/list_endpoints", ext.handler.ListEndpoints)
-	ext.router.POST("/create_endpoint", ext.handler.CreateEndpoint)
-	ext.router.POST("/remove_endpoint", ext.handler.RemoveEndpoint)
-	ext.router.GET("/agent_status", ext.handler.GetAgentStatus)
-	
-	return nil
+func (ext *ngrokExtension) initHandler() {
+	ext.handler = handler.New(ext.logger, ext.endpointManager, ext.router)
 }
 
 

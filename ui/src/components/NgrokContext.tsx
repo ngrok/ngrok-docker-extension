@@ -48,6 +48,18 @@ export interface Endpoint {
   targetPort: string;
 }
 
+export interface DetectProtocolRequest {
+  container_id: string;
+  port: string;
+}
+
+export interface DetectProtocolResponse {
+  tcp: boolean;
+  http: boolean;
+  https: boolean;
+  tls: boolean;
+}
+
 const client = createDockerDesktopClient();
 
 function useDockerDesktopClient() {

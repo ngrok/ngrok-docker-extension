@@ -66,3 +66,16 @@ type AgentStatusResponse struct {
 	ConnectionLatency int64  `json:"connectionLatency"` // milliseconds
 	LastError         string `json:"lastError"`
 }
+
+// Detect Protocol Types
+type DetectProtocolRequest struct {
+	ContainerID string `json:"container_id"`
+	Port        string `json:"port"`
+}
+
+type DetectProtocolResponse struct {
+	TCP   bool `json:"tcp"`
+	HTTP  bool `json:"http"`
+	HTTPS bool `json:"https"`
+	TLS   bool `json:"tls"`
+}

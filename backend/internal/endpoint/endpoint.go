@@ -34,6 +34,7 @@ type Manager interface {
 	RemoveEndpoint(ctx context.Context, containerID, targetPort string) error
 	ListEndpoints() map[string]*Endpoint
 	GetCurrentStatus() StatusUpdate
+	DetectContainerProtocol(containerID string, port string) (*detectproto.Result, error)
 	Shutdown(ctx context.Context) error
 }
 
@@ -142,11 +143,8 @@ func (m *manager) CreateEndpoint(ctx context.Context, containerID, targetPort st
 		return nil, fmt.Errorf("no agent configured - call ConfigureAgent first")
 	}
 
-	// Detect protocols on the port with 250ms timeout
-	detectCtx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
-	defer cancel()
-
-	detection, err := detectproto.Detect(detectCtx, "172.17.0.1", targetPort)
+	// Use the reusable detection method
+	detection, err := m.DetectContainerProtocol(containerID, targetPort)
 	if err != nil {
 		m.logger.Warn("Protocol detection failed, using default",
 			"error", err,
@@ -304,4 +302,15 @@ func (m *manager) GetCurrentStatus() StatusUpdate {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.agentStatus
+}
+
+// DetectContainerProtocol detects protocols on a specific container and port
+func (m *manager) DetectContainerProtocol(containerID string, port string) (*detectproto.Result, error) {
+	// Detect protocols on the port with 250ms timeout
+	detectCtx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	// For now, we continue using the Docker bridge IP (172.17.0.1)
+	// In the future, we could use containerID to resolve the specific container's IP
+	return detectproto.Detect(detectCtx, "172.17.0.1", port)
 }
