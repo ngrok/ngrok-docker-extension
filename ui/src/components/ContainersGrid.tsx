@@ -492,6 +492,7 @@ export default function ContainersGrid() {
         initialConfig={editingConfig}
         containerName={currentContainer?.Name || ''}
         containerImage={currentContainer?.Image || ''}
+        containerID={currentContainer?.ContainerId || ''}
         targetPort={currentContainer?.Port.PublicPort.toString() || ''}
         isEditing={!!editingConfig}
         isRunning={!!(currentContainer && runningEndpoints[currentContainer.id])}

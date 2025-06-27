@@ -19,11 +19,12 @@ import {
   Link,
   FormHelperText,
   Box,
-  Alert
+  Alert,
+  CircularProgress
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { EndpointConfiguration } from "./NgrokContext";
+import { EndpointConfiguration, DetectProtocolRequest, DetectProtocolResponse } from "./NgrokContext";
 
 const client = createDockerDesktopClient();
 
@@ -39,6 +40,7 @@ interface EndpointConfigurationDialogProps {
   initialConfig?: EndpointConfiguration;
   containerName: string;
   containerImage: string;
+  containerID: string;
   targetPort: string;
   isEditing: boolean; // determines button text and behavior
   isRunning: boolean; // indicates if the endpoint is currently running
@@ -52,6 +54,7 @@ export default function EndpointConfigurationDialog({
   initialConfig,
   containerName,
   containerImage,
+  containerID,
   targetPort,
   isEditing,
   isRunning
@@ -68,6 +71,10 @@ export default function EndpointConfigurationDialog({
     description: initialConfig?.description || '',
     metadata: initialConfig?.metadata || '',
   });
+
+  // Protocol detection state
+  const [protocolDetection, setProtocolDetection] = useState<DetectProtocolResponse | null>(null);
+  const [detectionLoading, setDetectionLoading] = useState(false);
 
   useEffect(() => {
     if (initialConfig) {
@@ -86,6 +93,29 @@ export default function EndpointConfigurationDialog({
       });
     }
   }, [initialConfig, containerName, targetPort]);
+
+  // Protocol detection effect
+  useEffect(() => {
+    if (open && containerID && targetPort) {
+      setDetectionLoading(true);
+      setProtocolDetection(null);
+
+      const request: DetectProtocolRequest = { 
+        container_id: containerID, 
+        port: targetPort 
+      };
+      
+      ddClient.extension.vm?.service?.post('/detect_protocol', request)
+        .then((result) => setProtocolDetection(result as DetectProtocolResponse))
+        .catch(() => setProtocolDetection({
+          tcp: false,
+          http: false,
+          https: false,
+          tls: false
+        }))
+        .finally(() => setDetectionLoading(false));
+    }
+  }, [open, containerID, targetPort, ddClient]);
 
   const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setConfig({ ...config, url: event.target.value });
@@ -177,6 +207,44 @@ export default function EndpointConfigurationDialog({
     }
   };
 
+  // Detection results display component
+  const DetectionResults = () => {
+    if (detectionLoading) {
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+          <CircularProgress size={16} />
+          <Typography variant="body2" color="text.secondary">
+            Detecting protocols...
+          </Typography>
+        </Box>
+      );
+    }
+    
+    if (!protocolDetection) {
+      return (
+        <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="body2" color="text.secondary">
+            Protocol Detection: Waiting for container information...
+          </Typography>
+        </Box>
+      );
+    }
+    
+    const protocols = [];
+    if (protocolDetection.tcp) protocols.push('TCP');
+    if (protocolDetection.http) protocols.push('HTTP');
+    if (protocolDetection.https) protocols.push('HTTPS');
+    if (protocolDetection.tls) protocols.push('TLS');
+    
+    return (
+      <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="body2" color="text.secondary">
+          Detected Protocols: {protocols.length > 0 ? protocols.join(', ') : 'None'}
+        </Typography>
+      </Box>
+    );
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
@@ -195,6 +263,9 @@ export default function EndpointConfigurationDialog({
             Updating this endpoint's configuration will restart the running endpoint.
           </Alert>
         )}
+        
+        {/* Protocol Detection Results */}
+        <DetectionResults />
         
         {/* Binding Field with Help Link */}
         <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>

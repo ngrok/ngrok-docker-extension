@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"slices"
 
+	"github.com/labstack/echo/v4"
 	"github.com/ngrok/ngrok-docker-extension/internal/endpoint"
 )
 
@@ -12,11 +13,21 @@ type Handler struct {
 	endpointManager endpoint.Manager
 }
 
-func New(logger *slog.Logger, endpointManager endpoint.Manager) *Handler {
-	return &Handler{
+func New(logger *slog.Logger, endpointManager endpoint.Manager, router *echo.Echo) *Handler {
+	h := &Handler{
 		logger:          logger,
 		endpointManager: endpointManager,
 	}
+	
+	// Setup routes
+	router.POST("/configure_agent", h.ConfigureAgent)
+	router.GET("/list_endpoints", h.ListEndpoints)
+	router.POST("/create_endpoint", h.CreateEndpoint)
+	router.POST("/remove_endpoint", h.RemoveEndpoint)
+	router.GET("/agent_status", h.GetAgentStatus)
+	router.POST("/detect_protocol", h.DetectProtocol)
+	
+	return h
 }
 
 // Helper function to convert endpoint manager endpoints to our response format
