@@ -233,7 +233,7 @@ func (m *manager) RemoveEndpoint(ctx context.Context, containerID, targetPort st
 	// If no more endpoints remain, disconnect the agent to free up resources
 	if len(m.endpoints) == 0 && m.agent != nil {
 		m.logger.Info("No endpoints remaining, disconnecting ngrok agent")
-		if err := m.closeAgent(ctx); err != nil {
+		if err := m.agent.Disconnect(); err != nil {
 			m.logger.Warn("Error disconnecting agent after removing last endpoint", "error", err)
 		}
 	}
