@@ -106,7 +106,11 @@ export default function EndpointConfigurationDialog({
       };
       
       ddClient.extension.vm?.service?.post('/detect_protocol', request)
-        .then((result) => setProtocolDetection(result as DetectProtocolResponse))
+        .then((result: any) => {
+          // Handle both old and new response structures (Docker Desktop API change)
+          const responseData = result?.data || result;
+          setProtocolDetection(responseData as DetectProtocolResponse);
+        })
         .catch(() => setProtocolDetection({
           tcp: false,
           http: false,

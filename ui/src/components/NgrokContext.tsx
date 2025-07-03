@@ -162,12 +162,15 @@ export function NgrokContextProvider({
     });
 
     ddClient.extension.vm?.service?.get("/list_endpoints").then((result: any)=>{
+      // Handle both old and new response structures (Docker Desktop API change)
+      const responseData = result?.data || result;
+
       // console.log('Loaded endpoints', result);
       const endpointsMap: Record<string, Endpoint> = {};
       const runningEndpointsMap: Record<string, RunningEndpoint> = {};
       
-      if (result.endpoints) {
-        result.endpoints.forEach((endpoint: Endpoint) => {
+      if (responseData.endpoints) {
+        responseData.endpoints.forEach((endpoint: Endpoint) => {
           endpointsMap[endpoint.id] = endpoint;
           // Also populate running endpoints
           runningEndpointsMap[endpoint.id] = {
@@ -266,6 +269,14 @@ export function NgrokContextProvider({
         .then((_result) => {
           localStorage.setItem("authToken", authToken);
           localStorage.setItem("connectURL", connectURL);
+        })
+        .catch((error) => {
+          throw new Error(`Failed to configure agent: ${JSON.stringify(error)}`);
+          // Reset status to unknown on error
+          setAgentStatus({
+            status: 'unknown',
+            timestamp: new Date().toISOString()
+          });
         });
       
       getContainers();
