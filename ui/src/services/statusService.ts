@@ -41,12 +41,14 @@ export class StatusService {
     try {
       const result = await ddClient.extension.vm?.service?.get('/agent_status') as any;
       
-      if (result) {
+      // Handle both old and new response structures (Docker Desktop API change)
+      const statusData = result?.data || result;
+      if (statusData) {
         const status: AgentStatus = {
-          status: result.status,
-          timestamp: result.timestamp,
-          connectionLatency: result.connectionLatency,
-          lastError: result.lastError
+          status: statusData.status,
+          timestamp: statusData.timestamp,
+          connectionLatency: statusData.connectionLatency,
+          lastError: statusData.lastError
         };
         this.onStatusUpdate?.(status);
       } else {

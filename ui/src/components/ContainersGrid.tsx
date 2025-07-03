@@ -379,10 +379,16 @@ export default function ContainersGrid() {
         metadata: config.metadata,
       });
 
+      // Handle both old and new response structures (Docker Desktop API change)
+      const endpointData = response.data?.endpoint || response.endpoint;
+      if (!endpointData || !endpointData.url) {
+        throw new Error(`Unexpected response from create_endpoint: ${JSON.stringify(response)}`);
+      }
+
       // Add to running endpoints
       const runningEndpoint: RunningEndpoint = {
         id: container.id,
-        url: response.endpoint.url,
+        url: endpointData.url,
         containerId: container.ContainerId,
         targetPort: container.Port.PublicPort.toString()
       };
@@ -392,7 +398,7 @@ export default function ContainersGrid() {
       statusService.checkStatusNow();
 
       ddClient.desktopUI.toast.success(
-        `Endpoint started at ${response.endpoint.url}`
+        `Endpoint started at ${endpointData.url}`
       );
     } catch (error: any) {
       console.log(error);
