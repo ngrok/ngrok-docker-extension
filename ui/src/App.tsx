@@ -1,7 +1,7 @@
 import Grid2 from "@mui/material/Grid2";
 import ContainersGrid from "./components/ContainersGrid";
 import { Header } from "./components/Header";
-import AuthStepper from "./components/AuthStepper";
+import AuthSetup from "./components/AuthSetup";
 import { useNgrokContext } from "./components/NgrokContext";
 
 export function App() {
@@ -9,17 +9,17 @@ export function App() {
 
   return (
     <>
-      <Header />
+      {authIsSetup && <Header />}
       <Grid2
         container
         direction={"column"}
         spacing={2}
         textAlign={"center"}
         justifyContent={"center"}
-        sx={{ mt: 8 }}
+        sx={{ mt: authIsSetup ? 8 : 0 }}
       >
         {!authIsSetup ? (
-          <AuthStepper />
+          <AuthSetup />
         ) : (
           <Grid2 sx={{ mt: 2 }}>
             <ContainersGrid />
