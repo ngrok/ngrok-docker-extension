@@ -157,7 +157,6 @@ export function NgrokContextProvider({
 
   const getContainers = async () => {
     ddClient.docker.listContainers().then((loaded)=>{
-      // console.log("Loaded containers", loaded);
       updateContainers(loaded as DockerContainer[]);
     });
 
@@ -165,7 +164,6 @@ export function NgrokContextProvider({
       // Handle both old and new response structures (Docker Desktop API change)
       const responseData = result?.data || result;
 
-      // console.log('Loaded endpoints', result);
       const endpointsMap: Record<string, Endpoint> = {};
       const runningEndpointsMap: Record<string, RunningEndpoint> = {};
       
@@ -190,7 +188,9 @@ export function NgrokContextProvider({
     if(loaded){
       const newContainers: Record<string, NgrokContainer> = {};
       for(const container of loaded){
-        for(const port of container.Ports.filter(x=>x.PublicPort)){
+        const publicPorts = container.Ports ? container.Ports.filter(x=>x.PublicPort) : [];
+        
+        for(const port of publicPorts){
           const container_id = `${container.Id}:${port.PublicPort}`;
           if(!containers[container_id]){
             newContainers[container_id] = {
