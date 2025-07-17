@@ -25,8 +25,14 @@ func (h *Handler) ConfigureAgent(ctx echo.Context) error {
 		agentOpts = append(agentOpts, ngrok.WithAgentConnectURL(req.ConnectURL))
 	}
 
-	if err := h.endpointManager.ConfigureAgent(ctx.Request().Context(), agentOpts...); err != nil {
-		h.logger.Error("Failed to configure agent", "error", err, "connectURL", req.ConnectURL)
+	// Default auto-disconnect to false if not specified
+	autoDisconnect := false
+	if req.AutoDisconnect != nil {
+		autoDisconnect = *req.AutoDisconnect
+	}
+
+	if err := h.endpointManager.ConfigureAgent(ctx.Request().Context(), autoDisconnect, agentOpts...); err != nil {
+		h.logger.Error("Failed to configure agent", "error", err, "connectURL", req.ConnectURL, "autoDisconnect", autoDisconnect)
 		return ctx.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid agent configuration"})
 	}
 

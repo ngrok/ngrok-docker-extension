@@ -6,7 +6,7 @@ import {
   GridColDef,
 
 } from "@mui/x-data-grid";
-import { CircularProgress, Tooltip, Typography, Popover, Paper, Button, Stack } from "@mui/material";
+import { CircularProgress, Tooltip, Typography, Popover, Paper, Button, Stack, Box } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import LanguageIcon from "@mui/icons-material/Language";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -40,7 +40,8 @@ export default function ContainersGrid() {
     setRunningEndpoints,
     createEndpointConfiguration,
     updateEndpointConfiguration,
-    deleteEndpointConfiguration
+    deleteEndpointConfiguration,
+    setAuthToken
   } = useNgrokContext();
   const [rows, setRows] = useState<NgrokContainer[]>(Object.values(containers));
 
@@ -483,7 +484,19 @@ export default function ContainersGrid() {
   };
 
   return (
-    <Grid2 container flex={1} height="calc(100vh - 200px)">
+    <Box>
+      {/* Temporary button for testing auth setup flow */}
+      <Button 
+        variant="outlined" 
+        color="secondary" 
+        size="small" 
+        onClick={() => setAuthToken('')}
+        sx={{ mb: 2 }}
+      >
+        🔧 Test Auth Setup (Clear Token)
+      </Button>
+      
+      <Grid2 container flex={1} height="calc(100vh - 200px)">
       <AlertDialog
         open={showAlertDialog}
         msg={alertDialogMsg}
@@ -586,6 +599,7 @@ export default function ContainersGrid() {
           },
         }}
       />
-    </Grid2>
+      </Grid2>
+    </Box>
   );
 }

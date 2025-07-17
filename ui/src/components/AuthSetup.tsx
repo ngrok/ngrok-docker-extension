@@ -14,7 +14,6 @@ import Grid2 from "@mui/material/Grid2";
 import {
   OpenInNew as OpenInNewIcon,
   VpnKey as VpnKeyIcon,
-  CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
 } from "@mui/icons-material";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -32,7 +31,7 @@ export default function AuthSetup() {
   const [localAuthToken, setLocalAuthToken] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [validationError, setValidationError] = React.useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = React.useState(false);
+
   const ddClient = useDockerDesktopClient();
 
   const handleTokenChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,12 +60,7 @@ export default function AuthSetup() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setAuthToken(localAuthToken);
-      setIsSuccess(true);
-      
-      // Clear success state after a short delay
-      setTimeout(() => {
-        setIsSuccess(false);
-      }, 2000);
+      ddClient.desktopUI.toast.success("Your ngrok auth token was authorized!");
     } catch (error) {
       setValidationError("Failed to save authtoken. Please try again.");
     } finally {
@@ -123,11 +117,7 @@ export default function AuthSetup() {
                       <VpnKeyIcon color={validationError ? "error" : "action"} />
                     </InputAdornment>
                   ),
-                  endAdornment: isSuccess ? (
-                    <InputAdornment position="end">
-                      <CheckCircleIcon color="success" />
-                    </InputAdornment>
-                  ) : validationError ? (
+                  endAdornment: validationError ? (
                     <InputAdornment position="end">
                       <ErrorIcon color="error" />
                     </InputAdornment>
@@ -162,13 +152,7 @@ export default function AuthSetup() {
           </Grid2>
         )}
 
-        {isSuccess && (
-          <Grid2>
-            <Alert severity="success" variant="outlined">
-              Authtoken saved successfully!
-            </Alert>
-          </Grid2>
-        )}
+
       </Grid2>
     </Container>
   );

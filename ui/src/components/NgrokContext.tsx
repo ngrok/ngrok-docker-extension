@@ -74,6 +74,9 @@ interface NgrokContextType {
   connectURL: string;
   setConnectURL: (connectURL: string) => void;
 
+  autoDisconnect: boolean;
+  setAutoDisconnect: (autoDisconnect: boolean) => void;
+
   containers: Record<string,NgrokContainer>;
   setContainers: (containers: Record<string, NgrokContainer>) => void;
 
@@ -104,6 +107,9 @@ const NgrokContext = createContext<NgrokContextType>({
   connectURL: "",
   setConnectURL: () => null,
 
+  autoDisconnect: false,
+  setAutoDisconnect: () => null,
+
   containers: {},
   setContainers: () => null,
   endpoints: {},
@@ -133,6 +139,10 @@ export function NgrokContextProvider({
 
   const [connectURL, setConnectURL] = useState(
     localStorage.getItem("connectURL") ?? ""
+  );
+
+  const [autoDisconnect, setAutoDisconnect] = useState(
+    localStorage.getItem("autoDisconnect") === "true" ? true : false // Default to false
   );
 
   const [containers, setContainers] = useState(
@@ -265,13 +275,20 @@ export function NgrokContextProvider({
   useEffect(() => {
     if (authIsSetup) {
       ddClient.extension.vm?.service
-        ?.post('/configure_agent', { token: authToken, connectURL: connectURL })
+        ?.post('/configure_agent', { 
+          token: authToken, 
+          connectURL: connectURL,
+          autoDisconnect: autoDisconnect 
+        })
         .then((_result) => {
           localStorage.setItem("authToken", authToken);
           localStorage.setItem("connectURL", connectURL);
+          localStorage.setItem("autoDisconnect", autoDisconnect.toString());
+          ddClient.desktopUI.toast.success("Settings saved successfully");
         })
         .catch((error) => {
-          throw new Error(`Failed to configure agent: ${JSON.stringify(error)}`);
+          console.error(`Failed to configure agent: ${JSON.stringify(error)}`);
+          ddClient.desktopUI.toast.error("Failed to save settings");
           // Reset status to unknown on error
           setAgentStatus({
             status: 'unknown',
@@ -281,7 +298,7 @@ export function NgrokContextProvider({
       
       getContainers();
     }
-  }, [authToken, authIsSetup, connectURL]);
+  }, [authToken, authIsSetup, connectURL, autoDisconnect]);
 
   useEffect(() => {
     // If the auth token already exists in the local storage, make a POST /auth request automatically to set up the auth
@@ -339,6 +356,9 @@ export function NgrokContextProvider({
         
         connectURL,
         setConnectURL,
+        
+        autoDisconnect,
+        setAutoDisconnect,
         
         containers,
         setContainers,

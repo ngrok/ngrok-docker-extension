@@ -2,17 +2,17 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   TextField,
   Link,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
   Box,
+  Switch,
+  FormControlLabel,
+  IconButton,
 } from "@mui/material";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CloseIcon from '@mui/icons-material/Close';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import Button from "@mui/material/Button";
 import React, { useState } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -25,22 +25,41 @@ function useDockerDesktopClient() {
   return client;
 }
 
-export default function SettingsDialog() {
-  const { authToken, setAuthToken, connectURL, setConnectURL } = useNgrokContext();
+interface SettingsDialogProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+
+
+export default function SettingsDialog({ open: externalOpen, onClose }: SettingsDialogProps = {}) {
+  const { authToken, setAuthToken, connectURL, setConnectURL, autoDisconnect, setAutoDisconnect } = useNgrokContext();
   const [tempAuthToken, setTempAuthToken] = useState(authToken);
   const [tempConnectURL, setTempConnectURL] = useState(connectURL);
+  const [tempAutoDisconnect, setTempAutoDisconnect] = useState(autoDisconnect);
   const ddClient = useDockerDesktopClient();
 
-  const [open, setOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+
+  // Check if anything has changed
+  const hasChanges = tempAuthToken !== authToken || 
+                    tempConnectURL !== connectURL || 
+                    tempAutoDisconnect !== autoDisconnect;
 
   const handleClickOpen = () => {
     setTempAuthToken(authToken);
     setTempConnectURL(connectURL);
-    setOpen(true);
+    setTempAutoDisconnect(autoDisconnect);
+    setInternalOpen(true);
   };
 
   const handleCancel = () => {
-    setOpen(false);
+    if (onClose) {
+      onClose();
+    } else {
+      setInternalOpen(false);
+    }
   };
 
   const handleAuthTokenChange = (event: any) => {
@@ -51,117 +70,328 @@ export default function SettingsDialog() {
     setTempConnectURL(event.target.value);
   };
 
-  const handleUseDefault = () => {
-    setTempConnectURL("");
+  const handleAutoDisconnectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTempAutoDisconnect(event.target.checked);
   };
 
   const handleSave = (_event: any) => {
+    // Update context state - the useEffect in NgrokContext will handle the API call
     setAuthToken(tempAuthToken);
     setConnectURL(tempConnectURL);
-    setOpen(false);
+    setAutoDisconnect(tempAutoDisconnect);
+    
+    if (onClose) {
+      onClose();
+    } else {
+      setInternalOpen(false);
+    }
   };
 
   return (
     <div>
-      <Button size="small" onClick={handleClickOpen}>
-        Settings
-      </Button>
-      <Dialog open={open} onClose={handleCancel}>
-        <DialogTitle>Settings</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Paste your Authtoken to authenticate your ngrok agent. You only have to do this once.{' '}
-            <Link
-              component="button"
-              variant="inherit"
-              onClick={() => {
-                ddClient.host.openExternal(
-                  "https://dashboard.ngrok.com/get-started/your-authtoken"
-                );
+      {externalOpen === undefined && (
+        <Button size="small" onClick={handleClickOpen}>
+          Settings
+        </Button>
+      )}
+      <Dialog 
+        open={isOpen} 
+        onClose={handleCancel}
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            width: '642px',
+            maxWidth: 'none',
+          }
+        }}
+      >
+        <DialogTitle 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            fontFamily: 'Roboto',
+            fontWeight: 500,
+            fontSize: '21px',
+            lineHeight: '28px',
+            p: 3
+          }}
+        >
+          ngrok Settings
+          <IconButton 
+            onClick={handleCancel}
+            sx={{ p: 0 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, py: 0 }}>
+          {/* Authtoken Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontFamily: 'Roboto',
+                fontWeight: 500,
+                fontSize: '16px',
+                lineHeight: '24px',
+                mb: 2
               }}
-              sx={{ textDecoration: 'underline', cursor: 'pointer' }}
             >
-              Get authtoken from dashboard
-            </Link>
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="authtoken"
-            label="ngrok Auth Token"
-            placeholder="2GPS8IuofEuUw..."
-            type="password"
-            fullWidth
-            variant="filled"
-            onChange={handleAuthTokenChange}
-            value={tempAuthToken}
-            style={{marginTop:"1em"}}
-          />
+              ngrok Authtoken
+            </Typography>
+            <TextField
+              autoFocus
+              id="authtoken"
+              placeholder="2GPS8IuofEuUw..."
+              type="password"
+              fullWidth
+              variant="outlined"
+              onChange={handleAuthTokenChange}
+              value={tempAuthToken}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  fontFamily: 'Roboto Mono',
+                  fontSize: '14px',
+                  '& fieldset': {
+                    borderColor: '#C9C9C9',
+                    borderWidth: '1.5px',
+                  },
+                },
+                mb: 2
+              }}
+            />
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontFamily: 'Roboto',
+                fontWeight: 500,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#677285',
+                mb: 1
+              }}
+            >
+              Connects the extension with your ngrok account
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Link
+                component="button"
+                variant="inherit"
+                onClick={() => {
+                  ddClient.host.openExternal(
+                    "https://dashboard.ngrok.com/get-started/your-authtoken"
+                  );
+                }}
+                sx={{ 
+                  textDecoration: 'underline', 
+                  cursor: 'pointer',
+                  color: '#086dd7',
+                  fontFamily: 'Roboto',
+                  fontSize: '12px',
+                  lineHeight: '16px',
+                  letterSpacing: '0.24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5
+                }}
+              >
+                View in dashboard
+                <OpenInNewIcon sx={{ fontSize: '16px' }} />
+              </Link>
+            </Box>
+          </Box>
 
-          <Accordion style={{marginTop:"1em"}}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="advanced-settings-content"
-              id="advanced-settings-header"
+          {/* Agent Connect URL Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontFamily: 'Roboto',
+                fontWeight: 500,
+                fontSize: '16px',
+                lineHeight: '24px',
+                mb: 2
+              }}
             >
-              <Typography>Advanced Settings</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-                  <TextField
-                    margin="dense"
-                    id="connecturl"
-                    label="Agent Connect URL"
-                    placeholder=""
-                    sx={{ flexGrow: 1 }}
-                    variant="filled"
-                    onChange={handleConnectURLChange}
-                    value={tempConnectURL}
-                  />
-                  <Button 
-                    size="small" 
-                    onClick={handleUseDefault}
-                    variant="outlined"
-                    disabled={tempConnectURL === ""}
-                    sx={{ mb: 1 }}
-                  >
-                    Use Default
-                  </Button>
-                </Box>
-                <Typography variant="body2" color="text.secondary" style={{marginTop:"0.5em"}}>
-                  Specify a custom agent ingress address. Leave blank to use ngrok's default servers.{' '}
-                  <Link
-                    component="button"
-                    variant="inherit"
-                    onClick={() => {
-                      ddClient.host.openExternal("https://ngrok.com/docs/agent/ingress/");
-                    }}
-                    sx={{ textDecoration: 'underline', cursor: 'pointer' }}
-                  >
-                    Learn more about agent ingress
-                  </Link>
-                  {' '}or{' '}
-                  <Link
-                    component="button"
-                    variant="inherit"
-                    onClick={() => {
-                      ddClient.host.openExternal("https://dashboard.ngrok.com/tunnels/ingress");
-                    }}
-                    sx={{ textDecoration: 'underline', cursor: 'pointer' }}
-                  >
-                    manage agent ingress in dashboard
-                  </Link>
+              Agent Connect URL
+            </Typography>
+            <TextField
+              id="connecturl"
+              placeholder="connect.example.org:443"
+              fullWidth
+              variant="outlined"
+              onChange={handleConnectURLChange}
+              value={tempConnectURL}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  fontFamily: 'Roboto',
+                  fontSize: '14px',
+                  '& fieldset': {
+                    borderColor: '#E1E2E6',
+                    borderWidth: '1.5px',
+                  },
+                  '& input::placeholder': {
+                    color: '#677285',
+                  },
+                },
+                mb: 2
+              }}
+            />
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontFamily: 'Roboto',
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#677285',
+                mb: 1
+              }}
+            >
+              The network address used to connect to the ngrok service. Leave blank to use ngrok's default servers.
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+              <Link
+                component="button"
+                variant="inherit"
+                onClick={() => {
+                  ddClient.host.openExternal("https://ngrok.com/docs/agent/ingress/");
+                }}
+                sx={{ 
+                  textDecoration: 'underline', 
+                  cursor: 'pointer',
+                  color: '#086dd7',
+                  fontFamily: 'Roboto',
+                  fontSize: '12px',
+                  lineHeight: '16px',
+                  letterSpacing: '0.24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5
+                }}
+              >
+                Learn more in docs
+                <OpenInNewIcon sx={{ fontSize: '16px' }} />
+              </Link>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Link
+                component="button"
+                variant="inherit"
+                onClick={() => {
+                  ddClient.host.openExternal("https://dashboard.ngrok.com/tunnels/ingress");
+                }}
+                sx={{ 
+                  textDecoration: 'underline', 
+                  cursor: 'pointer',
+                  color: '#086dd7',
+                  fontFamily: 'Roboto',
+                  fontSize: '12px',
+                  lineHeight: '16px',
+                  letterSpacing: '0.24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5
+                }}
+              >
+                View in dashboard
+                <OpenInNewIcon sx={{ fontSize: '16px' }} />
+              </Link>
+            </Box>
+          </Box>
+
+          {/* Auto-disconnect Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontFamily: 'Roboto',
+                fontWeight: 500,
+                fontSize: '16px',
+                lineHeight: '24px',
+                mb: 2
+              }}
+            >
+              Auto-Disconnect
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={tempAutoDisconnect}
+                  onChange={handleAutoDisconnectChange}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#116ED0',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#8BC7F5',
+                    },
+                  }}
+                />
+              }
+              label={
+                <Typography 
+                  sx={{ 
+                    fontFamily: 'Roboto',
+                    fontSize: '14px',
+                    color: '#116ED0'
+                  }}
+                >
+                  Disconnect from ngrok service when all endpoints are offline
                 </Typography>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
+              }
+            />
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontFamily: 'Roboto',
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#677285',
+                mt: 1
+              }}
+            >
+              You may wish to enable this option to preserve bandwidth
+            </Typography>
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancel} variant="outlined">
+        <DialogActions sx={{ px: 3, py: 3, gap: 1 }}>
+          <Button 
+            onClick={handleCancel} 
+            variant="outlined"
+            sx={{
+              fontFamily: 'Roboto',
+              fontWeight: 500,
+              fontSize: '14px',
+              width: '74px',
+              height: '40px',
+              borderColor: '#116ED0',
+              color: '#116ED0',
+              borderWidth: '2px',
+              '&:hover': {
+                borderWidth: '2px',
+                borderColor: '#116ED0',
+              }
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={tempAuthToken.length === 0}>
+          <Button 
+            onClick={handleSave} 
+            variant="contained"
+            disabled={tempAuthToken.length === 0 || !hasChanges}
+            sx={{
+              fontFamily: 'Roboto',
+              fontWeight: 500,
+              fontSize: '14px',
+              width: '74px',
+              height: '40px',
+              backgroundColor: '#116ED0',
+              '&:hover': {
+                backgroundColor: '#116ED0',
+              }
+            }}
+          >
             Save
           </Button>
         </DialogActions>
