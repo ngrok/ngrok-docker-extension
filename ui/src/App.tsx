@@ -1,5 +1,5 @@
 import Grid2 from "@mui/material/Grid2";
-import ContainersGrid from "./components/ContainersGrid";
+import ContainerGrid from "./components/ContainerGrid";
 import { Header } from "./components/Header";
 import AuthSetup from "./components/AuthSetup";
 import { useNgrokContext } from "./components/NgrokContext";
@@ -22,7 +22,7 @@ export function App() {
           <AuthSetup />
         ) : (
           <Grid2 sx={{ mt: 2 }}>
-            <ContainersGrid />
+            <ContainerGrid />
           </Grid2>
         )}
       </Grid2>

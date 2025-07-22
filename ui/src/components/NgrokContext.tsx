@@ -95,6 +95,10 @@ interface NgrokContextType {
   updateEndpointConfiguration: (id: string, config: EndpointConfiguration) => void;
   deleteEndpointConfiguration: (id: string) => void;
 
+  // Online endpoints filter state
+  onlineEndpointsOnly: boolean;
+  setOnlineEndpointsOnly: (value: boolean) => void;
+
   // Agent status
   agentStatus: AgentStatus;
 }
@@ -121,6 +125,8 @@ const NgrokContext = createContext<NgrokContextType>({
   createEndpointConfiguration: () => null,
   updateEndpointConfiguration: () => null,
   deleteEndpointConfiguration: () => null,
+  onlineEndpointsOnly: false,
+  setOnlineEndpointsOnly: () => null,
   agentStatus: {
     status: 'offline',
     timestamp: new Date().toISOString()
@@ -164,6 +170,8 @@ export function NgrokContextProvider({
     status: 'unknown',
     timestamp: new Date().toISOString()
   });
+
+  const [onlineEndpointsOnly, setOnlineEndpointsOnly] = useState(false);
 
   const getContainers = async () => {
     ddClient.docker.listContainers().then((loaded)=>{
@@ -371,6 +379,8 @@ export function NgrokContextProvider({
         createEndpointConfiguration,
         updateEndpointConfiguration,
         deleteEndpointConfiguration,
+        onlineEndpointsOnly,
+        setOnlineEndpointsOnly,
         agentStatus,
       }}
     >
