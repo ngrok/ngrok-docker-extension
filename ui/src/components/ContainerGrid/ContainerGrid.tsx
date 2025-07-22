@@ -15,6 +15,7 @@ import { NgrokContainer, EndpointConfiguration, RunningEndpoint, useNgrokContext
 import { statusService } from '../../services/statusService';
 import AlertDialog from "../AlertDialog";
 import EndpointConfigurationDialog from "../EndpointConfigurationDialog";
+import EndpointCreationDialog, { StepOneConfig, StepTwoConfig } from "../EndpointCreationDialog";
 
 // Sub-components
 import EmptyState from "./components/EmptyState";
@@ -59,6 +60,7 @@ const ContainerGrid: React.FC = () => {
 
   // Dialog state
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [creationDialogOpen, setCreationDialogOpen] = useState(false);
   const [currentContainer, setCurrentContainer] = useState<NgrokContainer | null>(null);
   const [editingConfig, setEditingConfig] = useState<EndpointConfiguration | undefined>();
   
@@ -318,7 +320,7 @@ const ContainerGrid: React.FC = () => {
     
     setCurrentContainer(container);
     setEditingConfig(undefined);
-    setConfigDialogOpen(true);
+    setCreationDialogOpen(true);
   };
 
   const handleEditEndpoint = () => {
@@ -423,6 +425,34 @@ const ContainerGrid: React.FC = () => {
     }
   };
 
+  const handleCreationDialogNext = (_stepOneConfig: StepOneConfig) => {
+    // Step one completed, moving to step two - no action needed
+  };
+
+  const handleCreationDialogComplete = (stepOne: StepOneConfig, stepTwo: StepTwoConfig) => {
+    if (!currentContainer) return;
+
+    // Create endpoint configuration from both steps
+    const config: EndpointConfiguration = {
+      id: currentContainer.id,
+      containerId: currentContainer.ContainerId,
+      targetPort: currentContainer.Port.PublicPort.toString(),
+      url: stepOne.url || '',
+      binding: stepOne.binding,
+      poolingEnabled: stepOne.additionalOptions.poolingEnabled,
+      trafficPolicy: stepTwo.trafficPolicy,
+      description: stepOne.additionalOptions.description,
+      metadata: stepOne.additionalOptions.metadata,
+    };
+
+    // Create configuration and start endpoint
+    createEndpointConfiguration(config);
+    handleStartEndpoint(currentContainer.id);
+
+    setCreationDialogOpen(false);
+    setCurrentContainer(null);
+  };
+
   const handleConfigurationSave = (config: EndpointConfiguration, shouldStart: boolean) => {
     if (!currentContainer) return;
 
@@ -475,6 +505,19 @@ const ContainerGrid: React.FC = () => {
         open={showAlertDialog}
         msg={alertDialogMsg}
         onClose={() => setShowAlertDialog(false)}
+      />
+      
+      <EndpointCreationDialog
+        open={creationDialogOpen}
+        onClose={() => setCreationDialogOpen(false)}
+        onNext={handleCreationDialogNext}
+        onComplete={handleCreationDialogComplete}
+        containerInfo={{
+          imageName: currentContainer?.Image || '',
+          containerName: currentContainer?.Name || '',
+          containerID: currentContainer?.ContainerId || '',
+          targetPort: currentContainer?.Port.PublicPort.toString() || ''
+        }}
       />
       
       <EndpointConfigurationDialog

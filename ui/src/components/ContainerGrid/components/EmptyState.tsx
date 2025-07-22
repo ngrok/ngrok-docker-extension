@@ -1,6 +1,5 @@
 import { Box, Typography, Button } from "@mui/material";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { useNgrokContext } from "../../NgrokContext";
 
 const ddClient = createDockerDesktopClient();
 
