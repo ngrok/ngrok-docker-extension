@@ -50,6 +50,7 @@ const ContainerGrid: React.FC = () => {
     runningEndpoints, 
     endpointConfigurations,
     onlineEndpointsOnly,
+    setOnlineEndpointsOnly,
     setRunningEndpoints,
     createEndpointConfiguration,
     updateEndpointConfiguration,
@@ -106,14 +107,26 @@ const ContainerGrid: React.FC = () => {
   };
 
   const filteredContainers = getFilteredContainers();
+  const allContainers = Object.values(containers);
   const hasContainersWithPorts = filteredContainers.length > 0;
+
+  // Handle remove filter functionality
+  const handleRemoveFilter = () => {
+    setOnlineEndpointsOnly(false);
+  };
 
   // Show empty state if no containers with ports exist
   if (!hasContainersWithPorts) {
+    // Check if we're in filtered mode with containers available but none online
+    const isFiltered = onlineEndpointsOnly && allContainers.length > 0;
+    
     return (
       <Box>
         <OnlineEndpointsToggle />
-        <EmptyState />
+        <EmptyState 
+          isFiltered={isFiltered}
+          onRemoveFilter={handleRemoveFilter}
+        />
       </Box>
     );
   }
