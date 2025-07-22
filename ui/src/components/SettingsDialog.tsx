@@ -10,9 +10,11 @@ import {
   Switch,
   FormControlLabel,
   IconButton,
+  InputAdornment,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import Button from "@mui/material/Button";
 import React, { useState } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -37,6 +39,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
   const [tempAuthToken, setTempAuthToken] = useState(authToken);
   const [tempConnectURL, setTempConnectURL] = useState(connectURL);
   const [tempAutoDisconnect, setTempAutoDisconnect] = useState(autoDisconnect);
+  const [showPassword, setShowPassword] = useState(false);
   const ddClient = useDockerDesktopClient();
 
   const [internalOpen, setInternalOpen] = React.useState(false);
@@ -72,6 +75,10 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
 
   const handleAutoDisconnectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTempAutoDisconnect(event.target.checked);
+  };
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSave = (_event: any) => {
@@ -144,11 +151,28 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
               autoFocus
               id="authtoken"
               placeholder="2GPS8IuofEuUw..."
-              type="password"
+              type={showPassword ? "text" : "password"}
               fullWidth
               variant="outlined"
               onChange={handleAuthTokenChange}
               value={tempAuthToken}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      onMouseDown={(e) => e.preventDefault()}
+                      edge="end"
+                      tabIndex={-1}
+                      disableFocusRipple
+                      disableRipple
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   fontFamily: 'Roboto Mono',

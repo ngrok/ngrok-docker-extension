@@ -9,12 +9,15 @@ import {
   LinearProgress,
   Stack,
   InputAdornment,
+  IconButton,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import {
   OpenInNew as OpenInNewIcon,
   VpnKey as VpnKeyIcon,
   Error as ErrorIcon,
+  Visibility,
+  VisibilityOff,
 } from "@mui/icons-material";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { useNgrokContext } from "./NgrokContext";
@@ -31,6 +34,7 @@ export default function AuthSetup() {
   const [localAuthToken, setLocalAuthToken] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [validationError, setValidationError] = React.useState<string | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const ddClient = useDockerDesktopClient();
 
@@ -74,6 +78,10 @@ export default function AuthSetup() {
     }
   };
 
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <Container maxWidth="sm">
       <Grid2 container direction="column" spacing={4} sx={{ py: 8 }}>
@@ -104,6 +112,7 @@ export default function AuthSetup() {
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', width: '100%' }}>
               <TextField
                 fullWidth
+                type={showPassword ? "text" : "password"}
                 placeholder="Paste your authtoken here"
                 value={localAuthToken}
                 onChange={handleTokenChange}
@@ -117,11 +126,26 @@ export default function AuthSetup() {
                       <VpnKeyIcon color={validationError ? "error" : "action"} />
                     </InputAdornment>
                   ),
-                  endAdornment: validationError ? (
+                  endAdornment: (
                     <InputAdornment position="end">
-                      <ErrorIcon color="error" />
+                      {validationError ? (
+                        <ErrorIcon color="error" />
+                      ) : (
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleClickShowPassword}
+                          onMouseDown={(e) => e.preventDefault()}
+                          edge="end"
+                          disabled={isSubmitting}
+                          tabIndex={-1}
+                          disableFocusRipple
+                          disableRipple
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      )}
                     </InputAdornment>
-                  ) : null,
+                  ),
                 }}
               />
 
