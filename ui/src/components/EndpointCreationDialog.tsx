@@ -469,7 +469,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
         body: Hello, World!`}
               fullWidth
               multiline
-              rows={12}
+              rows={16}
               sx={{
                 mb: 1,
                 '& .MuiOutlinedInput-root': {

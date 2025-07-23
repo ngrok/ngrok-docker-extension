@@ -6,7 +6,8 @@ export interface AgentStatus {
   status: 'online' | 'offline' | 'reconnecting' | 'unknown';
   timestamp: string;
   connectionLatency?: number; // milliseconds
-  lastError?: string;
+  lastError?: string; // Error from ngrok agent (like connection failures)
+  requestError?: string; // Error from HTTP request to backend (like docker backend unavailable)
 }
 
 export class StatusService {
@@ -48,20 +49,24 @@ export class StatusService {
           status: statusData.status,
           timestamp: statusData.timestamp,
           connectionLatency: statusData.connectionLatency,
-          lastError: statusData.lastError
+          lastError: statusData.lastError,
+          requestError: undefined // Clear any previous request errors on successful response
         };
         this.onStatusUpdate?.(status);
       } else {
         this.onStatusUpdate?.({
           status: 'unknown',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          requestError: 'Empty response from backend'
         });
       }
     } catch (error) {
       console.error('Failed to fetch agent status:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.onStatusUpdate?.({
         status: 'unknown',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        requestError: errorMessage
       });
       this.onError?.(error as Error);
     }

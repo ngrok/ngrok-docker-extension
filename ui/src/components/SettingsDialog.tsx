@@ -36,7 +36,7 @@ interface SettingsDialogProps {
 
 
 export default function SettingsDialog({ open: externalOpen, onClose }: SettingsDialogProps = {}) {
-  const { authToken, setAuthToken, connectURL, setConnectURL, autoDisconnect, setAutoDisconnect } = useNgrokContext();
+  const { authToken, connectURL, autoDisconnect, saveSettings } = useNgrokContext();
   const [tempAuthToken, setTempAuthToken] = useState(authToken);
   const [tempConnectURL, setTempConnectURL] = useState(connectURL);
   const [tempAutoDisconnect, setTempAutoDisconnect] = useState(autoDisconnect);
@@ -83,11 +83,9 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
     setShowPassword(!showPassword);
   };
 
-  const handleSave = (_event: any) => {
-    // Update context state - the useEffect in NgrokContext will handle the API call
-    setAuthToken(tempAuthToken);
-    setConnectURL(tempConnectURL);
-    setAutoDisconnect(tempAutoDisconnect);
+  const handleSave = async (_event: any) => {
+    // Use the new saveSettings function which will show toast and configure agent
+    await saveSettings(tempAuthToken, tempConnectURL, tempAutoDisconnect);
     
     if (onClose) {
       onClose();

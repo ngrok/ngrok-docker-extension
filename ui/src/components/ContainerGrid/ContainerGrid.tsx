@@ -66,7 +66,6 @@ const ContainerGrid: React.FC = () => {
 
     // Alert dialog state
     const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
-    const [alertDialogMsg, setAlertDialogMsg] = useState<string>("");
 
     // More actions menu state
     const [moreMenuAnchorEl, setMoreMenuAnchorEl] = useState<HTMLElement | null>(null);
@@ -357,7 +356,12 @@ const ContainerGrid: React.FC = () => {
         setCreatingEndpoint({ ...creatingEndpoint, [containerRowId]: true });
 
         try {
-            const response: any = await ddClient.extension.vm?.service?.post('/create_endpoint', {
+            // Wrap the POST request with a timeout
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Request timed out after 5 seconds')), 5000);
+            });
+
+            const postPromise = ddClient.extension.vm?.service?.post('/create_endpoint', {
                 containerId: container.ContainerId,
                 targetPort: container.Port.PublicPort.toString(),
                 url: config.url,
@@ -367,6 +371,8 @@ const ContainerGrid: React.FC = () => {
                 description: config.description,
                 metadata: config.metadata,
             });
+
+            const response: any = await Promise.race([postPromise, timeoutPromise]);
 
             // Handle both old and new response structures (Docker Desktop API change)
             const endpointData = response.data?.endpoint || response.endpoint;
@@ -398,8 +404,7 @@ const ContainerGrid: React.FC = () => {
         } catch (error: any) {
             console.log(error);
             let errMsg = error.error ? error.error : error.message.replaceAll(`"`, "").replaceAll("\\r", "");
-            setAlertDialogMsg(errMsg);
-            setShowAlertDialog(true);
+            ddClient.desktopUI.toast.error(errMsg);
         } finally {
             setCreatingEndpoint({ ...creatingEndpoint, [containerRowId]: false });
         }
@@ -412,10 +417,17 @@ const ContainerGrid: React.FC = () => {
         setRemovingEndpoint(true);
 
         try {
-            await ddClient.extension.vm?.service?.post('/remove_endpoint', {
+            // Wrap the POST request with a timeout
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Request timed out after 5 seconds')), 5000);
+            });
+
+            const postPromise = ddClient.extension.vm?.service?.post('/remove_endpoint', {
                 containerId: container.ContainerId,
                 targetPort: container.Port.PublicPort.toString()
             });
+
+            await Promise.race([postPromise, timeoutPromise]);
 
             // Remove from running endpoints but keep configuration
             const updatedRunningEndpoints = { ...runningEndpoints };
@@ -429,8 +441,7 @@ const ContainerGrid: React.FC = () => {
         } catch (error: any) {
             console.log(error);
             let errMsg = error.error ? error.error : error.message.replaceAll(`"`, "").replaceAll("\\r", "");
-            setAlertDialogMsg(errMsg);
-            setShowAlertDialog(true);
+            ddClient.desktopUI.toast.error(errMsg);
         } finally {
             setRemovingEndpoint(false);
         }
@@ -514,7 +525,7 @@ const ContainerGrid: React.FC = () => {
             <OnlineEndpointsToggle hasContainersWithPorts={true} />
             <AlertDialog
                 open={showAlertDialog}
-                msg={alertDialogMsg}
+                msg=""
                 onClose={() => setShowAlertDialog(false)}
             />
 

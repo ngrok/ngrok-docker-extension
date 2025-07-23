@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { statusService, AgentStatus } from '../services/statusService';
 
@@ -80,6 +80,7 @@ interface NgrokContextType {
 
     autoDisconnect: boolean;
     setAutoDisconnect: (autoDisconnect: boolean) => void;
+    saveSettings: (authToken: string, connectURL: string, autoDisconnect: boolean) => Promise<void>;
 
     containers: Record<string, NgrokContainer>;
     setContainers: (containers: Record<string, NgrokContainer>) => void;
@@ -117,6 +118,7 @@ const NgrokContext = createContext<NgrokContextType>({
 
     autoDisconnect: false,
     setAutoDisconnect: () => null,
+    saveSettings: async () => {},
 
     containers: {},
     setContainers: () => null,
@@ -145,7 +147,7 @@ export function NgrokContextProvider({
     const [authToken, setAuthToken] = useState(
         localStorage.getItem("authToken") ?? ""
     );
-    const authIsSetup = authToken !== "";
+    const authIsSetup = useMemo(() => authToken !== "", [authToken]);
 
     const [connectURL, setConnectURL] = useState(
         localStorage.getItem("connectURL") ?? ""
@@ -285,33 +287,62 @@ export function NgrokContextProvider({
     }, []);
 
     const ddClient = useDockerDesktopClient();
+    
+    // Configure agent with specific values
+    const configureAgentWithValues = useCallback(async (token: string, connectURL: string, autoDisconnect: boolean) => {
+        if (!token) return;
+        
+        try {
+            await ddClient.extension.vm?.service?.post('/configure_agent', {
+                token: token,
+                connectURL: connectURL,
+                autoDisconnect: autoDisconnect
+            });
+            
+            // Update localStorage
+            localStorage.setItem("authToken", token);
+            localStorage.setItem("connectURL", connectURL);
+            localStorage.setItem("autoDisconnect", autoDisconnect.toString());
+        } catch (error) {
+            console.error(`Failed to configure agent: ${JSON.stringify(error)}`);
+            // Reset status to unknown on error
+            setAgentStatus({
+                status: 'unknown',
+                timestamp: new Date().toISOString()
+            });
+            throw error; // Re-throw so saveSettings can handle it
+        }
+    }, [ddClient]);
+
+    // Configure agent with current state values
+    const configureAgent = useCallback(async () => {
+        await configureAgentWithValues(authToken, connectURL, autoDisconnect);
+    }, [authToken, connectURL, autoDisconnect, configureAgentWithValues]);
+
+    // User-initiated save with toast notification
+    const saveSettings = useCallback(async (newAuthToken: string, newConnectURL: string, newAutoDisconnect: boolean) => {
+        try {
+            // Update state first
+            setAuthToken(newAuthToken);
+            setConnectURL(newConnectURL);
+            setAutoDisconnect(newAutoDisconnect);
+            
+            // Configure agent with new values
+            await configureAgentWithValues(newAuthToken, newConnectURL, newAutoDisconnect);
+            
+            ddClient.desktopUI.toast.success("Settings saved successfully");
+        } catch (error) {
+            console.error(`Failed to save settings: ${JSON.stringify(error)}`);
+            ddClient.desktopUI.toast.error("Failed to save settings");
+        }
+    }, [configureAgentWithValues, ddClient]);
+
     useEffect(() => {
         if (authIsSetup) {
-            ddClient.extension.vm?.service
-                ?.post('/configure_agent', {
-                    token: authToken,
-                    connectURL: connectURL,
-                    autoDisconnect: autoDisconnect
-                })
-                .then((_result) => {
-                    localStorage.setItem("authToken", authToken);
-                    localStorage.setItem("connectURL", connectURL);
-                    localStorage.setItem("autoDisconnect", autoDisconnect.toString());
-                    ddClient.desktopUI.toast.success("Settings saved successfully");
-                })
-                .catch((error) => {
-                    console.error(`Failed to configure agent: ${JSON.stringify(error)}`);
-                    ddClient.desktopUI.toast.error("Failed to save settings");
-                    // Reset status to unknown on error
-                    setAgentStatus({
-                        status: 'unknown',
-                        timestamp: new Date().toISOString()
-                    });
-                });
-
+            configureAgent();
             getContainers();
         }
-    }, [authToken, authIsSetup, connectURL, autoDisconnect]);
+    }, [authIsSetup, configureAgent]);
 
     useEffect(() => {
         // If the auth token already exists in the local storage, make a POST /auth request automatically to set up the auth
@@ -372,6 +403,7 @@ export function NgrokContextProvider({
 
                 autoDisconnect,
                 setAutoDisconnect,
+                saveSettings,
 
                 containers,
                 setContainers,

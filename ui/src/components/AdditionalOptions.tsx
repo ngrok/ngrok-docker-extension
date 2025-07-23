@@ -131,7 +131,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                       : '#677285'
                   }}
                 >
-                  Pool endpoints to distribute traffic for high availability.
+                  Load balance traffic across endpoints with the same URL
                 </Typography>
               }
             />
@@ -177,7 +177,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
               Description
             </Typography>
             <TextField
-              placeholder="Describe your endpoint"
+              placeholder="ex. nginx docker desktop endpoint"
               value={options.description}
               onChange={handleDescriptionChange}
               fullWidth
@@ -246,7 +246,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
               Metadata
             </Typography>
             <TextField
-              placeholder="Metadata"
+              placeholder='ex. {"container": "nginx", "image": "nginx", "port": "80", "env": "docker-desktop"}'
               value={options.metadata}
               onChange={handleMetadataChange}
               fullWidth

@@ -2,6 +2,7 @@ import Grid2 from "@mui/material/Grid2";
 import ContainerGrid from "./components/ContainerGrid";
 import { Header } from "./components/Header";
 import AuthSetup from "./components/AuthSetup";
+import ErrorBanner from "./components/ErrorBanner";
 import { useNgrokContext } from "./components/NgrokContext";
 
 export function App() {
@@ -10,6 +11,7 @@ export function App() {
   return (
     <>
       {authIsSetup && <Header />}
+      {authIsSetup && <ErrorBanner />}
       <Grid2
         container
         direction={"column"}
