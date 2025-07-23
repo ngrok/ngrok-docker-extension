@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -7,7 +7,9 @@ import {
   AccordionDetails,
   TextField,
   Switch,
-  Link
+  Link,
+  FormControlLabel,
+  useTheme
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -32,19 +34,9 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
 
-  // Scroll into view when accordion expands
-  useEffect(() => {
-    if (expanded && accordionRef.current) {
-      // Small delay to allow accordion animation to start
-      setTimeout(() => {
-        accordionRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest'
-        });
-      }, 100);
-    }
-  }, [expanded]);
+
 
   const handlePoolingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({ ...options, poolingEnabled: event.target.checked });
@@ -67,6 +59,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
       ref={accordionRef}
       expanded={expanded} 
       onChange={(_, isExpanded) => setExpanded(isExpanded)}
+      TransitionProps={{ timeout: 0 }}
       sx={{
         backgroundColor: '#ffffff',
         border: '1px solid #d1d4db',
@@ -102,57 +95,72 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* Endpoint Pooling Section */}
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  fontWeight: 'medium',
-                  color: '#000000',
-                  fontSize: '14px'
-                }}
-              >
-                Endpoint Pooling
-              </Typography>
-              <Switch
-              checked={options.poolingEnabled}
-              onChange={handlePoolingChange}
-              sx={{
-              '& .MuiSwitch-switchBase.Mui-checked': {
-              color: '#116ED0',
-              },
-              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-              backgroundColor: '#8BC7F5',
-              },
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontWeight: 'medium',
+                color: '#000000',
+                fontSize: '14px',
+                mb: 1
               }}
-              />
-            </Box>
+            >
+              Endpoint Pooling
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={options.poolingEnabled}
+                  onChange={handlePoolingChange}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#116ED0',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#8BC7F5',
+                    },
+                  }}
+                />
+              }
+              label={
+                <Typography 
+                  sx={{ 
+                    fontFamily: 'Roboto',
+                    fontSize: '14px',
+                    color: options.poolingEnabled 
+                      ? (theme.palette.mode === 'dark' ? '#ffffff' : '#116ED0')
+                      : '#677285'
+                  }}
+                >
+                  Pool endpoints to distribute traffic for high availability.
+                </Typography>
+              }
+            />
             <Typography 
               variant="body2" 
               sx={{ 
                 color: '#677285',
                 fontSize: '14px',
                 lineHeight: 1.4,
-                mb: 1
+                mt: 1
               }}
             >
-              Pool endpoints to distribute traffic for high availability.
+              <Link
+                component="button"
+                variant="caption"
+                onClick={() => openExternalLink('https://ngrok.com/docs/universal-gateway/endpoint-pooling/')}
+                sx={{
+                  color: '#086dd7',
+                  fontSize: '12px',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  p: 0,
+                  border: 'none',
+                  background: 'none'
+                }}
+              >
+                Learn more
+              </Link>
             </Typography>
-            <Link
-              component="button"
-              variant="caption"
-              onClick={() => openExternalLink('https://ngrok.com/docs/universal-gateway/endpoint-pooling/')}
-              sx={{
-                color: '#086dd7',
-                fontSize: '12px',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                p: 0,
-                border: 'none',
-                background: 'none'
-              }}
-            >
-              Learn more
-            </Link>
           </Box>
 
           {/* Description Section */}
@@ -220,7 +228,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 background: 'none'
               }}
             >
-              View docs for details
+              Learn more
             </Link>
           </Box>
 
@@ -235,7 +243,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 mb: 1
               }}
             >
-              Meta
+              Metadata
             </Typography>
             <TextField
               placeholder="Metadata"
@@ -290,7 +298,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 background: 'none'
               }}
             >
-              View docs for details
+              Learn more
             </Link>
           </Box>
         </Box>

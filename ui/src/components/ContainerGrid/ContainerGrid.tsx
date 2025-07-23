@@ -107,7 +107,7 @@ const ContainerGrid: React.FC = () => {
             port: portDisplay,
             url: runningEndpoint?.url || config?.url || '',
             trafficPolicy: config?.trafficPolicy ? 'YES' : 'NO',
-            lastStarted: runningEndpoint?.lastStarted || '',
+            lastStarted: runningEndpoint?.lastStarted || config?.lastStarted || '',
             isOnline: !!runningEndpoint, // Same logic as showing stop button
             actions: []
         };
@@ -265,7 +265,7 @@ const ContainerGrid: React.FC = () => {
             headerName: 'Port',
             width: 100,
             renderCell: (params) => (
-                <Box sx={{ color: params.row.isOnline ? '#505968' : '#677285', fontWeight: params.row.isOnline ? 500 : 400 }}>
+                <Box sx={{ color: '#000000', fontWeight: params.row.isOnline ? 500 : 400 }}>
                     {params.value}
                 </Box>
             )
@@ -273,7 +273,7 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'url',
             headerName: 'URL',
-            width: 232,
+            width: 250,
             renderCell: (params) => (
                 <UrlCell url={params.value} isOnline={params.row.isOnline} />
             )
@@ -349,9 +349,9 @@ const ContainerGrid: React.FC = () => {
         deleteEndpointConfiguration(moreMenuContainerId);
     };
 
-    const handleStartEndpoint = async (containerRowId: string) => {
+    const handleStartEndpoint = async (containerRowId: string, configOverride?: EndpointConfiguration) => {
         const container = Object.values(containers).find(c => c.id === containerRowId);
-        const config = endpointConfigurations[containerRowId];
+        const config = configOverride || endpointConfigurations[containerRowId];
         if (!container || !config) return;
 
         setCreatingEndpoint({ ...creatingEndpoint, [containerRowId]: true });
@@ -375,14 +375,19 @@ const ContainerGrid: React.FC = () => {
             }
 
             // Add to running endpoints
+            const currentTimestamp = new Date().toISOString();
             const runningEndpoint: RunningEndpoint = {
                 id: container.id,
                 url: endpointData.url,
                 containerId: container.ContainerId,
                 targetPort: container.Port.PublicPort.toString(),
-                lastStarted: new Date().toISOString()
+                lastStarted: currentTimestamp
             };
             setRunningEndpoints({ ...runningEndpoints, [container.id]: runningEndpoint });
+
+            // Update configuration to persist lastStarted timestamp
+            const updatedConfig = { ...config, lastStarted: currentTimestamp };
+            updateEndpointConfiguration(container.id, updatedConfig);
 
             // Trigger immediate status check after successful endpoint creation
             statusService.checkStatusNow();
@@ -453,7 +458,7 @@ const ContainerGrid: React.FC = () => {
 
         // Create configuration and start endpoint
         createEndpointConfiguration(config);
-        handleStartEndpoint(currentContainer.id);
+        handleStartEndpoint(currentContainer.id, config);
 
         setCreationDialogOpen(false);
         setCurrentContainer(null);
@@ -614,6 +619,9 @@ const ContainerGrid: React.FC = () => {
                         },
                         '&[data-field="actions"]': {
                             justifyContent: 'flex-end !important'
+                        },
+                        '&[data-field="url"]': {
+                            overflow: 'visible !important'
                         },
                         "& .MuiIconButton-root.circular-progress": {
                             "&:hover": {

@@ -33,6 +33,7 @@ export interface EndpointConfiguration {
     trafficPolicy?: string;
     description?: string;
     metadata?: string;
+    lastStarted?: string; // ISO timestamp of when endpoint was last started
 }
 
 export interface RunningEndpoint {

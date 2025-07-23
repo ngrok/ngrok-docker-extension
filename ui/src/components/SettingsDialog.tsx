@@ -11,6 +11,7 @@ import {
   FormControlLabel,
   IconButton,
   InputAdornment,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -41,6 +42,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
   const [tempAutoDisconnect, setTempAutoDisconnect] = useState(autoDisconnect);
   const [showPassword, setShowPassword] = useState(false);
   const ddClient = useDockerDesktopClient();
+  const theme = useTheme();
 
   const [internalOpen, setInternalOpen] = React.useState(false);
   const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
@@ -358,7 +360,9 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                   sx={{ 
                     fontFamily: 'Roboto',
                     fontSize: '14px',
-                    color: tempAutoDisconnect ? '#116ED0' : '#677285'
+                    color: tempAutoDisconnect 
+                      ? (theme.palette.mode === 'dark' ? '#ffffff' : '#116ED0')
+                      : '#677285'
                   }}
                 >
                   Disconnect from ngrok service when all endpoints are offline

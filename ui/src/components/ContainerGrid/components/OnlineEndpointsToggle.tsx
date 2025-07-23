@@ -1,4 +1,4 @@
-import { Box, Typography, Switch } from "@mui/material";
+import { Box, Typography, Switch, useTheme } from "@mui/material";
 import { useNgrokContext } from "../../NgrokContext";
 
 interface OnlineEndpointsToggleProps {
@@ -9,6 +9,7 @@ const OnlineEndpointsToggle: React.FC<OnlineEndpointsToggleProps> = ({
   hasContainersWithPorts = true 
 }) => {
   const { onlineEndpointsOnly, setOnlineEndpointsOnly } = useNgrokContext();
+  const theme = useTheme();
 
   // Hide the switch when empty state is active AND switch is off
   const shouldHideSwitch = !hasContainersWithPorts && !onlineEndpointsOnly;
@@ -25,7 +26,14 @@ const OnlineEndpointsToggle: React.FC<OnlineEndpointsToggleProps> = ({
             onChange={(e) => setOnlineEndpointsOnly(e.target.checked)}
             size="small"
           />
-          <Typography variant="body2" color="text.secondary">
+          <Typography 
+            variant="body2" 
+            sx={{
+              color: onlineEndpointsOnly 
+                ? (theme.palette.mode === 'dark' ? '#ffffff' : '#116ED0')
+                : '#677285'
+            }}
+          >
             Show only online endpoints
           </Typography>
         </Box>
