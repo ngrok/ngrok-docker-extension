@@ -105,6 +105,8 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
         open={isOpen} 
         onClose={handleCancel}
         maxWidth="md"
+        TransitionComponent={undefined}
+        transitionDuration={0}
         PaperProps={{
           sx: {
             width: '642px',

@@ -235,6 +235,8 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
       open={open} 
       onClose={onClose} 
       maxWidth={false}
+      TransitionComponent={undefined}
+      transitionDuration={0}
       PaperProps={{
         sx: {
           width: 674,

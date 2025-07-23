@@ -7,6 +7,7 @@ export interface NgrokContainer {
     ContainerId: string;
     Name: string;
     Image: string;
+    ImageId: string;
     Port: DockerPort;
 }
 
@@ -14,6 +15,7 @@ export interface DockerContainer {
     Id: string;
     Names: string[];
     Image: string;
+    ImageID: string;
     Ports: DockerPort[];
 }
 
@@ -118,7 +120,7 @@ const NgrokContext = createContext<NgrokContextType>({
 
     autoDisconnect: false,
     setAutoDisconnect: () => null,
-    saveSettings: async () => {},
+    saveSettings: async () => { },
 
     containers: {},
     setContainers: () => null,
@@ -181,7 +183,9 @@ export function NgrokContextProvider({
 
     const getContainers = async () => {
         ddClient.docker.listContainers().then((loaded) => {
-            updateContainers(loaded as DockerContainer[]);
+            const containers = loaded as DockerContainer[];
+
+            updateContainers(containers);
         });
 
         ddClient.extension.vm?.service?.get("/list_endpoints").then((result: any) => {
@@ -217,12 +221,14 @@ export function NgrokContextProvider({
 
                 for (const port of publicPorts) {
                     const container_id = `${container.Id}:${port.PublicPort}`;
+                    const imageId = (container as any).ImageID;
                     if (!containers[container_id]) {
                         newContainers[container_id] = {
                             id: container_id,
                             ContainerId: container.Id,
                             Name: container.Names[0].substring(1),
                             Image: container.Image,
+                            ImageId: imageId,
                             Port: port,
                         };
                     } else {
@@ -287,18 +293,18 @@ export function NgrokContextProvider({
     }, []);
 
     const ddClient = useDockerDesktopClient();
-    
+
     // Configure agent with specific values
     const configureAgentWithValues = useCallback(async (token: string, connectURL: string, autoDisconnect: boolean) => {
         if (!token) return;
-        
+
         try {
             await ddClient.extension.vm?.service?.post('/configure_agent', {
                 token: token,
                 connectURL: connectURL,
                 autoDisconnect: autoDisconnect
             });
-            
+
             // Update localStorage
             localStorage.setItem("authToken", token);
             localStorage.setItem("connectURL", connectURL);
@@ -326,10 +332,10 @@ export function NgrokContextProvider({
             setAuthToken(newAuthToken);
             setConnectURL(newConnectURL);
             setAutoDisconnect(newAutoDisconnect);
-            
+
             // Configure agent with new values
             await configureAgentWithValues(newAuthToken, newConnectURL, newAutoDisconnect);
-            
+
             ddClient.desktopUI.toast.success("Settings saved successfully");
         } catch (error) {
             console.error(`Failed to save settings: ${JSON.stringify(error)}`);

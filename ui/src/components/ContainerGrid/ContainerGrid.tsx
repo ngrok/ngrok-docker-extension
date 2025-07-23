@@ -35,6 +35,7 @@ interface ContainerGridRow {
     containerId: string;
     containerName: string;
     image: string;
+    imageId: string;
     port: string; // Changed to string to support "publicport:privateport" format
     url: string;
     trafficPolicy: 'YES' | 'NO';
@@ -93,6 +94,7 @@ const ContainerGrid: React.FC = () => {
         const runningEndpoint = runningEndpoints[container.id];
         const config = endpointConfigurations[container.id];
 
+
         // Format port as "publicport:privateport" if both are available, otherwise just show public port
         const portDisplay = container.Port.PrivatePort
             ? `${container.Port.PublicPort}:${container.Port.PrivatePort}`
@@ -103,6 +105,7 @@ const ContainerGrid: React.FC = () => {
             containerId: container.ContainerId,
             containerName: container.Name,
             image: container.Image,
+            imageId: container.ImageId,
             port: portDisplay,
             url: runningEndpoint?.url || config?.url || '',
             trafficPolicy: config?.trafficPolicy ? 'YES' : 'NO',
@@ -255,6 +258,7 @@ const ContainerGrid: React.FC = () => {
             renderCell: (params) => (
                 <ClickableImageName
                     image={params.value}
+                    imageId={params.row.imageId}
                     isOnline={params.row.isOnline}
                 />
             )
@@ -266,6 +270,16 @@ const ContainerGrid: React.FC = () => {
             renderCell: (params) => (
                 <Box sx={{ color: '#000000', fontWeight: params.row.isOnline ? 500 : 400 }}>
                     {params.value}
+                </Box>
+            )
+        },
+        {
+            field: 'imageId',
+            headerName: 'Image ID',
+            width: 200,
+            renderCell: (params) => (
+                <Box sx={{ color: '#000000', fontWeight: params.row.isOnline ? 500 : 400, fontSize: '11px' }}>
+                    {params.value || 'No ID'}
                 </Box>
             )
         },
