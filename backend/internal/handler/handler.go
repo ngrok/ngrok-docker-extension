@@ -3,6 +3,7 @@ package handler
 import (
 	"log/slog"
 	"slices"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/ngrok/ngrok-docker-extension/internal/endpoint"
@@ -39,6 +40,7 @@ func convertEndpointsToSlice(endpointsMap map[string]*endpoint.Endpoint) []Endpo
 				URL:         ep.Forwarder.URL().String(),
 				ContainerID: ep.ContainerID,
 				TargetPort:  ep.TargetPort,
+				LastStarted: ep.StartedAt.Format(time.RFC3339),
 			}) {
 				return
 			}

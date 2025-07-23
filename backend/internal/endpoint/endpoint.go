@@ -25,6 +25,7 @@ type Endpoint struct {
 	Forwarder   ngrok.EndpointForwarder
 	ContainerID string
 	TargetPort  string
+	StartedAt   time.Time
 }
 
 // Manager manages ngrok endpoints for Docker containers
@@ -196,6 +197,7 @@ func (m *manager) CreateEndpoint(ctx context.Context, containerID, targetPort st
 		Forwarder:   forwarder,
 		ContainerID: containerID,
 		TargetPort:  targetPort,
+		StartedAt:   time.Now(),
 	}
 
 	// Store the endpoint using composite key

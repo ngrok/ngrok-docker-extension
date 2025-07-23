@@ -91,12 +91,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
         }
       });
       setStepTwoConfig({
-        trafficPolicy: `on_http_request:
-  - actions:
-    - type: custom-response
-      config:
-        status_code: 200
-        body: Hello, World!`
+        trafficPolicy: ''
       });
       detectProtocol();
     }
@@ -417,7 +412,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
                   background: 'none'
                 }}
               >
-                Learn More About URL Options
+                Learn more
               </Link>
             </Box>
 
@@ -463,28 +458,15 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
               is a configuration language for controlling traffic to your applications.
             </Typography>
             
-            <Link
-              component="button"
-              variant="body2"
-              onClick={() => openExternalLink('https://ngrok.com/docs/traffic-policy/')}
-              sx={{
-                color: '#086dd7',
-                fontSize: '14px',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                p: 0,
-                border: 'none',
-                background: 'none',
-                mb: 2,
-                display: 'block'
-              }}
-            >
-              Learn more about Traffic Policy
-            </Link>
-            
             <TextField
               value={stepTwoConfig.trafficPolicy}
               onChange={handleTrafficPolicyChange}
+              placeholder={`on_http_request:
+  - actions:
+    - type: custom-response
+      config:
+        status_code: 200
+        body: Hello, World!`}
               fullWidth
               multiline
               rows={12}
@@ -509,27 +491,46 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
                   padding: '11px 16px',
                   fontSize: '13px',
                   fontFamily: 'Roboto Mono, monospace',
-                  color: '#677285'
+                  color: '#000000'
                 }
               }}
             />
             
-            <Link
-              component="button"
-              variant="body2"
-              onClick={() => openExternalLink('https://ngrok.com/docs/traffic-policy/examples/')}
-              sx={{
-                color: '#086dd7',
-                fontSize: '14px',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                p: 0,
-                border: 'none',
-                background: 'none'
-              }}
-            >
-              View Traffic Policy example gallery
-            </Link>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Link
+                component="button"
+                variant="body2"
+                onClick={() => openExternalLink('https://ngrok.com/docs/traffic-policy/')}
+                sx={{
+                  color: '#086dd7',
+                  fontSize: '14px',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  p: 0,
+                  border: 'none',
+                  background: 'none'
+                }}
+              >
+                Learn more
+              </Link>
+              
+              <Link
+                component="button"
+                variant="body2"
+                onClick={() => openExternalLink('https://ngrok.com/docs/traffic-policy/examples/')}
+                sx={{
+                  color: '#086dd7',
+                  fontSize: '14px',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  p: 0,
+                  border: 'none',
+                  background: 'none'
+                }}
+              >
+                View example gallery
+              </Link>
+            </Box>
           </Box>
         )}
       </DialogContent>

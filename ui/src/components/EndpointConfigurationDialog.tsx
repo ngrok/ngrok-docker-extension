@@ -353,6 +353,14 @@ export default function EndpointConfigurationDialog({
             <Switch
               checked={config.poolingEnabled || false}
               onChange={handlePoolingChange}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#116ED0',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#8BC7F5',
+                },
+              }}
             />
           </Box>
           <FormHelperText>

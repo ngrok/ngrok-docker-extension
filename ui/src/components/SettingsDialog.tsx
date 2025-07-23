@@ -188,12 +188,12 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
             <Typography 
               variant="body2" 
               sx={{ 
-                fontFamily: 'Roboto',
-                fontWeight: 500,
-                fontSize: '14px',
-                lineHeight: '21px',
-                color: '#677285',
-                mb: 1
+              fontFamily: 'Roboto',
+              fontWeight: 400,
+              fontSize: '14px',
+              lineHeight: '21px',
+              color: '#677285',
+              mb: 1
               }}
             >
               Connects the extension with your ngrok account
@@ -272,7 +272,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                 mb: 1
               }}
             >
-              The network address used to connect to the ngrok service. Leave blank to use ngrok's default servers.
+              The network address used to connect to the ngrok service. Leave blank to use ngrok's default servers
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
               <Link
@@ -294,7 +294,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                   gap: 0.5
                 }}
               >
-                Learn more in docs
+                Learn more
                 <OpenInNewIcon sx={{ fontSize: '16px' }} />
               </Link>
             </Box>
@@ -358,7 +358,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                   sx={{ 
                     fontFamily: 'Roboto',
                     fontSize: '14px',
-                    color: '#116ED0'
+                    color: tempAutoDisconnect ? '#116ED0' : '#677285'
                   }}
                 >
                   Disconnect from ngrok service when all endpoints are offline
@@ -375,7 +375,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                 mt: 1
               }}
             >
-              You may wish to enable this option to preserve bandwidth
+              Enable this option in low-bandwidth environments
             </Typography>
           </Box>
         </DialogContent>

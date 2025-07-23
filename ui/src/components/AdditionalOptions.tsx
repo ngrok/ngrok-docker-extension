@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -31,6 +31,20 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
   onChange
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const accordionRef = useRef<HTMLDivElement>(null);
+
+  // Scroll into view when accordion expands
+  useEffect(() => {
+    if (expanded && accordionRef.current) {
+      // Small delay to allow accordion animation to start
+      setTimeout(() => {
+        accordionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        });
+      }, 100);
+    }
+  }, [expanded]);
 
   const handlePoolingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({ ...options, poolingEnabled: event.target.checked });
@@ -50,6 +64,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
 
   return (
     <Accordion 
+      ref={accordionRef}
       expanded={expanded} 
       onChange={(_, isExpanded) => setExpanded(isExpanded)}
       sx={{
@@ -99,16 +114,16 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 Endpoint Pooling
               </Typography>
               <Switch
-                checked={options.poolingEnabled}
-                onChange={handlePoolingChange}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#ffffff',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#1976d2',
-                  }
-                }}
+              checked={options.poolingEnabled}
+              onChange={handlePoolingChange}
+              sx={{
+              '& .MuiSwitch-switchBase.Mui-checked': {
+              color: '#116ED0',
+              },
+              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+              backgroundColor: '#8BC7F5',
+              },
+              }}
               />
             </Box>
             <Typography 
@@ -136,7 +151,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 background: 'none'
               }}
             >
-              Learn more about Pooling and Load Balancing
+              Learn more
             </Link>
           </Box>
 

@@ -1,4 +1,5 @@
 import { Box, Typography, Button } from "@mui/material";
+import { AllInbox as ContainerIcon } from "@mui/icons-material";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 
 const ddClient = createDockerDesktopClient();
@@ -41,12 +42,12 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
           mb: 3
         }}
       >
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M20 8H4V6c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v2zm0 2v8c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2v-8h16zM8 14h8v2H8v-2z"
-            fill="white"
-          />
-        </svg>
+        <ContainerIcon
+          sx={{
+            fontSize: 32,
+            color: 'white'
+          }}
+        />
       </Box>
 
       {/* Title */}
@@ -92,7 +93,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
           }
         }}
       >
-        {isFiltered ? 'Remove filter' : 'Start a container'}
+        {isFiltered ? 'Show all endpoints' : 'Start a container'}
       </Button>
     </Box>
   );

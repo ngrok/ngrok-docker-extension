@@ -3,392 +3,396 @@ import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { statusService, AgentStatus } from '../services/statusService';
 
 export interface NgrokContainer {
-  id: string;
-  ContainerId: string;
-  Name: string;
-  Image: string;
-  Port: DockerPort;
+    id: string;
+    ContainerId: string;
+    Name: string;
+    Image: string;
+    Port: DockerPort;
 }
 
 export interface DockerContainer {
-  Id: string;
-  Names: string[];
-  Image: string;
-  Ports: DockerPort[];
+    Id: string;
+    Names: string[];
+    Image: string;
+    Ports: DockerPort[];
 }
 
 export interface DockerPort {
-  PublicPort: number;
-  Type: string;
+    PublicPort: number;
+    PrivatePort?: number;
+    Type: string;
 }
 
 export interface EndpointConfiguration {
-  id: string; // containerId:targetPort
-  containerId: string;
-  targetPort: string;
-  url?: string;
-  binding: 'public' | 'internal' | 'kubernetes';
-  poolingEnabled: boolean;
-  trafficPolicy?: string;
-  description?: string;
-  metadata?: string;
+    id: string; // containerId:targetPort
+    containerId: string;
+    targetPort: string;
+    url?: string;
+    binding: 'public' | 'internal' | 'kubernetes';
+    poolingEnabled: boolean;
+    trafficPolicy?: string;
+    description?: string;
+    metadata?: string;
 }
 
 export interface RunningEndpoint {
-  id: string; // same as configuration id
-  url: string; // actual ngrok URL
-  containerId: string;
-  targetPort: string;
+    id: string; // same as configuration id
+    url: string; // actual ngrok URL
+    containerId: string;
+    targetPort: string;
+    lastStarted: string; // ISO timestamp when endpoint was last started
 }
 
 export interface Endpoint {
-  id: string;
-  url: string;
-  containerId: string;
-  targetPort: string;
+    id: string;
+    url: string;
+    containerId: string;
+    targetPort: string;
+    lastStarted: string;
 }
 
 export interface DetectProtocolRequest {
-  container_id: string;
-  port: string;
+    container_id: string;
+    port: string;
 }
 
 export interface DetectProtocolResponse {
-  tcp: boolean;
-  http: boolean;
-  https: boolean;
-  tls: boolean;
+    tcp: boolean;
+    http: boolean;
+    https: boolean;
+    tls: boolean;
 }
 
 const client = createDockerDesktopClient();
 
 function useDockerDesktopClient() {
-  return client;
+    return client;
 }
 
 interface NgrokContextType {
-  authToken: string;
-  setAuthToken: (authToken: string) => void;
-  authIsSetup: boolean;
+    authToken: string;
+    setAuthToken: (authToken: string) => void;
+    authIsSetup: boolean;
 
-  connectURL: string;
-  setConnectURL: (connectURL: string) => void;
+    connectURL: string;
+    setConnectURL: (connectURL: string) => void;
 
-  autoDisconnect: boolean;
-  setAutoDisconnect: (autoDisconnect: boolean) => void;
+    autoDisconnect: boolean;
+    setAutoDisconnect: (autoDisconnect: boolean) => void;
 
-  containers: Record<string,NgrokContainer>;
-  setContainers: (containers: Record<string, NgrokContainer>) => void;
+    containers: Record<string, NgrokContainer>;
+    setContainers: (containers: Record<string, NgrokContainer>) => void;
 
-  // Legacy endpoints for backward compatibility
-  endpoints: Record<string,Endpoint>;
-  setEndpoints: (endpoints: Record<string, Endpoint>) => void;
+    // Legacy endpoints for backward compatibility
+    endpoints: Record<string, Endpoint>;
+    setEndpoints: (endpoints: Record<string, Endpoint>) => void;
 
-  // New separate state for configurations and running endpoints
-  endpointConfigurations: Record<string, EndpointConfiguration>;
-  setEndpointConfigurations: (configs: Record<string, EndpointConfiguration>) => void;
-  runningEndpoints: Record<string, RunningEndpoint>;
-  setRunningEndpoints: (endpoints: Record<string, RunningEndpoint>) => void;
+    // New separate state for configurations and running endpoints
+    endpointConfigurations: Record<string, EndpointConfiguration>;
+    setEndpointConfigurations: (configs: Record<string, EndpointConfiguration>) => void;
+    runningEndpoints: Record<string, RunningEndpoint>;
+    setRunningEndpoints: (endpoints: Record<string, RunningEndpoint>) => void;
 
-  // Configuration management methods
-  createEndpointConfiguration: (config: EndpointConfiguration) => void;
-  updateEndpointConfiguration: (id: string, config: EndpointConfiguration) => void;
-  deleteEndpointConfiguration: (id: string) => void;
+    // Configuration management methods
+    createEndpointConfiguration: (config: EndpointConfiguration) => void;
+    updateEndpointConfiguration: (id: string, config: EndpointConfiguration) => void;
+    deleteEndpointConfiguration: (id: string) => void;
 
-  // Online endpoints filter state
-  onlineEndpointsOnly: boolean;
-  setOnlineEndpointsOnly: (value: boolean) => void;
+    // Online endpoints filter state
+    onlineEndpointsOnly: boolean;
+    setOnlineEndpointsOnly: (value: boolean) => void;
 
-  // Agent status
-  agentStatus: AgentStatus;
+    // Agent status
+    agentStatus: AgentStatus;
 }
 
 const NgrokContext = createContext<NgrokContextType>({
-  authToken: "",
-  setAuthToken: () => null,
-  authIsSetup: false,
+    authToken: "",
+    setAuthToken: () => null,
+    authIsSetup: false,
 
-  connectURL: "",
-  setConnectURL: () => null,
+    connectURL: "",
+    setConnectURL: () => null,
 
-  autoDisconnect: false,
-  setAutoDisconnect: () => null,
+    autoDisconnect: false,
+    setAutoDisconnect: () => null,
 
-  containers: {},
-  setContainers: () => null,
-  endpoints: {},
-  setEndpoints: () => null,
-  endpointConfigurations: {},
-  setEndpointConfigurations: () => null,
-  runningEndpoints: {},
-  setRunningEndpoints: () => null,
-  createEndpointConfiguration: () => null,
-  updateEndpointConfiguration: () => null,
-  deleteEndpointConfiguration: () => null,
-  onlineEndpointsOnly: false,
-  setOnlineEndpointsOnly: () => null,
-  agentStatus: {
-    status: 'offline',
-    timestamp: new Date().toISOString()
-  },
+    containers: {},
+    setContainers: () => null,
+    endpoints: {},
+    setEndpoints: () => null,
+    endpointConfigurations: {},
+    setEndpointConfigurations: () => null,
+    runningEndpoints: {},
+    setRunningEndpoints: () => null,
+    createEndpointConfiguration: () => null,
+    updateEndpointConfiguration: () => null,
+    deleteEndpointConfiguration: () => null,
+    onlineEndpointsOnly: false,
+    setOnlineEndpointsOnly: () => null,
+    agentStatus: {
+        status: 'offline',
+        timestamp: new Date().toISOString()
+    },
 });
 
 export function NgrokContextProvider({
-  children,
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  const [authToken, setAuthToken] = useState(
-    localStorage.getItem("authToken") ?? ""
-  );
-  const authIsSetup = authToken !== "";
+    const [authToken, setAuthToken] = useState(
+        localStorage.getItem("authToken") ?? ""
+    );
+    const authIsSetup = authToken !== "";
 
-  const [connectURL, setConnectURL] = useState(
-    localStorage.getItem("connectURL") ?? ""
-  );
+    const [connectURL, setConnectURL] = useState(
+        localStorage.getItem("connectURL") ?? ""
+    );
 
-  const [autoDisconnect, setAutoDisconnect] = useState(
-    localStorage.getItem("autoDisconnect") === "true" ? true : false // Default to false
-  );
+    const [autoDisconnect, setAutoDisconnect] = useState(
+        localStorage.getItem("autoDisconnect") === "true" ? true : false // Default to false
+    );
 
-  const [containers, setContainers] = useState(
-    localStorage.getItem("containers") ? JSON.parse(localStorage.getItem("containers") ?? "") : {}
-  );
+    const [containers, setContainers] = useState(
+        localStorage.getItem("containers") ? JSON.parse(localStorage.getItem("containers") ?? "") : {}
+    );
 
-  const [endpoints, setEndpoints] = useState(
-    localStorage.getItem("endpoints") ? JSON.parse(localStorage.getItem("endpoints") ?? "") : {}
-  );
+    const [endpoints, setEndpoints] = useState(
+        localStorage.getItem("endpoints") ? JSON.parse(localStorage.getItem("endpoints") ?? "") : {}
+    );
 
-  // New state for endpoint configurations and running endpoints
-  const [endpointConfigurations, setEndpointConfigurations] = useState<Record<string, EndpointConfiguration>>(
-    localStorage.getItem("endpointConfigurations") ? JSON.parse(localStorage.getItem("endpointConfigurations") ?? "{}") : {}
-  );
+    // New state for endpoint configurations and running endpoints
+    const [endpointConfigurations, setEndpointConfigurations] = useState<Record<string, EndpointConfiguration>>(
+        localStorage.getItem("endpointConfigurations") ? JSON.parse(localStorage.getItem("endpointConfigurations") ?? "{}") : {}
+    );
 
-  const [runningEndpoints, setRunningEndpoints] = useState<Record<string, RunningEndpoint>>({});
+    const [runningEndpoints, setRunningEndpoints] = useState<Record<string, RunningEndpoint>>({});
 
-  const [agentStatus, setAgentStatus] = useState<AgentStatus>({
-    status: 'unknown',
-    timestamp: new Date().toISOString()
-  });
-
-  const [onlineEndpointsOnly, setOnlineEndpointsOnly] = useState(false);
-
-  const getContainers = async () => {
-    ddClient.docker.listContainers().then((loaded)=>{
-      updateContainers(loaded as DockerContainer[]);
+    const [agentStatus, setAgentStatus] = useState<AgentStatus>({
+        status: 'unknown',
+        timestamp: new Date().toISOString()
     });
 
-    ddClient.extension.vm?.service?.get("/list_endpoints").then((result: any)=>{
-      // Handle both old and new response structures (Docker Desktop API change)
-      const responseData = result?.data || result;
+    const [onlineEndpointsOnly, setOnlineEndpointsOnly] = useState(false);
 
-      const endpointsMap: Record<string, Endpoint> = {};
-      const runningEndpointsMap: Record<string, RunningEndpoint> = {};
-      
-      if (responseData.endpoints) {
-        responseData.endpoints.forEach((endpoint: Endpoint) => {
-          endpointsMap[endpoint.id] = endpoint;
-          // Also populate running endpoints
-          runningEndpointsMap[endpoint.id] = {
-            id: endpoint.id,
-            url: endpoint.url,
-            containerId: endpoint.containerId,
-            targetPort: endpoint.targetPort
-          };
+    const getContainers = async () => {
+        ddClient.docker.listContainers().then((loaded) => {
+            updateContainers(loaded as DockerContainer[]);
         });
-      }
-      updateEndpoints(endpointsMap);
-      updateRunningEndpoints(runningEndpointsMap);
-    });
-  }
 
-  function updateContainers(loaded: DockerContainer[]) {
-    if(loaded){
-      const newContainers: Record<string, NgrokContainer> = {};
-      for(const container of loaded){
-        const publicPorts = container.Ports ? container.Ports.filter(x=>x.PublicPort) : [];
-        
-        for(const port of publicPorts){
-          const container_id = `${container.Id}:${port.PublicPort}`;
-          if(!containers[container_id]){
-            newContainers[container_id] = {
-              id: container_id,
-              ContainerId: container.Id,
-              Name: container.Names[0].substring(1),
-              Image: container.Image,
-              Port: port,
-            };
-          }else{
-            newContainers[container_id] = containers[container_id];
-            if(newContainers[container_id].Name !== container.Names[0].substring(1)){
-              newContainers[container_id].Name = container.Names[0].substring(1);
+        ddClient.extension.vm?.service?.get("/list_endpoints").then((result: any) => {
+            // Handle both old and new response structures (Docker Desktop API change)
+            const responseData = result?.data || result;
+
+            const endpointsMap: Record<string, Endpoint> = {};
+            const runningEndpointsMap: Record<string, RunningEndpoint> = {};
+
+            if (responseData.endpoints) {
+                responseData.endpoints.forEach((endpoint: Endpoint) => {
+                    endpointsMap[endpoint.id] = endpoint;
+                    // Also populate running endpoints
+                    runningEndpointsMap[endpoint.id] = {
+                        id: endpoint.id,
+                        url: endpoint.url,
+                        containerId: endpoint.containerId,
+                        targetPort: endpoint.targetPort,
+                        lastStarted: endpoint.lastStarted
+                    };
+                });
             }
-            if(newContainers[container_id].Image !== container.Image){
-              newContainers[container_id].Image = container.Image;
-            }
-            if(newContainers[container_id].Port.PublicPort !== port.PublicPort){
-              newContainers[container_id].Port = port;
-            }
-          }
-        }
-      }
-  
-      setContainers(newContainers);
-      localStorage.setItem("containers", JSON.stringify(newContainers));
+            updateEndpoints(endpointsMap);
+            updateRunningEndpoints(runningEndpointsMap);
+        });
     }
-  }
-  
-  function updateEndpoints(loaded: Record<string, Endpoint>) {
-    setEndpoints(loaded);
-    localStorage.setItem("endpoints", JSON.stringify(loaded));
-  }
 
-  // Configuration management functions
-  const createEndpointConfiguration = (config: EndpointConfiguration) => {
-    const newConfigs = { ...endpointConfigurations, [config.id]: config };
-    setEndpointConfigurations(newConfigs);
-    localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
-  };
+    function updateContainers(loaded: DockerContainer[]) {
+        if (loaded) {
+            const newContainers: Record<string, NgrokContainer> = {};
+            for (const container of loaded) {
+                const publicPorts = container.Ports ? container.Ports.filter(x => x.PublicPort) : [];
 
-  const updateEndpointConfiguration = (id: string, config: EndpointConfiguration) => {
-    const newConfigs = { ...endpointConfigurations, [id]: config };
-    setEndpointConfigurations(newConfigs);
-    localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
-  };
+                for (const port of publicPorts) {
+                    const container_id = `${container.Id}:${port.PublicPort}`;
+                    if (!containers[container_id]) {
+                        newContainers[container_id] = {
+                            id: container_id,
+                            ContainerId: container.Id,
+                            Name: container.Names[0].substring(1),
+                            Image: container.Image,
+                            Port: port,
+                        };
+                    } else {
+                        newContainers[container_id] = containers[container_id];
+                        if (newContainers[container_id].Name !== container.Names[0].substring(1)) {
+                            newContainers[container_id].Name = container.Names[0].substring(1);
+                        }
+                        if (newContainers[container_id].Image !== container.Image) {
+                            newContainers[container_id].Image = container.Image;
+                        }
+                        if (newContainers[container_id].Port.PublicPort !== port.PublicPort) {
+                            newContainers[container_id].Port = port;
+                        }
+                    }
+                }
+            }
 
-  const deleteEndpointConfiguration = (id: string) => {
-    const newConfigs = { ...endpointConfigurations };
-    delete newConfigs[id];
-    setEndpointConfigurations(newConfigs);
-    localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
-  };
+            setContainers(newContainers);
+            localStorage.setItem("containers", JSON.stringify(newContainers));
+        }
+    }
 
-  const updateRunningEndpoints = (loaded: Record<string, RunningEndpoint>) => {
-    setRunningEndpoints(loaded);
-  };
+    function updateEndpoints(loaded: Record<string, Endpoint>) {
+        setEndpoints(loaded);
+        localStorage.setItem("endpoints", JSON.stringify(loaded));
+    }
 
-  const handleStatusUpdate = useCallback((status: AgentStatus) => {
-    setAgentStatus(status);
-  }, []);
+    // Configuration management functions
+    const createEndpointConfiguration = (config: EndpointConfiguration) => {
+        const newConfigs = { ...endpointConfigurations, [config.id]: config };
+        setEndpointConfigurations(newConfigs);
+        localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
+    };
 
-  const handleStatusError = useCallback((error: Error) => {
-    console.error('Status polling error:', error);
-    setAgentStatus({
-      status: 'unknown',
-      timestamp: new Date().toISOString()
-    });
-  }, []);
+    const updateEndpointConfiguration = (id: string, config: EndpointConfiguration) => {
+        const newConfigs = { ...endpointConfigurations, [id]: config };
+        setEndpointConfigurations(newConfigs);
+        localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
+    };
 
-  const ddClient = useDockerDesktopClient();
-  useEffect(() => {
-    if (authIsSetup) {
-      ddClient.extension.vm?.service
-        ?.post('/configure_agent', { 
-          token: authToken, 
-          connectURL: connectURL,
-          autoDisconnect: autoDisconnect 
-        })
-        .then((_result) => {
-          localStorage.setItem("authToken", authToken);
-          localStorage.setItem("connectURL", connectURL);
-          localStorage.setItem("autoDisconnect", autoDisconnect.toString());
-          ddClient.desktopUI.toast.success("Settings saved successfully");
-        })
-        .catch((error) => {
-          console.error(`Failed to configure agent: ${JSON.stringify(error)}`);
-          ddClient.desktopUI.toast.error("Failed to save settings");
-          // Reset status to unknown on error
-          setAgentStatus({
+    const deleteEndpointConfiguration = (id: string) => {
+        const newConfigs = { ...endpointConfigurations };
+        delete newConfigs[id];
+        setEndpointConfigurations(newConfigs);
+        localStorage.setItem("endpointConfigurations", JSON.stringify(newConfigs));
+    };
+
+    const updateRunningEndpoints = (loaded: Record<string, RunningEndpoint>) => {
+        setRunningEndpoints(loaded);
+    };
+
+    const handleStatusUpdate = useCallback((status: AgentStatus) => {
+        setAgentStatus(status);
+    }, []);
+
+    const handleStatusError = useCallback((error: Error) => {
+        console.error('Status polling error:', error);
+        setAgentStatus({
             status: 'unknown',
             timestamp: new Date().toISOString()
-          });
         });
-      
-      getContainers();
-    }
-  }, [authToken, authIsSetup, connectURL, autoDisconnect]);
+    }, []);
 
-  useEffect(() => {
-    // If the auth token already exists in the local storage, make a POST /auth request automatically to set up the auth
-    if (authIsSetup) {
-      ddClient.extension.vm?.service?.post('/auth', { token: authToken });
+    const ddClient = useDockerDesktopClient();
+    useEffect(() => {
+        if (authIsSetup) {
+            ddClient.extension.vm?.service
+                ?.post('/configure_agent', {
+                    token: authToken,
+                    connectURL: connectURL,
+                    autoDisconnect: autoDisconnect
+                })
+                .then((_result) => {
+                    localStorage.setItem("authToken", authToken);
+                    localStorage.setItem("connectURL", connectURL);
+                    localStorage.setItem("autoDisconnect", autoDisconnect.toString());
+                    ddClient.desktopUI.toast.success("Settings saved successfully");
+                })
+                .catch((error) => {
+                    console.error(`Failed to configure agent: ${JSON.stringify(error)}`);
+                    ddClient.desktopUI.toast.error("Failed to save settings");
+                    // Reset status to unknown on error
+                    setAgentStatus({
+                        status: 'unknown',
+                        timestamp: new Date().toISOString()
+                    });
+                });
 
-      getContainers();
-    }
-  }, []);
-
-  useEffect(() => {
-    const containersEvents = async () => {
-      await ddClient.docker.cli.exec(
-        "events",
-        [
-          "--format",
-          `"{{ json . }}"`,
-          "--filter",
-          "type=container",
-          "--filter",
-          "event=start",
-          "--filter",
-          "event=destroy",
-        ],
-        {
-          stream: {
-            async onOutput(_data: any) {
-              await getContainers();
-            },
-            onClose(exitCode) {
-              console.log("onClose with exit code " + exitCode);
-            },
-            splitOutputLines: true,
-          },
+            getContainers();
         }
-      );
-    };
+    }, [authToken, authIsSetup, connectURL, autoDisconnect]);
 
-    containersEvents();
-  }, []);
+    useEffect(() => {
+        // If the auth token already exists in the local storage, make a POST /auth request automatically to set up the auth
+        if (authIsSetup) {
+            ddClient.extension.vm?.service?.post('/auth', { token: authToken });
 
-  useEffect(() => {
-    statusService.startPolling(handleStatusUpdate, handleStatusError);
-    return () => {
-      statusService.stopPolling();
-    };
-  }, [handleStatusUpdate, handleStatusError]);
+            getContainers();
+        }
+    }, []);
 
-  return (
-    <NgrokContext.Provider
-      value={{
-        authToken,
-        setAuthToken,
-        authIsSetup,
-        
-        connectURL,
-        setConnectURL,
-        
-        autoDisconnect,
-        setAutoDisconnect,
-        
-        containers,
-        setContainers,
-        endpoints,
-        setEndpoints,
-        endpointConfigurations,
-        setEndpointConfigurations,
-        runningEndpoints,
-        setRunningEndpoints,
-        createEndpointConfiguration,
-        updateEndpointConfiguration,
-        deleteEndpointConfiguration,
-        onlineEndpointsOnly,
-        setOnlineEndpointsOnly,
-        agentStatus,
-      }}
-    >
-      {children}
-    </NgrokContext.Provider>
-  );
+    useEffect(() => {
+        const containersEvents = async () => {
+            await ddClient.docker.cli.exec(
+                "events",
+                [
+                    "--format",
+                    `"{{ json . }}"`,
+                    "--filter",
+                    "type=container",
+                    "--filter",
+                    "event=start",
+                    "--filter",
+                    "event=destroy",
+                ],
+                {
+                    stream: {
+                        async onOutput(_data: any) {
+                            await getContainers();
+                        },
+                        onClose(exitCode) {
+                            console.log("onClose with exit code " + exitCode);
+                        },
+                        splitOutputLines: true,
+                    },
+                }
+            );
+        };
+
+        containersEvents();
+    }, []);
+
+    useEffect(() => {
+        statusService.startPolling(handleStatusUpdate, handleStatusError);
+        return () => {
+            statusService.stopPolling();
+        };
+    }, [handleStatusUpdate, handleStatusError]);
+
+    return (
+        <NgrokContext.Provider
+            value={{
+                authToken,
+                setAuthToken,
+                authIsSetup,
+
+                connectURL,
+                setConnectURL,
+
+                autoDisconnect,
+                setAutoDisconnect,
+
+                containers,
+                setContainers,
+                endpoints,
+                setEndpoints,
+                endpointConfigurations,
+                setEndpointConfigurations,
+                runningEndpoints,
+                setRunningEndpoints,
+                createEndpointConfiguration,
+                updateEndpointConfiguration,
+                deleteEndpointConfiguration,
+                onlineEndpointsOnly,
+                setOnlineEndpointsOnly,
+                agentStatus,
+            }}
+        >
+            {children}
+        </NgrokContext.Provider>
+    );
 }
 
 export function useNgrokContext() {
-  return useContext(NgrokContext);
+    return useContext(NgrokContext);
 }

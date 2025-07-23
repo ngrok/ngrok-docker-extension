@@ -27,6 +27,7 @@ type Endpoint struct {
 	URL         string `json:"url"`
 	ContainerID string `json:"containerId"`
 	TargetPort  string `json:"targetPort"`
+	LastStarted string `json:"lastStarted"`
 }
 
 // Remove Endpoint Types

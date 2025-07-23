@@ -37,7 +37,7 @@ const ClickableImageName: React.FC<ClickableImageNameProps> = ({ image, isOnline
       variant="body2"
       sx={{
         color: isOnline ? '#000000' : '#677285',
-        fontWeight: isOnline ? 400 : 300,
+        fontWeight: isOnline ? 500 : 400,
         textDecoration: 'none',
         cursor: 'pointer',
         border: 'none',

@@ -3,6 +3,7 @@ import { Box, Typography, IconButton, Chip } from '@mui/material';
 import { SettingsOutlined, ArticleOutlined, CheckCircle, Schedule } from '@mui/icons-material';
 import { AgentStatus } from '../services/statusService';
 import { createDockerDesktopClient } from '@docker/extension-api-client';
+import ngrokLogo from '../assets/ngrok-logo.svg';
 
 interface AppHeaderProps {
     status: AgentStatus;
@@ -20,9 +21,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
     const getLatencyColor = (latency?: number) => {
         if (!latency || latency <= 0) return '#8993a5'; // Default gray
-        if (latency < 50) return '#4caf50'; // Green for <50ms
-        if (latency < 250) return '#ff9800'; // Yellow for <250ms
-        return '#f44336'; // Red for >=250ms
+        if (latency < 250) return '#2e7f74'; // Green for <250ms
+        if (latency < 750) return '#ff9800'; // Yellow for <750ms
+        return '#f44336'; // Red for >=750ms
     };
 
     const getStatusLabel = () => {
@@ -76,20 +77,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         >
             {/* Left section: Title and status indicators */}
             <Box display="flex" alignItems="center" gap={4}>
-                {/* ngrok title */}
-                <Typography
-                    variant="h3"
+                {/* ngrok wordmark */}
+                <Box
+                    component="img"
+                    src={ngrokLogo}
+                    alt="ngrok"
                     sx={{
-                        fontFamily: 'Roboto, sans-serif',
-                        fontWeight: 500,
-                        fontSize: 23,
-                        color: '#000000',
-                        lineHeight: 1,
+                        height: 23,
+                        width: 'auto',
                         flexShrink: 0,
                     }}
-                >
-                    ngrok
-                </Typography>
+                />
 
                 {/* Status indicators */}
                 <Box display="flex" alignItems="center" gap={2}>

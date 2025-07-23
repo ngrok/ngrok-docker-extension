@@ -33,7 +33,7 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
         component="button"
         sx={{
           color: isOnline ? '#0055bd' : '#677285',
-          fontWeight: isOnline ? 400 : 300,
+          fontWeight: isOnline ? 500 : 400,
           textDecoration: isOnline ? 'underline' : 'none',
           cursor: isOnline ? 'pointer' : 'default',
           border: 'none',
@@ -48,7 +48,17 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
       >
         {url}
       </Typography>
-      <IconButton size="small" onClick={handleCopy}>
+      <IconButton 
+        size="small" 
+        onClick={handleCopy}
+        sx={{
+          opacity: 0,
+          transition: 'opacity 0.2s ease-in-out',
+          '.MuiDataGrid-row:hover &': {
+            opacity: 1
+          }
+        }}
+      >
         <ContentCopyIcon fontSize="small" />
       </IconButton>
     </Box>
