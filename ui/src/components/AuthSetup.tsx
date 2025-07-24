@@ -4,7 +4,6 @@ import {
   Button,
   Container,
   TextField,
-  Typography,
   Alert,
   LinearProgress,
   Stack,
@@ -22,6 +21,7 @@ import {
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { useNgrokContext } from "./NgrokContext";
 import ngrokLogoSvg from "../assets/ngrok-logo.svg";
+import { SecondaryText } from "./StyledTypography";
 
 const client = createDockerDesktopClient();
 
@@ -93,9 +93,9 @@ export default function AuthSetup() {
               style={{ height: '32px', width: 'auto' }}
             />
           </Box>
-          <Typography variant="body1" color="text.secondary">
+          <SecondaryText>
             We just need your authtoken to get started.
-          </Typography>
+          </SecondaryText>
         </Grid2>
 
         <Grid2>
@@ -146,6 +146,12 @@ export default function AuthSetup() {
                       )}
                     </InputAdornment>
                   ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    fontFamily: 'Roboto Mono, monospace',
+                    fontSize: 14,
+                  },
                 }}
               />
 

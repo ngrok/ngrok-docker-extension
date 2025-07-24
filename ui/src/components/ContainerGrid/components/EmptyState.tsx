@@ -1,6 +1,7 @@
 import { Box, Typography, Button } from "@mui/material";
 import { AllInbox as ContainerIcon } from "@mui/icons-material";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
+import { EmptyStatePanel } from "../../StyledPanels";
 
 const ddClient = createDockerDesktopClient();
 
@@ -16,19 +17,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '400px',
-        textAlign: 'center',
-        backgroundColor: '#f9f9fa',
-        borderRadius: '8px',
-        p: 4
-      }}
-    >
+    <EmptyStatePanel>
       {/* Container Icon */}
       <Box
         sx={{
@@ -95,7 +84,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
       >
         {isFiltered ? 'Show all endpoints' : 'Start a container'}
       </Button>
-    </Box>
+    </EmptyStatePanel>
   );
 };
 

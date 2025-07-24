@@ -8,7 +8,6 @@ import {
   Typography,
   Box,
   Grid,
-  Link,
   IconButton
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -24,6 +23,9 @@ import ProgressStepper from './ProgressStepper';
 import BindingCard, { BindingType } from './BindingCard';
 import ProtocolWarning from './ProtocolWarning';
 import AdditionalOptions, { AdditionalOptionsState } from './AdditionalOptions';
+import { CardPanel } from './StyledPanels';
+import { SectionTitle } from './StyledTypography';
+import { LinkButton } from './StyledButtons';
 
 const ddClient = createDockerDesktopClient();
 
@@ -299,26 +301,14 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
       <DialogContent sx={{ p: 2, pt: 0 }}>
         {currentStep === 1 ? (
           // Step 1: Configure Endpoint
-          <Box sx={{ 
-            backgroundColor: '#efeff2', 
-            borderRadius: 1, 
-            border: '1px solid #d1d4db',
-            p: 2 
-          }}>
+          <CardPanel>
             {/* Binding Section */}
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <ConnectWithoutContactIcon sx={{ width: 20, height: 20, color: '#677285', mr: 1 }} />
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '16px',
-                    fontWeight: 'medium',
-                    color: '#000000'
-                  }}
-                >
+                <SectionTitle>
                   Binding
-                </Typography>
+                </SectionTitle>
               </Box>
               
               <Grid container spacing={1}>
@@ -341,16 +331,9 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <LinkIcon sx={{ width: 20, height: 20, color: '#677285', mr: 1 }} />
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '16px',
-                    fontWeight: 'medium',
-                    color: '#000000'
-                  }}
-                >
+                <SectionTitle>
                   URL
-                </Typography>
+                </SectionTitle>
               </Box>
               
               <TextField
@@ -400,22 +383,9 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
                 Leave blank to auto-generate a random URL.
               </Typography>
               
-              <Link
-                component="button"
-                variant="caption"
-                onClick={() => openExternalLink('https://ngrok.com/docs/universal-gateway/bindings/')}
-                sx={{
-                  color: '#086dd7',
-                  fontSize: '12px',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  p: 0,
-                  border: 'none',
-                  background: 'none'
-                }}
-              >
+              <LinkButton onClick={() => openExternalLink('https://ngrok.com/docs/universal-gateway/bindings/')}>
                 Learn more
-              </Link>
+              </LinkButton>
             </Box>
 
             {/* Additional Options */}
@@ -423,27 +393,15 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
               options={stepOneConfig.additionalOptions}
               onChange={handleAdditionalOptionsChange}
             />
-          </Box>
+          </CardPanel>
         ) : (
           // Step 2: Traffic Policy
-          <Box sx={{ 
-            backgroundColor: '#efeff2', 
-            borderRadius: 1, 
-            border: '1px solid #d1d4db',
-            p: 2 
-          }}>
+          <CardPanel>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <PolicyIcon sx={{ width: 20, height: 20, color: '#677285', mr: 1 }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontSize: '16px',
-                  fontWeight: 'medium',
-                  color: '#000000'
-                }}
-              >
+              <SectionTitle>
                 Traffic Policy
-              </Typography>
+              </SectionTitle>
             </Box>
             
             <Typography 
@@ -477,7 +435,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1,
                   backgroundColor: '#ffffff',
-                  fontFamily: 'monospace',
+                  fontFamily: 'Roboto Mono, monospace',
                   '& fieldset': {
                     borderColor: '#c9c9c9',
                     borderWidth: '1.5px'
@@ -491,7 +449,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
                 },
                 '& .MuiOutlinedInput-input': {
                   padding: '11px 16px',
-                  fontSize: '13px',
+                  fontSize: 14,
                   fontFamily: 'Roboto Mono, monospace',
                   color: '#000000'
                 }
@@ -499,41 +457,15 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             />
             
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Link
-                component="button"
-                variant="body2"
-                onClick={() => openExternalLink('https://ngrok.com/docs/traffic-policy/')}
-                sx={{
-                  color: '#086dd7',
-                  fontSize: '14px',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  p: 0,
-                  border: 'none',
-                  background: 'none'
-                }}
-              >
+              <LinkButton onClick={() => openExternalLink('https://ngrok.com/docs/traffic-policy/')}>
                 Learn more
-              </Link>
+              </LinkButton>
               
-              <Link
-                component="button"
-                variant="body2"
-                onClick={() => openExternalLink('https://ngrok.com/docs/traffic-policy/examples/')}
-                sx={{
-                  color: '#086dd7',
-                  fontSize: '14px',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  p: 0,
-                  border: 'none',
-                  background: 'none'
-                }}
-              >
+              <LinkButton onClick={() => openExternalLink('https://ngrok.com/docs/traffic-policy/examples/')}>
                 View example gallery
-              </Link>
+              </LinkButton>
             </Box>
-          </Box>
+          </CardPanel>
         )}
       </DialogContent>
 

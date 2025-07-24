@@ -4,7 +4,6 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-  Link,
   Typography,
   Box,
   Switch,
@@ -13,6 +12,8 @@ import {
   InputAdornment,
   useTheme,
 } from "@mui/material";
+import { SectionTitle } from './StyledTypography';
+import { LinkButton } from './StyledButtons';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -137,18 +138,9 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
         <DialogContent sx={{ px: 3, py: 0 }}>
           {/* Authtoken Section */}
           <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                fontFamily: 'Roboto',
-                fontWeight: 500,
-                fontSize: '16px',
-                lineHeight: '24px',
-                mb: 2
-              }}
-            >
+            <SectionTitle sx={{ mb: 2 }}>
               ngrok Authtoken
-            </Typography>
+            </SectionTitle>
             <TextField
               autoFocus
               id="authtoken"
@@ -177,8 +169,8 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  fontFamily: 'Roboto Mono',
-                  fontSize: '14px',
+                  fontFamily: 'Roboto Mono, monospace',
+                  fontSize: 14,
                   '& fieldset': {
                     borderColor: '#C9C9C9',
                     borderWidth: '1.5px',
@@ -201,47 +193,29 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
               Connects the extension with your ngrok account
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Link
-                component="button"
-                variant="inherit"
+              <LinkButton
                 onClick={() => {
                   ddClient.host.openExternal(
                     "https://dashboard.ngrok.com/get-started/your-authtoken"
                   );
                 }}
-                sx={{ 
-                  textDecoration: 'underline', 
-                  cursor: 'pointer',
-                  color: '#086dd7',
-                  fontFamily: 'Roboto',
-                  fontSize: '12px',
-                  lineHeight: '16px',
-                  letterSpacing: '0.24px',
+                style={{ 
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.5
+                  gap: '4px'
                 }}
               >
                 View in dashboard
                 <OpenInNewIcon sx={{ fontSize: '16px' }} />
-              </Link>
+              </LinkButton>
             </Box>
           </Box>
 
           {/* Agent Connect URL Section */}
           <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                fontFamily: 'Roboto',
-                fontWeight: 500,
-                fontSize: '16px',
-                lineHeight: '24px',
-                mb: 2
-              }}
-            >
+            <SectionTitle sx={{ mb: 2 }}>
               Agent Connect URL
-            </Typography>
+            </SectionTitle>
             <TextField
               id="connecturl"
               placeholder="connect.example.org:443"
@@ -277,69 +251,42 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
               The network address used to connect to the ngrok service. Leave blank to use ngrok's default servers
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-              <Link
-                component="button"
-                variant="inherit"
+              <LinkButton
                 onClick={() => {
                   ddClient.host.openExternal("https://ngrok.com/docs/agent/ingress/");
                 }}
-                sx={{ 
-                  textDecoration: 'underline', 
-                  cursor: 'pointer',
-                  color: '#086dd7',
-                  fontFamily: 'Roboto',
-                  fontSize: '12px',
-                  lineHeight: '16px',
-                  letterSpacing: '0.24px',
+                style={{ 
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.5
+                  gap: '4px'
                 }}
               >
                 Learn more
                 <OpenInNewIcon sx={{ fontSize: '16px' }} />
-              </Link>
+              </LinkButton>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Link
-                component="button"
-                variant="inherit"
+              <LinkButton
                 onClick={() => {
                   ddClient.host.openExternal("https://dashboard.ngrok.com/tunnels/ingress");
                 }}
-                sx={{ 
-                  textDecoration: 'underline', 
-                  cursor: 'pointer',
-                  color: '#086dd7',
-                  fontFamily: 'Roboto',
-                  fontSize: '12px',
-                  lineHeight: '16px',
-                  letterSpacing: '0.24px',
+                style={{ 
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.5
+                  gap: '4px'
                 }}
               >
                 View in dashboard
                 <OpenInNewIcon sx={{ fontSize: '16px' }} />
-              </Link>
+              </LinkButton>
             </Box>
           </Box>
 
           {/* Auto-disconnect Section */}
           <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                fontFamily: 'Roboto',
-                fontWeight: 500,
-                fontSize: '16px',
-                lineHeight: '24px',
-                mb: 2
-              }}
-            >
+            <SectionTitle sx={{ mb: 2 }}>
               Auto-Disconnect
-            </Typography>
+            </SectionTitle>
             <FormControlLabel
               control={
                 <Switch

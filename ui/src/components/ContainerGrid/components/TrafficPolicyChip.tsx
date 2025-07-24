@@ -14,14 +14,16 @@ const TrafficPolicyChip: React.FC<TrafficPolicyChipProps> = ({ enabled, isOnline
       label={enabled ? 'YES' : 'NO'}
       size="small"
       sx={{
+        height: 20,
+        borderRadius: 4,
         backgroundColor: chipColor,
         color: textColor,
         fontWeight: 500,
-        fontSize: '10px',
+        fontSize: 10,
         textTransform: 'uppercase',
         opacity: isOnline ? 1 : 0.6,
         '& .MuiChip-label': {
-          padding: '2px 4px'
+          padding: '0 6px'
         }
       }}
     />

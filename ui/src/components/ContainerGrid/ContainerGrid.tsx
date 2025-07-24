@@ -235,14 +235,15 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'status',
             headerName: '',
-            width: 40,
+            width: 50,
             sortable: false,
             renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} />
         },
         {
             field: 'containerName',
             headerName: 'Container',
-            width: 153,
+            flex: 1,
+            minWidth: 120,
             renderCell: (params) => (
                 <ClickableContainerName
                     name={params.value}
@@ -254,7 +255,8 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'image',
             headerName: 'Image',
-            width: 229,
+            flex: 1.5,
+            minWidth: 180,
             renderCell: (params) => (
                 <ClickableImageName
                     image={params.value}
@@ -274,19 +276,10 @@ const ContainerGrid: React.FC = () => {
             )
         },
         {
-            field: 'imageId',
-            headerName: 'Image ID',
-            width: 200,
-            renderCell: (params) => (
-                <Box sx={{ color: '#000000', fontWeight: params.row.isOnline ? 500 : 400, fontSize: '11px' }}>
-                    {params.value || 'No ID'}
-                </Box>
-            )
-        },
-        {
             field: 'url',
             headerName: 'URL',
-            width: 250,
+            flex: 2,
+            minWidth: 200,
             renderCell: (params) => (
                 <UrlCell url={params.value} isOnline={params.row.isOnline} />
             )
@@ -294,7 +287,7 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'trafficPolicy',
             headerName: 'Traffic Policy',
-            width: 131,
+            width: 120,
             renderCell: (params) => (
                 <TrafficPolicyChip
                     enabled={params.value === 'YES'}
@@ -305,7 +298,7 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'lastStarted',
             headerName: 'Last Started',
-            width: 145,
+            width: 120,
             renderCell: (params) => (
                 <LastStartedCell
                     timestamp={params.value}
@@ -317,7 +310,7 @@ const ContainerGrid: React.FC = () => {
             field: 'actions',
             headerName: 'Actions',
             type: 'actions',
-            width: 120,
+            width: 100,
             getActions: (params) => generateActionButtons(params.row)
         }
     ];
@@ -597,64 +590,39 @@ const ContainerGrid: React.FC = () => {
                 pageSizeOptions={[10]}
                 checkboxSelection={false}
                 disableRowSelectionOnClick={true}
+                autoHeight
                 sx={{
-                    '& .MuiDataGrid-root': {
-                        border: 'none',
-                        borderRadius: '8px',
-                        backgroundColor: '#ffffff'
+                    // Keep minimal styling that doesn't conflict with Docker's DataGrid theme
+                    '& .MuiDataGrid-cell[data-field="status"]': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                     },
-                    '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#f5f5f5',
-                        borderBottom: '1px solid #e0e0e0',
-                        '& .MuiDataGrid-columnHeader': {
-                            padding: '12px 16px',
-                            '&:focus': {
-                                outline: 'none'
-                            }
-                        }
+                    '& .MuiDataGrid-cell[data-field="trafficPolicy"]': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                     },
-                    '& .MuiDataGrid-row': {
-                        minHeight: '48px',
-                        borderBottom: '1px solid #f0f0f0',
+                    '& .MuiDataGrid-cell[data-field="lastStarted"]': {
+                        display: 'flex',
+                        alignItems: 'center'
+                    },
+                    '& .MuiDataGrid-columnHeader[data-field="actions"]': {
+                        justifyContent: 'flex-end'
+                    },
+                    '& .MuiDataGrid-cell[data-field="actions"]': {
+                        justifyContent: 'flex-start',
+                        gap: '4px'
+                    },
+                    '& .MuiDataGrid-cell[data-field="url"]': {
+                        overflow: 'visible'
+                    },
+                    '& .MuiIconButton-root.circular-progress': {
+                        backgroundColor: 'transparent',
                         '&:hover': {
-                            backgroundColor: '#f9f9f9'
-                        },
-                        '&:nth-of-type(even)': {
-                            backgroundColor: '#fafafa'
+                            backgroundColor: 'transparent'
                         }
-                    },
-                    "& .MuiDataGrid-columnHeader": {
-                        padding: '12px 16px',
-                        '&:focus': {
-                            outline: 'none'
-                        },
-                        '&[data-field="actions"]': {
-                            justifyContent: 'flex-end !important'
-                        }
-                    },
-                    "& .MuiDataGrid-cell": {
-                        padding: '12px 16px',
-                        borderBottom: 'none',
-                        minHeight: '52px !important',
-                        maxHeight: '52px !important',
-                        display: 'flex !important',
-                        alignItems: 'center !important',
-                        '&:focus': {
-                            outline: 'none'
-                        },
-                        '&[data-field="actions"]': {
-                            justifyContent: 'flex-end !important'
-                        },
-                        '&[data-field="url"]': {
-                            overflow: 'visible !important'
-                        },
-                        "& .MuiIconButton-root.circular-progress": {
-                            "&:hover": {
-                                backgroundColor: "transparent",
-                            },
-                            backgroundColor: "transparent",
-                        },
-                    },
+                    }
                 }}
             />
         </Box>

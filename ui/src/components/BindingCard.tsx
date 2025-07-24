@@ -3,6 +3,7 @@ import { Box, Typography, Radio, Link } from '@mui/material';
 import PublicIcon from '@mui/icons-material/Public';
 import LockIcon from '@mui/icons-material/Lock';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
+import { SecondaryText } from './StyledTypography';
 
 const ddClient = createDockerDesktopClient();
 
@@ -97,17 +98,14 @@ const BindingCard: React.FC<BindingCardProps> = ({
         {title}
       </Typography>
       
-      <Typography 
-        variant="body2" 
+      <SecondaryText 
         sx={{ 
-          color: '#677285',
           fontSize: '13px',
-          lineHeight: 1.4,
           mb: 1.5
         }}
       >
         {description}
-      </Typography>
+      </SecondaryText>
       
       <Link
         component="button"

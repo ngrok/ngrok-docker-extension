@@ -1,8 +1,10 @@
 import React from 'react';
-import { Box, Typography, IconButton, Chip } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { SettingsOutlined, ArticleOutlined, CheckCircle, Schedule } from '@mui/icons-material';
 import { AgentStatus } from '../services/statusService';
 import { createDockerDesktopClient } from '@docker/extension-api-client';
+import { SquareIconButton } from './StyledIconButton';
+import { StatusChip } from './StyledChip';
 import ngrokLogo from '../assets/ngrok-logo.svg';
 
 interface AppHeaderProps {
@@ -36,28 +38,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         }
     };
 
-    const getStatusColor = () => {
-        switch (status.status) {
-            case 'online': return '#2e7f74';
-            case 'offline': return '#757575';
-            case 'reconnecting': return '#ff9800';
-            case 'unknown': return '#9e9e9e';
-            default: return '#9e9e9e';
-        }
-    };
-
-    const getStatusBgColor = () => {
-        switch (status.status) {
-            case 'online': return '#e6f5f3';
-            case 'offline': return '#f5f5f5';
-            case 'reconnecting': return '#fff3e0';
-            case 'unknown': return '#f5f5f5';
-            default: return '#f5f5f5';
-        }
-    };
-
-    const statusColor = getStatusColor();
-    const statusBgColor = getStatusBgColor();
     const statusLabel = getStatusLabel();
     const isConnected = status.status === 'online';
     const latencyColor = getLatencyColor(status.connectionLatency);
@@ -92,39 +72,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 {/* Status indicators */}
                 <Box display="flex" alignItems="center" gap={2}>
                     {/* Connection status chip */}
-                    <Chip
-                        icon={
-                            <CheckCircle
-                                sx={{
-                                    color: statusColor,
-                                    width: 12,
-                                    height: 12,
-                                }}
-                            />
-                        }
+                    <StatusChip
+                        status={status.status}
+                        icon={<CheckCircle />}
                         label={statusLabel}
                         variant="outlined"
                         size="small"
-                        sx={{
-                            backgroundColor: statusBgColor,
-                            borderColor: `${statusColor}80`, // 50% opacity
-                            color: statusColor,
-                            fontSize: 10,
-                            fontWeight: 500,
-                            letterSpacing: '0.15px',
-                            textTransform: 'uppercase',
-                            height: 20,
-                            px: 1,
-                            py: 0.5,
-                            '& .MuiChip-icon': {
-                                marginLeft: 0.5,
-                                marginRight: 0.5,
-                            },
-                            '& .MuiChip-label': {
-                                paddingLeft: 0.5,
-                                paddingRight: 0.5,
-                            }
-                        }}
                     />
 
                     {/* Latency display - only show when connected */}
@@ -158,34 +111,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             {/* Right section: Action buttons */}
             <Box display="flex" alignItems="center">
                 {/* Docs button */}
-                <IconButton
-                    onClick={handleDocsClick}
-                    sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '12px',
-                        '&:hover': {
-                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                        }
-                    }}
-                >
+                <SquareIconButton onClick={handleDocsClick}>
                     <ArticleOutlined sx={{ width: 24, height: 24 }} />
-                </IconButton>
+                </SquareIconButton>
 
                 {/* Settings button */}
-                <IconButton
-                    onClick={onSettingsClick}
-                    sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '12px',
-                        '&:hover': {
-                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                        }
-                    }}
-                >
+                <SquareIconButton onClick={onSettingsClick}>
                     <SettingsOutlined sx={{ width: 24, height: 24 }} />
-                </IconButton>
+                </SquareIconButton>
             </Box>
         </Box>
     );

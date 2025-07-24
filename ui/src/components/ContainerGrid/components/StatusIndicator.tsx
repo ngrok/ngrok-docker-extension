@@ -8,12 +8,22 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({ isOnline }) => {
   return (
     <Box
       sx={{
-        width: 12,
-        height: 12,
-        borderRadius: '50%',
-        backgroundColor: isOnline ? '#2e7f74' : '#8993a5'
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%'
       }}
-    />
+    >
+      <Box
+        sx={{
+          width: 12,
+          height: 12,
+          borderRadius: '50%',
+          backgroundColor: isOnline ? '#2e7f74' : '#8993a5'
+        }}
+      />
+    </Box>
   );
 };
 

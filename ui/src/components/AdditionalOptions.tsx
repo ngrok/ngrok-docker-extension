@@ -14,6 +14,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
+import { SecondaryText } from './StyledTypography';
 
 const ddClient = createDockerDesktopClient();
 
@@ -135,15 +136,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 </Typography>
               }
             />
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: '#677285',
-                fontSize: '14px',
-                lineHeight: 1.4,
-                mt: 1
-              }}
-            >
+            <SecondaryText sx={{ mt: 1 }}>
               <Link
                 component="button"
                 variant="caption"
@@ -160,7 +153,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
               >
                 Learn more
               </Link>
-            </Typography>
+            </SecondaryText>
           </Box>
 
           {/* Description Section */}
@@ -203,17 +196,9 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 }
               }}
             />
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: '#677285',
-                fontSize: '14px',
-                lineHeight: 1.4,
-                mb: 1
-              }}
-            >
+            <SecondaryText sx={{ mb: 1 }}>
               Add a human readable description so you can easily reference this endpoint later.
-            </Typography>
+            </SecondaryText>
             <Link
               component="button"
               variant="caption"
@@ -256,6 +241,8 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 mb: 1,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1,
+                  fontFamily: 'Roboto Mono, monospace',
+                  fontSize: 14,
                   '& fieldset': {
                     borderColor: '#c9c9c9',
                     borderWidth: '1.5px'
@@ -273,17 +260,9 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 }
               }}
             />
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: '#677285',
-                fontSize: '14px',
-                lineHeight: 1.4,
-                mb: 1
-              }}
-            >
+            <SecondaryText sx={{ mb: 1 }}>
               Allows up to 4096 characters of user-provided data. Metadata can include machine-readable data intended for integration with the ngrok API or other services.
-            </Typography>
+            </SecondaryText>
             <Link
               component="button"
               variant="caption"

@@ -1,4 +1,5 @@
-import { Box, Typography, IconButton } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
+
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useCallback } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -34,10 +35,11 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
       display: 'flex',
       alignItems: 'center'
     }}>
-      <Typography
-        variant="body2"
+      <Box
         component="button"
         sx={{
+          fontFamily: 'Roboto Mono, monospace',
+          fontSize: 14,
           color: isOnline ? '#0055bd' : '#000000',
           fontWeight: isOnline ? 500 : 400,
           textDecoration: isOnline ? 'underline' : 'none',
@@ -57,7 +59,7 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
         onClick={handleUrlClick}
       >
         {url}
-      </Typography>
+      </Box>
       <IconButton 
         size="small" 
         onClick={handleCopy}

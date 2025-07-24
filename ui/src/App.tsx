@@ -18,7 +18,7 @@ export function App() {
         spacing={2}
         textAlign={"center"}
         justifyContent={"center"}
-        sx={{ mt: authIsSetup ? 8 : 0 }}
+        sx={{ mt: authIsSetup ? 8 : 0, overflowX: 'auto' }}
       >
         {!authIsSetup ? (
           <AuthSetup />
