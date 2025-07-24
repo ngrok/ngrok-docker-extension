@@ -25,6 +25,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { EndpointConfiguration, DetectProtocolRequest, DetectProtocolResponse } from "./NgrokContext";
+import { SecondaryText } from "./styled";
 
 const client = createDockerDesktopClient();
 
@@ -217,9 +218,9 @@ export default function EndpointConfigurationDialog({
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
           <CircularProgress size={16} />
-          <Typography variant="body2" color="text.secondary">
+          <SecondaryText>
             Detecting protocols...
-          </Typography>
+          </SecondaryText>
         </Box>
       );
     }
@@ -227,9 +228,9 @@ export default function EndpointConfigurationDialog({
     if (!protocolDetection) {
       return (
         <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="body2" color="text.secondary">
+          <SecondaryText>
             Protocol Detection: Waiting for container information...
-          </Typography>
+          </SecondaryText>
         </Box>
       );
     }
@@ -242,9 +243,9 @@ export default function EndpointConfigurationDialog({
     
     return (
       <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="body2" color="text.secondary">
+        <SecondaryText>
           Detected Protocols: {protocols.length > 0 ? protocols.join(', ') : 'None'}
-        </Typography>
+        </SecondaryText>
       </Box>
     );
   };
@@ -256,9 +257,9 @@ export default function EndpointConfigurationDialog({
           <Typography variant="h6" component="div">
             Configure Endpoint for {containerName}:{targetPort}
           </Typography>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <SecondaryText sx={{ mt: 0.5 }}>
             {containerImage}
-          </Typography>
+          </SecondaryText>
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -353,6 +354,14 @@ export default function EndpointConfigurationDialog({
             <Switch
               checked={config.poolingEnabled || false}
               onChange={handlePoolingChange}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#116ED0',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#8BC7F5',
+                },
+              }}
             />
           </Box>
           <FormHelperText>
@@ -371,7 +380,7 @@ export default function EndpointConfigurationDialog({
         {/* Progressive Disclosure for Description */}
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography color="text.secondary">Advanced Options</Typography>
+            <SecondaryText>Advanced Options</SecondaryText>
           </AccordionSummary>
           <AccordionDetails>
             <TextField

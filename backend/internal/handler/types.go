@@ -4,8 +4,9 @@ package handler
 
 // Configure Agent Types
 type ConfigureAgentRequest struct {
-	Token      string `json:"token"`
-	ConnectURL string `json:"connectURL,omitempty"`
+	Token          string `json:"token"`
+	ConnectURL     string `json:"connectURL,omitempty"`
+	AutoDisconnect *bool  `json:"autoDisconnect,omitempty"` // pointer to distinguish null from false
 }
 
 type ConfigureAgentResponse struct {
@@ -26,6 +27,7 @@ type Endpoint struct {
 	URL         string `json:"url"`
 	ContainerID string `json:"containerId"`
 	TargetPort  string `json:"targetPort"`
+	LastStarted string `json:"lastStarted"`
 }
 
 // Remove Endpoint Types

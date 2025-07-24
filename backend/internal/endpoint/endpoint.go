@@ -25,11 +25,12 @@ type Endpoint struct {
 	Forwarder   ngrok.EndpointForwarder
 	ContainerID string
 	TargetPort  string
+	StartedAt   time.Time
 }
 
 // Manager manages ngrok endpoints for Docker containers
 type Manager interface {
-	ConfigureAgent(ctx context.Context, opts ...ngrok.AgentOption) error
+	ConfigureAgent(ctx context.Context, autoDisconnect bool, opts ...ngrok.AgentOption) error
 	CreateEndpoint(ctx context.Context, containerID, targetPort string, opts ...ngrok.EndpointOption) (*Endpoint, error)
 	RemoveEndpoint(ctx context.Context, containerID, targetPort string) error
 	ListEndpoints() map[string]*Endpoint
@@ -56,11 +57,12 @@ type StatusUpdate struct {
 
 // manager implements the Manager interface
 type manager struct {
-	mu          sync.RWMutex
-	agent       ngrok.Agent
-	endpoints   map[string]*Endpoint // containerID:targetPort -> endpoint
-	logger      *slog.Logger
-	agentStatus StatusUpdate
+	mu             sync.RWMutex
+	agent          ngrok.Agent
+	endpoints      map[string]*Endpoint // containerID:targetPort -> endpoint
+	logger         *slog.Logger
+	agentStatus    StatusUpdate
+	autoDisconnect bool // whether to disconnect agent when no endpoints remain
 }
 
 // NewManager creates a new endpoint manager
@@ -72,11 +74,12 @@ func NewManager(logger *slog.Logger) Manager {
 			Status:    StatusOffline,
 			Timestamp: time.Now(),
 		},
+		autoDisconnect: false, // default to false
 	}
 }
 
 // ConfigureAgent configures a new ngrok agent with the provided options
-func (m *manager) ConfigureAgent(ctx context.Context, opts ...ngrok.AgentOption) error {
+func (m *manager) ConfigureAgent(ctx context.Context, autoDisconnect bool, opts ...ngrok.AgentOption) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -86,6 +89,9 @@ func (m *manager) ConfigureAgent(ctx context.Context, opts ...ngrok.AgentOption)
 	}
 
 	m.logger.Info("Configuring ngrok agent")
+	
+	// Store the auto-disconnect setting
+	m.autoDisconnect = autoDisconnect
 
 	// Get version from environment
 	version := os.Getenv("EXTENSION_VERSION")
@@ -191,6 +197,7 @@ func (m *manager) CreateEndpoint(ctx context.Context, containerID, targetPort st
 		Forwarder:   forwarder,
 		ContainerID: containerID,
 		TargetPort:  targetPort,
+		StartedAt:   time.Now(),
 	}
 
 	// Store the endpoint using composite key
@@ -230,8 +237,8 @@ func (m *manager) RemoveEndpoint(ctx context.Context, containerID, targetPort st
 
 	m.logger.Info("Endpoint removed", "containerID", containerID, "targetPort", targetPort)
 
-	// If no more endpoints remain, disconnect the agent to free up resources
-	if len(m.endpoints) == 0 && m.agent != nil {
+	// If no more endpoints remain and auto-disconnect is enabled, disconnect the agent to free up resources
+	if len(m.endpoints) == 0 && m.agent != nil && m.autoDisconnect {
 		m.logger.Info("No endpoints remaining, disconnecting ngrok agent")
 		if err := m.agent.Disconnect(); err != nil {
 			m.logger.Warn("Error disconnecting agent after removing last endpoint", "error", err)
