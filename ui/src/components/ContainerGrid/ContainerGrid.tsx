@@ -15,6 +15,7 @@ import { NgrokContainer, EndpointConfiguration, RunningEndpoint, useNgrokContext
 import { statusService } from '../../services/statusService';
 import AlertDialog from "../AlertDialog";
 import EndpointCreationDialog, { StepOneConfig, StepTwoConfig } from "../EndpointCreationDialog";
+import EditEndpointDialog from "../EditEndpointDialog";
 
 // Sub-components
 import EmptyState from "./components/EmptyState";
@@ -64,6 +65,7 @@ const ContainerGrid: React.FC = () => {
 
     // Dialog state
     const [creationDialogOpen, setCreationDialogOpen] = useState(false);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [currentContainer, setCurrentContainer] = useState<NgrokContainer | null>(null);
 
     // Alert dialog state
@@ -344,7 +346,13 @@ const ContainerGrid: React.FC = () => {
     };
 
     const handleEditEndpoint = () => {
-        ddClient.desktopUI.toast.warning("Edit endpoint not implemented yet");
+        if (moreMenuContainerId) {
+            const container = Object.values(containers).find(c => c.id === moreMenuContainerId);
+            if (container) {
+                setCurrentContainer(container);
+                setEditDialogOpen(true);
+            }
+        }
         handleCloseMoreMenu();
     };
 
@@ -486,7 +494,39 @@ const ContainerGrid: React.FC = () => {
         setCurrentContainer(null);
     };
 
+    const handleEditDialogComplete = async (stepOne: StepOneConfig, stepTwo: StepTwoConfig) => {
+        if (!currentContainer) return;
 
+        // Create updated endpoint configuration
+        const updatedConfig: EndpointConfiguration = {
+            id: currentContainer.id,
+            containerId: currentContainer.ContainerId,
+            targetPort: currentContainer.Port.PublicPort.toString(),
+            url: stepOne.url || '',
+            binding: stepOne.binding,
+            poolingEnabled: stepOne.additionalOptions.poolingEnabled,
+            trafficPolicy: stepTwo.trafficPolicy,
+            description: stepOne.additionalOptions.description,
+            metadata: stepOne.additionalOptions.metadata,
+            lastStarted: endpointConfigurations[currentContainer.id]?.lastStarted
+        };
+
+        // Save updated configuration
+        updateEndpointConfiguration(currentContainer.id, updatedConfig);
+
+        // If endpoint is online, we need to restart it with new config
+        const isOnline = !!runningEndpoints[currentContainer.id];
+        if (isOnline) {
+            // Stop the current endpoint first
+            await handleStopEndpoint(currentContainer.id);
+            // Start with new configuration
+            handleStartEndpoint(currentContainer.id, updatedConfig);
+        }
+
+        // Close dialog
+        setEditDialogOpen(false);
+        setCurrentContainer(null);
+    };
 
     // Normal grid view
     return (
@@ -510,6 +550,22 @@ const ContainerGrid: React.FC = () => {
                     targetPort: currentContainer?.Port.PublicPort.toString() || ''
                 }}
             />
+
+            {currentContainer && endpointConfigurations[currentContainer.id] && (
+                <EditEndpointDialog
+                    open={editDialogOpen}
+                    onClose={() => setEditDialogOpen(false)}
+                    onComplete={handleEditDialogComplete}
+                    containerInfo={{
+                        imageName: currentContainer.Image,
+                        containerName: currentContainer.Name,
+                        containerID: currentContainer.ContainerId,
+                        targetPort: currentContainer.Port.PublicPort.toString()
+                    }}
+                    existingConfig={endpointConfigurations[currentContainer.id]}
+                    isEndpointOnline={!!runningEndpoints[currentContainer.id]}
+                />
+            )}
 
 
 
