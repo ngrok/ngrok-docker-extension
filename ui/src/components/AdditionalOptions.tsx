@@ -14,7 +14,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { SecondaryText } from './StyledTypography';
+import { SecondaryText } from './styled';
 
 const ddClient = createDockerDesktopClient();
 
@@ -62,8 +62,8 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
       onChange={(_, isExpanded) => setExpanded(isExpanded)}
       TransitionProps={{ timeout: 0 }}
       sx={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #d1d4db',
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
         borderRadius: 1,
         '&:before': {
           display: 'none',
@@ -79,12 +79,11 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
           }
         }}
       >
-        <SettingsIcon sx={{ width: 20, height: 20, color: '#677285', mr: 1 }} />
+        <SettingsIcon sx={{ width: 20, height: 20, color: theme.palette.text.secondary, mr: 1 }} />
         <Typography 
           variant="body2" 
           sx={{ 
             fontWeight: 'medium',
-            color: '#000000',
             fontSize: '14px'
           }}
         >
@@ -100,7 +99,6 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
               variant="body2" 
               sx={{ 
                 fontWeight: 'medium',
-                color: '#000000',
                 fontSize: '14px',
                 mb: 1
               }}
@@ -128,8 +126,8 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                     fontFamily: 'Roboto',
                     fontSize: '14px',
                     color: options.poolingEnabled 
-                      ? (theme.palette.mode === 'dark' ? '#ffffff' : '#116ED0')
-                      : '#677285'
+                      ? '#116ED0'
+                      : theme.palette.text.secondary
                   }}
                 >
                   Load balance traffic across endpoints with the same URL
@@ -162,7 +160,6 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
               variant="body2" 
               sx={{ 
                 fontWeight: 'medium',
-                color: '#000000',
                 fontSize: '14px',
                 mb: 1
               }}
@@ -180,7 +177,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1,
                   '& fieldset': {
-                    borderColor: '#c9c9c9',
+                    borderColor: theme.palette.divider,
                     borderWidth: '1.5px'
                   },
                   '&:hover fieldset': {
@@ -223,7 +220,6 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
               variant="body2" 
               sx={{ 
                 fontWeight: 'medium',
-                color: '#000000',
                 fontSize: '14px',
                 mb: 1
               }}
@@ -244,7 +240,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                   fontFamily: 'Roboto Mono, monospace',
                   fontSize: 14,
                   '& fieldset': {
-                    borderColor: '#c9c9c9',
+                    borderColor: theme.palette.divider,
                     borderWidth: '1.5px'
                   },
                   '&:hover fieldset': {

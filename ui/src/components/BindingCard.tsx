@@ -1,9 +1,9 @@
 import React from 'react';
-import { Box, Typography, Radio, Link } from '@mui/material';
+import { Box, Typography, Radio, Link, useTheme } from '@mui/material';
 import PublicIcon from '@mui/icons-material/Public';
 import LockIcon from '@mui/icons-material/Lock';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { SecondaryText } from './StyledTypography';
+import { SecondaryText } from './styled';
 
 const ddClient = createDockerDesktopClient();
 
@@ -37,16 +37,20 @@ const BindingCard: React.FC<BindingCardProps> = ({
   selected,
   onSelect
 }) => {
+  const theme = useTheme();
   const getIcon = () => {
+    const iconColor = selected ? 'primary.main' : 'text.secondary';
+    const iconProps = { sx: { width: 24, height: 24, color: iconColor } };
+    
     switch (type) {
       case 'public':
-        return <PublicIcon sx={{ width: 24, height: 24, color: selected ? '#116ed0' : '#677285' }} />;
+        return <PublicIcon {...iconProps} />;
       case 'internal':
-        return <LockIcon sx={{ width: 24, height: 24, color: selected ? '#116ed0' : '#677285' }} />;
+        return <LockIcon {...iconProps} />;
       case 'kubernetes':
-        return <KubernetesIcon sx={{ width: 24, height: 24, color: selected ? '#116ed0' : '#677285' }} />;
+        return <KubernetesIcon {...iconProps} />;
       default:
-        return <PublicIcon sx={{ width: 24, height: 24, color: selected ? '#116ed0' : '#677285' }} />;
+        return <PublicIcon {...iconProps} />;
     }
   };
 
@@ -59,15 +63,15 @@ const BindingCard: React.FC<BindingCardProps> = ({
     <Box
       onClick={() => onSelect(type)}
       sx={{
-        border: selected ? '2px solid #116ed0' : '1px solid #d1d4db',
+        border: selected ? `2px solid ${theme.palette.primary.main}` : `1px solid ${theme.palette.divider}`,
         borderRadius: 1,
-        backgroundColor: selected ? '#e5f2fc' : '#ffffff',
+        backgroundColor: theme.palette.background.paper,
         p: 2,
         cursor: 'pointer',
         transition: 'all 0.2s ease',
         '&:hover': {
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          borderColor: selected ? '#116ed0' : '#116ed0'
+          borderColor: theme.palette.primary.main
         }
       }}
     >
@@ -75,9 +79,9 @@ const BindingCard: React.FC<BindingCardProps> = ({
         <Radio
           checked={selected}
           sx={{
-            color: '#d1d4db',
+            color: theme.palette.text.disabled,
             '&.Mui-checked': {
-              color: '#116ed0',
+              color: theme.palette.primary.main,
             },
             p: 0,
             mr: 1.5
@@ -90,7 +94,7 @@ const BindingCard: React.FC<BindingCardProps> = ({
         variant="body2" 
         sx={{ 
           fontWeight: 'medium',
-          color: '#000000',
+          color: 'text.primary',
           mb: 1,
           fontSize: '14px'
         }}
@@ -112,7 +116,7 @@ const BindingCard: React.FC<BindingCardProps> = ({
         variant="caption"
         onClick={handleLearnMoreClick}
         sx={{
-          color: '#086dd7',
+          color: selected ? 'primary.main' : 'primary.main',
           fontSize: '12px',
           textDecoration: 'underline',
           cursor: 'pointer',

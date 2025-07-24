@@ -40,7 +40,7 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
         sx={{
           fontFamily: 'Roboto Mono, monospace',
           fontSize: 14,
-          color: isOnline ? '#0055bd' : '#000000',
+          color: isOnline ? 'primary.main' : 'text.primary',
           fontWeight: isOnline ? 500 : 400,
           textDecoration: isOnline ? 'underline' : 'none',
           cursor: isOnline ? 'pointer' : 'default',

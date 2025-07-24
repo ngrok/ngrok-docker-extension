@@ -6,6 +6,7 @@ declare module '@mui/material/styles' {
     brand: {
       linkBlue: string;
       panelBackground: string;
+      emptyStateBackground: string;
     };
     status: {
       online: string;
@@ -18,6 +19,7 @@ declare module '@mui/material/styles' {
     brand?: {
       linkBlue?: string;
       panelBackground?: string;
+      emptyStateBackground?: string;
     };
     status?: {
       online?: string;
@@ -36,7 +38,8 @@ export const buildNgrokTheme = (dockerTheme: Theme) =>
       // Add custom brand colors for ngrok-specific elements
       brand: {
         linkBlue: '#086DD7',        // Custom link blue
-        panelBackground: '#EFEFF2'  // Light grey for panels
+        panelBackground: dockerTheme.palette.background.paper, // Use Docker's elevated surface color
+        emptyStateBackground: dockerTheme.palette.mode === 'dark' ? '#1c262d' : dockerTheme.palette.background.paper
       },
       status: {
         online: '#2E7F74',     // Success green
@@ -85,7 +88,6 @@ export const buildNgrokTheme = (dockerTheme: Theme) =>
       MuiLink: {
         styleOverrides: {
           root: {
-            color: '#086DD7',  // Custom link blue
             textDecoration: 'underline',
             cursor: 'pointer'
           }

@@ -8,7 +8,8 @@ import {
   Typography,
   Box,
   Grid,
-  IconButton
+  IconButton,
+  useTheme
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
@@ -23,9 +24,7 @@ import ProgressStepper from './ProgressStepper';
 import BindingCard, { BindingType } from './BindingCard';
 import ProtocolWarning from './ProtocolWarning';
 import AdditionalOptions, { AdditionalOptionsState } from './AdditionalOptions';
-import { CardPanel } from './StyledPanels';
-import { SectionTitle } from './StyledTypography';
-import { LinkButton } from './StyledButtons';
+import { CardPanel, SectionTitle, LinkButton } from './styled';
 
 const ddClient = createDockerDesktopClient();
 
@@ -59,6 +58,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
   onComplete,
   containerInfo
 }) => {
+  const theme = useTheme();
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const [stepOneConfig, setStepOneConfig] = useState<StepOneConfig>({
     binding: 'public',
@@ -245,14 +245,14 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
           maxWidth: '90vw',
           borderRadius: 2,
           boxShadow: '0px 2px 4px 4px rgba(0,0,0,0.15)',
-          border: '1px solid #efeff2'
+          border: `1px solid ${theme.palette.divider}`
         }
       }}
     >
       {/* Header */}
       <Box sx={{ 
         p: 2, 
-        borderBottom: '1px solid #efeff2',
+        borderBottom: `1px solid ${theme.palette.divider}`,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start'
@@ -263,7 +263,6 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             sx={{ 
               fontSize: '21px',
               fontWeight: 'medium',
-              color: '#000000',
               mb: 1
             }}
           >
@@ -273,14 +272,14 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
           {/* Container Information */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <DockerIcon sx={{ width: 16, height: 16, color: '#677285' }} />
-              <Typography variant="body2" sx={{ color: '#677285', fontSize: '14px' }}>
+              <DockerIcon sx={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
+              <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontSize: '14px' }}>
                 {containerInfo.imageName}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <ContainerIcon sx={{ width: 16, height: 16, color: '#677285' }} />
-              <Typography variant="body2" sx={{ color: '#677285', fontSize: '14px' }}>
+              <ContainerIcon sx={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
+              <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontSize: '14px' }}>
                 {containerInfo.containerName}
               </Typography>
             </Box>
@@ -289,7 +288,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
         
         <IconButton 
           onClick={onClose}
-          sx={{ color: '#677285' }}
+          sx={{ color: theme.palette.text.secondary }}
         >
           <CloseIcon />
         </IconButton>
@@ -305,7 +304,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             {/* Binding Section */}
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <ConnectWithoutContactIcon sx={{ width: 20, height: 20, color: '#677285', mr: 1 }} />
+                <ConnectWithoutContactIcon sx={{ width: 20, height: 20, color: theme.palette.text.secondary, mr: 1 }} />
                 <SectionTitle>
                   Binding
                 </SectionTitle>
@@ -330,7 +329,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             {/* URL Section */}
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <LinkIcon sx={{ width: 20, height: 20, color: '#677285', mr: 1 }} />
+                <LinkIcon sx={{ width: 20, height: 20, color: theme.palette.text.secondary, mr: 1 }} />
                 <SectionTitle>
                   URL
                 </SectionTitle>
@@ -345,12 +344,12 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
                 sx={{
                   mb: 1,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 1,
-                    backgroundColor: '#ffffff',
-                    '& fieldset': {
-                      borderColor: '#c9c9c9',
-                      borderWidth: '1.5px'
-                    },
+                  borderRadius: 1,
+                  backgroundColor: theme.palette.background.paper,
+                  '& fieldset': {
+                  borderColor: theme.palette.divider,
+                  borderWidth: '1.5px'
+                  },
                     '&:hover fieldset': {
                       borderColor: '#116ed0'
                     },
@@ -374,7 +373,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
               <Typography 
                 variant="body2" 
                 sx={{ 
-                  color: '#677285',
+                  color: theme.palette.text.secondary,
                   fontSize: '13px',
                   lineHeight: 1.4,
                   mb: 0.5
@@ -398,7 +397,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
           // Step 2: Traffic Policy
           <CardPanel>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <PolicyIcon sx={{ width: 20, height: 20, color: '#677285', mr: 1 }} />
+              <PolicyIcon sx={{ width: 20, height: 20, color: theme.palette.text.secondary, mr: 1 }} />
               <SectionTitle>
                 Traffic Policy
               </SectionTitle>
@@ -407,14 +406,14 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             <Typography 
               variant="body2" 
               sx={{ 
-                color: '#677285',
+                color: theme.palette.text.secondary,
                 fontSize: '14px',
                 lineHeight: 1.4,
                 mb: 1
               }}
             >
-              <Box component="span" sx={{ fontWeight: 'medium', color: '#000000' }}>ngrok's</Box>{' '}
-              <Box component="span" sx={{ fontWeight: 'medium', color: '#000000' }}>Traffic Policy</Box>{' '}
+              <Box component="span" sx={{ fontWeight: 'medium' }}>ngrok's</Box>{' '}
+              <Box component="span" sx={{ fontWeight: 'medium' }}>Traffic Policy</Box>{' '}
               is a configuration language for controlling traffic to your applications.
             </Typography>
             
@@ -434,10 +433,10 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
                 mb: 1,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1,
-                  backgroundColor: '#ffffff',
+                  backgroundColor: theme.palette.background.paper,
                   fontFamily: 'Roboto Mono, monospace',
                   '& fieldset': {
-                    borderColor: '#c9c9c9',
+                    borderColor: theme.palette.divider,
                     borderWidth: '1.5px'
                   },
                   '&:hover fieldset': {
@@ -451,7 +450,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
                   padding: '11px 16px',
                   fontSize: 14,
                   fontFamily: 'Roboto Mono, monospace',
-                  color: '#000000'
+
                 }
               }}
             />
@@ -475,27 +474,14 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             <Button 
               onClick={onClose}
               variant="outlined"
-              sx={{
-                color: '#116ed0',
-                borderColor: '#116ed0',
-                backgroundColor: 'white',
-                '&:hover': {
-                  backgroundColor: '#e5f2fc',
-                  borderColor: '#116ed0'
-                }
-              }}
+              color="primary"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleNextStep}
               variant="contained"
-              sx={{
-                backgroundColor: '#116ed0',
-                '&:hover': {
-                  backgroundColor: '#0d5ba8'
-                }
-              }}
+              color="primary"
             >
               Next Step
             </Button>
@@ -505,27 +491,14 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             <Button 
               onClick={handlePreviousStep}
               variant="outlined"
-              sx={{
-                color: '#116ed0',
-                borderColor: '#116ed0',
-                backgroundColor: 'white',
-                '&:hover': {
-                  backgroundColor: '#e5f2fc',
-                  borderColor: '#116ed0'
-                }
-              }}
+              color="primary"
             >
               Previous Step
             </Button>
             <Button 
               onClick={handleComplete}
               variant="contained"
-              sx={{
-                backgroundColor: '#116ed0',
-                '&:hover': {
-                  backgroundColor: '#0d5ba8'
-                }
-              }}
+              color="primary"
             >
               {getCreateButtonText()}
             </Button>

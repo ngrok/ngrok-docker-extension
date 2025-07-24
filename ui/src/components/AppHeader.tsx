@@ -3,8 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { SettingsOutlined, ArticleOutlined, CheckCircle, Schedule } from '@mui/icons-material';
 import { AgentStatus } from '../services/statusService';
 import { createDockerDesktopClient } from '@docker/extension-api-client';
-import { SquareIconButton } from './StyledIconButton';
-import { StatusChip } from './StyledChip';
+import { SquareIconButton, StatusChip } from './styled';
 import ngrokLogo from '../assets/ngrok-logo.svg';
 
 interface AppHeaderProps {

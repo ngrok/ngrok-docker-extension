@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 
 export const CardPanel = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.brand.panelBackground,
-  border: `1px solid ${theme.palette.grey[300]}`,
+  border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
   padding: theme.spacing(2)
 }));
@@ -15,7 +15,7 @@ export const EmptyStatePanel = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
   minHeight: 400,
   textAlign: 'center',
-  backgroundColor: '#f9f9fa',
+  backgroundColor: theme.palette.brand.emptyStateBackground,
   borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(4)
+  padding: theme.spacing(4),
 }));

@@ -39,7 +39,6 @@ const LastStartedCell: React.FC<LastStartedCellProps> = ({ timestamp, isOnline }
     <Typography
       variant="body2"
       sx={{
-        color: '#000000',
         fontWeight: isOnline ? 500 : 400
       }}
     >

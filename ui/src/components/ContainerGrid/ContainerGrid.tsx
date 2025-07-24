@@ -5,7 +5,7 @@ import {
     GridActionsColDef,
     GridColDef,
 } from "@mui/x-data-grid";
-import { Box, CircularProgress, Tooltip } from "@mui/material";
+import { Box, CircularProgress, Tooltip, useMediaQuery, useTheme } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -47,6 +47,10 @@ interface ContainerGridRow {
 export type DataGridColumnType = (GridActionsColDef<ContainerGridRow, any, any> | GridColDef<ContainerGridRow, any, any>)[];
 
 const ContainerGrid: React.FC = () => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md')); // < 900px
+    const isSmall = useMediaQuery(theme.breakpoints.down('sm')); // < 600px
+
     const {
         containers,
         runningEndpoints,
@@ -74,6 +78,15 @@ const ContainerGrid: React.FC = () => {
 
     const [creatingEndpoint, setCreatingEndpoint] = useState<Record<string, boolean>>({});
     const [removingEndpoint, setRemovingEndpoint] = useState<boolean>(false);
+
+    // Responsive column visibility
+    const columnVisibilityModel = {
+        id: false,
+        // Hide less critical columns on mobile
+        image: !isMobile,
+        trafficPolicy: !isMobile,
+        lastStarted: !isSmall,
+    };
 
     const getFilteredContainers = useCallback(() => {
         // Containers are already appropriately filtered by existing logic
@@ -130,7 +143,7 @@ const ContainerGrid: React.FC = () => {
         const isFiltered = onlineEndpointsOnly && allContainers.length > 0;
 
         return (
-            <Box>
+            <Box sx={{ width: '100%', minWidth: 0 }}>
                 <OnlineEndpointsToggle hasContainersWithPorts={false} />
                 <EmptyState
                     isFiltered={isFiltered}
@@ -235,7 +248,7 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'status',
             headerName: '',
-            width: 50,
+            width: isSmall ? 40 : 50,
             sortable: false,
             renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} />
         },
@@ -243,7 +256,7 @@ const ContainerGrid: React.FC = () => {
             field: 'containerName',
             headerName: 'Container',
             flex: 1,
-            minWidth: 120,
+            minWidth: isSmall ? 80 : 100,
             renderCell: (params) => (
                 <ClickableContainerName
                     name={params.value}
@@ -255,8 +268,8 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'image',
             headerName: 'Image',
-            flex: 1.5,
-            minWidth: 180,
+            flex: isMobile ? 0 : 1.5,
+            minWidth: isMobile ? 0 : 120,
             renderCell: (params) => (
                 <ClickableImageName
                     image={params.value}
@@ -268,9 +281,9 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'port',
             headerName: 'Port',
-            width: 100,
+            width: isSmall ? 60 : 80,
             renderCell: (params) => (
-                <Box sx={{ color: '#000000', fontWeight: params.row.isOnline ? 500 : 400 }}>
+                <Box sx={{ fontWeight: params.row.isOnline ? 500 : 400 }}>
                     {params.value}
                 </Box>
             )
@@ -279,7 +292,7 @@ const ContainerGrid: React.FC = () => {
             field: 'url',
             headerName: 'URL',
             flex: 2,
-            minWidth: 200,
+            minWidth: isSmall ? 120 : 160,
             renderCell: (params) => (
                 <UrlCell url={params.value} isOnline={params.row.isOnline} />
             )
@@ -310,7 +323,7 @@ const ContainerGrid: React.FC = () => {
             field: 'actions',
             headerName: 'Actions',
             type: 'actions',
-            width: 100,
+            width: isSmall ? 80 : 100,
             getActions: (params) => generateActionButtons(params.row)
         }
     ];
@@ -528,7 +541,7 @@ const ContainerGrid: React.FC = () => {
 
     // Normal grid view
     return (
-        <Box>
+        <Box sx={{ width: '100%', minWidth: 0 }}>
             <OnlineEndpointsToggle hasContainersWithPorts={true} />
             <AlertDialog
                 open={showAlertDialog}
@@ -577,14 +590,10 @@ const ContainerGrid: React.FC = () => {
             <DataGrid
                 rows={filteredContainers.map(transformContainerToRow)}
                 columns={columns}
+                columnVisibilityModel={columnVisibilityModel}
                 initialState={{
                     pagination: {
                         paginationModel: { page: 0, pageSize: 10 },
-                    },
-                    columns: {
-                        columnVisibilityModel: {
-                            id: false,
-                        },
                     },
                 }}
                 pageSizeOptions={[10]}
@@ -592,6 +601,8 @@ const ContainerGrid: React.FC = () => {
                 disableRowSelectionOnClick={true}
                 autoHeight
                 sx={{
+                    width: '100%',
+                    minWidth: 0,
                     // Keep minimal styling that doesn't conflict with Docker's DataGrid theme
                     '& .MuiDataGrid-cell[data-field="status"]': {
                         display: 'flex',
@@ -600,8 +611,7 @@ const ContainerGrid: React.FC = () => {
                     },
                     '& .MuiDataGrid-cell[data-field="trafficPolicy"]': {
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        alignItems: 'center'
                     },
                     '& .MuiDataGrid-cell[data-field="lastStarted"]': {
                         display: 'flex',

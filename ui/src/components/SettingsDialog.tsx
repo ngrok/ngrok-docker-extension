@@ -12,8 +12,7 @@ import {
   InputAdornment,
   useTheme,
 } from "@mui/material";
-import { SectionTitle } from './StyledTypography';
-import { LinkButton } from './StyledButtons';
+import { SectionTitle, LinkButton } from './styled';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Visibility, VisibilityOff } from '@mui/icons-material';

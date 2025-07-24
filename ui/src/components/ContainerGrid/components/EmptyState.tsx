@@ -1,7 +1,7 @@
 import { Box, Typography, Button } from "@mui/material";
 import { AllInbox as ContainerIcon } from "@mui/icons-material";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { EmptyStatePanel } from "../../StyledPanels";
+import { EmptyStatePanel } from "../../styled";
 
 const ddClient = createDockerDesktopClient();
 
@@ -23,7 +23,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
         sx={{
           width: 64,
           height: 64,
-          backgroundColor: '#8993a5',
+          backgroundColor: 'text.disabled',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
@@ -34,7 +34,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
         <ContainerIcon
           sx={{
             fontSize: 32,
-            color: 'white'
+            color: 'background.paper'
           }}
         />
       </Box>
@@ -43,7 +43,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
       <Typography
         variant="h6"
         sx={{
-          color: '#000000',
           fontWeight: 600,
           mb: 1
         }}
@@ -56,7 +55,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
         <Typography
           variant="body2"
           sx={{
-            color: '#8993a5',
+            color: 'text.secondary',
             mb: 3,
             maxWidth: 400
           }}
@@ -70,16 +69,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
         variant="contained"
         onClick={isFiltered ? onRemoveFilter : handleViewContainers}
         sx={{
-          backgroundColor: '#0055bd',
-          color: 'white',
           textTransform: 'none',
           fontWeight: 500,
           px: 3,
           py: 1,
-          mt: isFiltered ? 3 : 0,
-          '&:hover': {
-            backgroundColor: '#003d8a'
-          }
+          mt: isFiltered ? 3 : 0
         }}
       >
         {isFiltered ? 'Show all endpoints' : 'Start a container'}

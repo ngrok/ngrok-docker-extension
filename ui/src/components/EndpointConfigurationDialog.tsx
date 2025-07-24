@@ -25,7 +25,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { EndpointConfiguration, DetectProtocolRequest, DetectProtocolResponse } from "./NgrokContext";
-import { SecondaryText } from "./StyledTypography";
+import { SecondaryText } from "./styled";
 
 const client = createDockerDesktopClient();
 

@@ -21,7 +21,7 @@ import {
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { useNgrokContext } from "./NgrokContext";
 import ngrokLogoSvg from "../assets/ngrok-logo.svg";
-import { SecondaryText } from "./StyledTypography";
+import { SecondaryText } from "./styled";
 
 const client = createDockerDesktopClient();
 
