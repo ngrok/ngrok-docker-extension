@@ -14,7 +14,6 @@ import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { NgrokContainer, EndpointConfiguration, RunningEndpoint, useNgrokContext } from "../NgrokContext";
 import { statusService } from '../../services/statusService';
 import AlertDialog from "../AlertDialog";
-import EndpointConfigurationDialog from "../EndpointConfigurationDialog";
 import EndpointCreationDialog, { StepOneConfig, StepTwoConfig } from "../EndpointCreationDialog";
 
 // Sub-components
@@ -64,10 +63,8 @@ const ContainerGrid: React.FC = () => {
     } = useNgrokContext();
 
     // Dialog state
-    const [configDialogOpen, setConfigDialogOpen] = useState(false);
     const [creationDialogOpen, setCreationDialogOpen] = useState(false);
     const [currentContainer, setCurrentContainer] = useState<NgrokContainer | null>(null);
-    const [editingConfig, setEditingConfig] = useState<EndpointConfiguration | undefined>();
 
     // Alert dialog state
     const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
@@ -343,18 +340,12 @@ const ContainerGrid: React.FC = () => {
         if (!container) return;
 
         setCurrentContainer(container);
-        setEditingConfig(undefined);
         setCreationDialogOpen(true);
     };
 
     const handleEditEndpoint = () => {
-        if (!moreMenuContainerId) return;
-        const container = Object.values(containers).find(c => c.id === moreMenuContainerId);
-        if (!container) return;
-
-        setCurrentContainer(container);
-        setEditingConfig(endpointConfigurations[container.id]);
-        setConfigDialogOpen(true);
+        ddClient.desktopUI.toast.warning("Edit endpoint not implemented yet");
+        handleCloseMoreMenu();
     };
 
     const handleDeleteEndpoint = () => {
@@ -495,49 +486,7 @@ const ContainerGrid: React.FC = () => {
         setCurrentContainer(null);
     };
 
-    const handleConfigurationSave = (config: EndpointConfiguration, shouldStart: boolean) => {
-        if (!currentContainer) return;
 
-        // Ensure the config has the correct container info
-        const configWithContainerInfo: EndpointConfiguration = {
-            ...config,
-            id: currentContainer.id,
-            containerId: currentContainer.ContainerId,
-            targetPort: currentContainer.Port.PublicPort.toString(),
-        };
-
-        // Create new configuration and start if requested
-        createEndpointConfiguration(configWithContainerInfo);
-
-        if (shouldStart) {
-            // Pass the config directly to avoid timing issues with context updates
-            handleStartEndpoint(currentContainer.id);
-        }
-
-        setConfigDialogOpen(false);
-        setCurrentContainer(null);
-        setEditingConfig(undefined);
-    };
-
-    const handleConfigurationUpdate = (config: EndpointConfiguration) => {
-        if (!currentContainer) return;
-
-        const wasRunning = !!runningEndpoints[currentContainer.id];
-
-        // Update configuration
-        updateEndpointConfiguration(currentContainer.id, config);
-
-        if (wasRunning) {
-            // Stop and restart with the new config
-            handleStopEndpoint(currentContainer.id).then(() => {
-                handleStartEndpoint(currentContainer.id);
-            });
-        }
-
-        setConfigDialogOpen(false);
-        setCurrentContainer(null);
-        setEditingConfig(undefined);
-    };
 
     // Normal grid view
     return (
@@ -562,19 +511,7 @@ const ContainerGrid: React.FC = () => {
                 }}
             />
 
-            <EndpointConfigurationDialog
-                open={configDialogOpen}
-                onClose={() => setConfigDialogOpen(false)}
-                onSave={handleConfigurationSave}
-                onUpdate={handleConfigurationUpdate}
-                initialConfig={editingConfig}
-                containerName={currentContainer?.Name || ''}
-                containerImage={currentContainer?.Image || ''}
-                containerID={currentContainer?.ContainerId || ''}
-                targetPort={currentContainer?.Port.PublicPort.toString() || ''}
-                isEditing={!!editingConfig}
-                isRunning={!!(currentContainer && runningEndpoints[currentContainer.id])}
-            />
+
 
             {moreMenuContainerId && (
                 <MoreActionsMenu
