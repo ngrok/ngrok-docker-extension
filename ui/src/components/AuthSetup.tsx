@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  Box,
   Button,
   Container,
   TextField,
@@ -21,7 +20,7 @@ import {
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { useNgrokContext } from "./NgrokContext";
 import ngrokLogoSvg from "../assets/ngrok-logo.svg";
-import { SecondaryText } from "./styled";
+import { SecondaryText, FlexRowMb2, FlexRowStart } from "./styled";
 
 const client = createDockerDesktopClient();
 
@@ -86,13 +85,13 @@ export default function AuthSetup() {
     <Container maxWidth="sm">
       <Grid2 container direction="column" spacing={4} sx={{ py: 8 }}>
         <Grid2 sx={{ textAlign: 'center' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <FlexRowMb2 sx={{ justifyContent: 'center' }}>
             <img 
               src={ngrokLogoSvg} 
               alt="ngrok" 
               style={{ height: '32px', width: 'auto' }}
             />
-          </Box>
+          </FlexRowMb2>
           <SecondaryText>
             We just need your authtoken to get started.
           </SecondaryText>
@@ -109,7 +108,7 @@ export default function AuthSetup() {
               Get my authtoken on ngrok dashboard
             </Button>
 
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', width: '100%' }}>
+            <FlexRowStart sx={{ gap: 2, width: '100%' }}>
               <TextField
                 fullWidth
                 type={showPassword ? "text" : "password"}
@@ -164,7 +163,7 @@ export default function AuthSetup() {
               >
                 {isSubmitting ? 'Saving...' : 'Save'}
               </Button>
-            </Box>
+            </FlexRowStart>
           </Stack>
         </Grid2>
 

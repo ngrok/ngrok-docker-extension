@@ -1,8 +1,8 @@
-import { Box } from "@mui/material";
 import SettingsDialog from "./SettingsDialog";
 import { useNgrokContext } from "./NgrokContext";
 import { AppHeader } from "./AppHeader";
 import { useState } from "react";
+import { SectionBoxMb3 } from "./styled";
 
 export function Header() {
   const { authIsSetup, agentStatus } = useNgrokContext();
@@ -14,12 +14,12 @@ export function Header() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
+      <SectionBoxMb3>
         <AppHeader 
           status={agentStatus}
           onSettingsClick={handleSettingsClick}
         />
-      </Box>
+      </SectionBoxMb3>
       
       {/* Settings dialog */}
       {authIsSetup && (
