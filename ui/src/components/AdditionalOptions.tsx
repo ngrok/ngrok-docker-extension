@@ -14,7 +14,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { SecondaryText } from './styled';
+import { SecondaryTextMt1, SecondaryTextMb1, IconSmall, IconSecondary, FlexColumnGap2 } from './styled';
 
 const ddClient = createDockerDesktopClient();
 
@@ -81,7 +81,11 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
           }
         }}
       >
-        <SettingsIcon sx={{ width: 20, height: 20, color: theme.palette.text.secondary, mr: 1 }} />
+        <IconSmall sx={{ mr: 1 }}>
+          <IconSecondary>
+            <SettingsIcon />
+          </IconSecondary>
+        </IconSmall>
         <Typography 
           variant="body2" 
           sx={{ 
@@ -94,7 +98,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
       </AccordionSummary>
       
       <AccordionDetails sx={{ pt: 0 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <FlexColumnGap2>
           {/* Endpoint Pooling Section */}
           <Box>
             <Typography 
@@ -136,7 +140,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 </Typography>
               }
             />
-            <SecondaryText sx={{ mt: 1 }}>
+            <SecondaryTextMt1>
               <Link
                 component="button"
                 variant="caption"
@@ -153,7 +157,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
               >
                 Learn more
               </Link>
-            </SecondaryText>
+            </SecondaryTextMt1>
           </Box>
 
           {/* Description Section */}
@@ -195,9 +199,9 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 }
               }}
             />
-            <SecondaryText sx={{ mb: 1 }}>
+            <SecondaryTextMb1>
               Add a human readable description so you can easily reference this endpoint later.
-            </SecondaryText>
+            </SecondaryTextMb1>
             <Link
               component="button"
               variant="caption"
@@ -258,9 +262,9 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
                 }
               }}
             />
-            <SecondaryText sx={{ mb: 1 }}>
+            <SecondaryTextMb1>
               Allows up to 4096 characters of user-provided data. Metadata can include machine-readable data intended for integration with the ngrok API or other services.
-            </SecondaryText>
+            </SecondaryTextMb1>
             <Link
               component="button"
               variant="caption"
@@ -278,7 +282,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
               Learn more
             </Link>
           </Box>
-        </Box>
+        </FlexColumnGap2>
       </AccordionDetails>
     </Accordion>
   );

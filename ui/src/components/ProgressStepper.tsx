@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { FlexRow } from './styled';
 
 interface ProgressStepperProps {
   currentStep: 1 | 2;
@@ -15,7 +16,7 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
       px: 2 
     }}>
       {/* Step 1 */}
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <FlexRow>
         {currentStep > 1 ? (
           <CheckCircleIcon 
             sx={{ 
@@ -53,7 +54,7 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
         >
           Configure your endpoint
         </Typography>
-      </Box>
+      </FlexRow>
 
       {/* Connecting Line */}
       <Box
@@ -66,7 +67,7 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
       />
 
       {/* Step 2 */}
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <FlexRow>
         <Box
           sx={{
             width: 24,
@@ -93,7 +94,7 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
         >
           Add an optional Traffic Policy
         </Typography>
-      </Box>
+      </FlexRow>
     </Box>
   );
 };

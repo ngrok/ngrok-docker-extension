@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogContent,
-  DialogActions,
   Button,
   Typography,
   Box,
@@ -14,7 +12,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import ProgressStepper from './ProgressStepper';
 import { EndpointForm, TrafficPolicySection, ContainerInfo } from './EndpointDialog';
 import { BindingType, AdditionalOptionsState } from './EndpointDialog/types';
-import { CardPanel } from './styled';
+import { CardPanel, DialogContentPanel, DialogActionsPanel } from './styled';
 
 // const ddClient = createDockerDesktopClient(); // Remove for now since unused
 
@@ -166,7 +164,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
       {/* Progress Stepper */}
       <ProgressStepper currentStep={currentStep} />
 
-      <DialogContent sx={{ p: 2, pt: 2 }}>
+      <DialogContentPanel>
         {currentStep === 1 ? (
           // Step 1: Configure Endpoint
           <EndpointForm
@@ -192,9 +190,9 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             />
           </CardPanel>
         )}
-      </DialogContent>
+      </DialogContentPanel>
 
-      <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+      <DialogActionsPanel>
         {currentStep === 1 ? (
           <>
             <Button 
@@ -230,7 +228,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
             </Button>
           </>
         )}
-      </DialogActions>
+      </DialogActionsPanel>
     </Dialog>
   );
 };

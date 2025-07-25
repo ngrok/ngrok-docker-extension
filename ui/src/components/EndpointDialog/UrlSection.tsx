@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, TextField, Typography, useTheme } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
 import ProtocolWarning from '../ProtocolWarning';
-import { SectionTitle, LinkButton } from '../styled';
+import { SectionTitle, LinkButton, IconSmall, FlexRow, IconSecondary } from '../styled';
 import { BindingType } from './types';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 
@@ -52,13 +52,17 @@ const UrlSection: React.FC<UrlSectionProps> = ({
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <LinkIcon sx={{ width: 20, height: 20, color: theme.palette.text.secondary, mr: 1 }} />
+      <FlexRow sx={{ mb: 2 }}>
+        <IconSmall sx={{ mr: 1 }}>
+          <IconSecondary>
+            <LinkIcon />
+          </IconSecondary>
+        </IconSmall>
         <SectionTitle>
           URL
         </SectionTitle>
-      </Box>
-      
+      </FlexRow>
+
       <TextField
         placeholder={getUrlPlaceholder(binding, detectedProtocol)}
         value={url}
@@ -87,16 +91,16 @@ const UrlSection: React.FC<UrlSectionProps> = ({
           }
         }}
       />
-      
+
       <ProtocolWarning
         visible={showProtocolWarning}
         detectedProtocol={detectedProtocol}
         enteredProtocol={enteredProtocol}
       />
-      
-      <Typography 
-        variant="body2" 
-        sx={{ 
+
+      <Typography
+        variant="body2"
+        sx={{
           color: theme.palette.text.secondary,
           fontSize: '13px',
           lineHeight: 1.4,
@@ -105,7 +109,7 @@ const UrlSection: React.FC<UrlSectionProps> = ({
       >
         Leave blank to auto-generate a random URL.
       </Typography>
-      
+
       <LinkButton onClick={() => openExternalLink('https://ngrok.com/docs/universal-gateway/bindings/')}>
         Learn more
       </LinkButton>
