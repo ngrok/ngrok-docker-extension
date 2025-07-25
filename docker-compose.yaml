@@ -2,5 +2,12 @@ services:
   ngrok-docker-extension:
     image: ${DESKTOP_PLUGIN_IMAGE}
     volumes:
+      - ngrok-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - NGROK_EXT_STATE_DIR=/data
     network_mode: "host"
+
+volumes:
+  ngrok-data:
+    driver: local

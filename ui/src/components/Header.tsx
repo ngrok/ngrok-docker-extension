@@ -5,7 +5,7 @@ import { useState } from "react";
 import { SectionBoxMb3 } from "./styled";
 
 export function Header() {
-  const { authIsSetup, agentStatus } = useNgrokContext();
+  const { authIsSetup, agentStatus, agentConfig, toggleAgentState } = useNgrokContext();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const handleSettingsClick = () => {
@@ -16,7 +16,9 @@ export function Header() {
     <>
       <SectionBoxMb3>
         <AppHeader 
-          status={agentStatus}
+          status={agentStatus || { state: 'unknown', connectedAt: '', lastError: '' }}
+          expectedState={agentConfig?.expectedState || 'offline'}
+          onToggleAgentState={toggleAgentState}
           onSettingsClick={handleSettingsClick}
         />
       </SectionBoxMb3>

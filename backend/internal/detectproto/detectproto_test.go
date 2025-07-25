@@ -141,6 +141,7 @@ func startTLSServer(t *testing.T, alpnProtos []string) (int, func()) {
 
 func TestProtocolDetection(t *testing.T) {
 	ctx := context.Background()
+	detector := NewDetector()
 
 	tests := []struct {
 		name     string
@@ -148,23 +149,23 @@ func TestProtocolDetection(t *testing.T) {
 		expected Result
 	}{
 		{
-			name:  "HTTP server",
-			setup: func(t *testing.T) (int, func()) { return startHTTPServer(t) },
+			name:     "HTTP server",
+			setup:    func(t *testing.T) (int, func()) { return startHTTPServer(t) },
 			expected: Result{TCP: true, HTTP: true, HTTPS: false, TLS: false},
 		},
 		{
-			name:  "HTTPS server with HTTP ALPN",
-			setup: func(t *testing.T) (int, func()) { return startHTTPSServer(t, []string{"h2", "http/1.1"}) },
+			name:     "HTTPS server with HTTP ALPN",
+			setup:    func(t *testing.T) (int, func()) { return startHTTPSServer(t, []string{"h2", "http/1.1"}) },
 			expected: Result{TCP: true, HTTP: false, HTTPS: true, TLS: true},
 		},
 		{
-			name:  "TLS server without HTTP ALPN",
-			setup: func(t *testing.T) (int, func()) { return startTLSServer(t, nil) },
+			name:     "TLS server without HTTP ALPN",
+			setup:    func(t *testing.T) (int, func()) { return startTLSServer(t, nil) },
 			expected: Result{TCP: true, HTTP: false, HTTPS: false, TLS: true},
 		},
 		{
-			name:  "Non-existent service",
-			setup: func(t *testing.T) (int, func()) { return 99999, func() {} },
+			name:     "Non-existent service",
+			setup:    func(t *testing.T) (int, func()) { return 99999, func() {} },
 			expected: Result{TCP: false, HTTP: false, HTTPS: false, TLS: false},
 		},
 	}
@@ -177,7 +178,7 @@ func TestProtocolDetection(t *testing.T) {
 			ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 			defer cancel()
 
-			result, err := Detect(ctx, "127.0.0.1", fmt.Sprintf("%d", port))
+			result, err := detector.Detect(ctx, "127.0.0.1", fmt.Sprintf("%d", port))
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, *result)
 		})
@@ -185,6 +186,8 @@ func TestProtocolDetection(t *testing.T) {
 }
 
 func TestTimeoutBehavior(t *testing.T) {
+	detector := NewDetector()
+	
 	// Start a server that accepts connections but responds slowly
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
@@ -213,7 +216,7 @@ func TestTimeoutBehavior(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	result, err := Detect(ctx, "127.0.0.1", fmt.Sprintf("%d", port))
+	result, err := detector.Detect(ctx, "127.0.0.1", fmt.Sprintf("%d", port))
 	require.NoError(t, err)
 	assert.True(t, result.TCP, "TCP connection should succeed")
 	assert.False(t, result.HTTP, "HTTP should timeout")
@@ -221,9 +224,8 @@ func TestTimeoutBehavior(t *testing.T) {
 	assert.False(t, result.TLS)
 }
 
-
-
 func TestInvalidInputs(t *testing.T) {
+	detector := NewDetector()
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 
@@ -239,7 +241,7 @@ func TestInvalidInputs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := Detect(ctx, tt.host, tt.port)
+			result, err := detector.Detect(ctx, tt.host, tt.port)
 			require.NoError(t, err)
 			assert.False(t, result.TCP)
 			assert.False(t, result.HTTP)
@@ -248,7 +250,3 @@ func TestInvalidInputs(t *testing.T) {
 		})
 	}
 }
-
-
-
-

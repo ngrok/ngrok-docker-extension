@@ -23,15 +23,4 @@ export interface ContainerInfo {
   targetPort: string;
 }
 
-export interface EndpointConfiguration {
-  id: string; // containerId:targetPort
-  containerId: string;
-  targetPort: string;
-  url?: string;
-  binding: 'public' | 'internal' | 'kubernetes';
-  poolingEnabled: boolean;
-  trafficPolicy?: string;
-  description?: string;
-  metadata?: string;
-  lastStarted?: string; // ISO timestamp of when endpoint was last started
-}
+

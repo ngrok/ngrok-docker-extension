@@ -1,45 +1,57 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tooltip, Switch } from '@mui/material';
 import { SettingsOutlined, MenuBookOutlined, CheckCircle, Schedule } from '@mui/icons-material';
-import { AgentStatus } from '../services/statusService';
+import { AgentStatus } from '../types/api';
 import { createDockerDesktopClient } from '@docker/extension-api-client';
 import { SquareIconButton, StatusChip, IconMedium } from './styled';
 import ngrokLogo from '../assets/ngrok-logo.svg';
 
 interface AppHeaderProps {
     status: AgentStatus;
+    expectedState: "online" | "offline";
+    onToggleAgentState: (expectedState: "online" | "offline") => void;
     onSettingsClick?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
     status,
+    expectedState,
+    onToggleAgentState,
     onSettingsClick
 }) => {
     const ddClient = createDockerDesktopClient();
-    const latencyText = status.connectionLatency && status.connectionLatency > 0
-        ? `${Math.round(status.connectionLatency)}ms latency`
+    const latencyText = status.latency && status.latency > 0
+        ? `${Math.round(status.latency / 1000000)}ms latency`
         : 'Checking latency';
 
     const getLatencyColor = (latency?: number) => {
         if (!latency || latency <= 0) return '#8993a5'; // Default gray
-        if (latency < 250) return '#2e7f74'; // Green for <250ms
-        if (latency < 750) return '#ff9800'; // Yellow for <750ms
+        const latencyMs = latency / 1000000; // Convert nanoseconds to milliseconds
+        if (latencyMs < 250) return '#2e7f74'; // Green for <250ms
+        if (latencyMs < 750) return '#ff9800'; // Yellow for <750ms
         return '#f44336'; // Red for >=750ms
     };
 
+    const getComputedStatus = () => {
+        if (status.state === 'connecting') {
+            return status.lastError && status.lastError.trim() !== '' ? 'connectingError' : 'connecting';
+        }
+        return status.state;
+    };
+
     const getStatusLabel = () => {
-        switch (status.status) {
-            case 'online': return 'CONNECTED';
-            case 'offline': return 'DISCONNECTED';
-            case 'reconnecting': return 'RECONNECTING';
+        switch (status.state) {
+            case 'online': return 'ONLINE';
+            case 'offline': return 'OFFLINE';
+            case 'connecting': return 'CONNECTING';
             case 'unknown': return 'UNKNOWN';
             default: return 'UNKNOWN';
         }
     };
 
     const statusLabel = getStatusLabel();
-    const isConnected = status.status === 'online';
-    const latencyColor = getLatencyColor(status.connectionLatency);
+    const isConnected = status.state === 'online';
+    const latencyColor = getLatencyColor(status.latency);
 
     const handleDocsClick = () => {
         ddClient.host.openExternal('https://ngrok.com/docs');
@@ -70,9 +82,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
                 {/* Status indicators */}
                 <Box display="flex" alignItems="center" gap={2}>
+                    {/* Agent toggle switch */}
+                    <Tooltip title={`Turn agent ${expectedState === 'online' ? 'offline' : 'online'}`} arrow>
+                        <Switch
+                            checked={expectedState === 'online'}
+                            onChange={(e) => onToggleAgentState(e.target.checked ? 'online' : 'offline')}
+                            size="small"
+                            sx={{
+                                '& .MuiSwitch-track': {
+                                    backgroundColor: expectedState === 'online' ? '#2e7f74' : '#8993a5',
+                                },
+                                '& .MuiSwitch-thumb': {
+                                    backgroundColor: '#ffffff',
+                                }
+                            }}
+                        />
+                    </Tooltip>
+
                     {/* Connection status chip */}
                     <StatusChip
-                        status={status.status}
+                        status={getComputedStatus()}
                         icon={<CheckCircle />}
                         label={statusLabel}
                         variant="outlined"
@@ -110,18 +139,22 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             {/* Right section: Action buttons */}
             <Box display="flex" alignItems="center">
                 {/* Docs button */}
-                <SquareIconButton onClick={handleDocsClick}>
-                    <IconMedium>
-                        <MenuBookOutlined />
-                    </IconMedium>
-                </SquareIconButton>
+                <Tooltip title="Documentation" arrow>
+                    <SquareIconButton onClick={handleDocsClick}>
+                        <IconMedium>
+                            <MenuBookOutlined />
+                        </IconMedium>
+                    </SquareIconButton>
+                </Tooltip>
 
                 {/* Settings button */}
-                <SquareIconButton onClick={onSettingsClick}>
-                    <IconMedium>
-                        <SettingsOutlined />
-                    </IconMedium>
-                </SquareIconButton>
+                <Tooltip title="Settings" arrow>
+                    <SquareIconButton onClick={onSettingsClick}>
+                        <IconMedium>
+                            <SettingsOutlined />
+                        </IconMedium>
+                    </SquareIconButton>
+                </Tooltip>
             </Box>
         </Box>
     );

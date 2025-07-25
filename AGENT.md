@@ -38,6 +38,18 @@ make prepare-buildx             # one-time setup
 make push-extension TAG=1.0.0   # build+push linux/amd64 & linux/arm64
 ```
 
+### Debugging Commands
+```bash
+# View extension container logs
+docker logs -f ngrok_ngrok-docker-extension-desktop-extension-service
+
+# Inspect extension state
+docker exec ngrok_ngrok-docker-extension-desktop-extension-service cat /tmp/state.json
+
+# Test container connectivity from inside extension
+docker exec ngrok_ngrok-docker-extension-desktop-extension-service curl http://172.17.0.1:PORT
+```
+
 ## Repository Map
 
 ```

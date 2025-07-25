@@ -3,29 +3,33 @@ import { useNgrokContext } from "./NgrokContext";
 
 const ErrorBanner: React.FC = () => {
   const { agentStatus } = useNgrokContext();
+  const status = agentStatus || { state: 'unknown', connectedAt: '', lastError: '' };
   
-  const hasAgentError = Boolean(agentStatus.lastError && agentStatus.lastError.trim() !== '');
-  const hasRequestError = Boolean(agentStatus.requestError && agentStatus.requestError.trim() !== '');
+  const hasAgentError = Boolean(status.lastError && status.lastError.trim() !== '');
+  const hasRequestError = Boolean(status.requestError && status.requestError.trim() !== '');
   
-  const shouldShowBanner = (hasAgentError && agentStatus.status === 'reconnecting') || 
-    (hasRequestError && agentStatus.status === 'unknown');
+  const shouldShowBanner = hasAgentError || hasRequestError;
 
   const getErrorTitle = () => {
-    switch (agentStatus.status) {
-      case 'reconnecting':
-        return 'Connection Lost - Reconnecting...';
-      case 'unknown':
-        return 'Could not connect to docker backend';
+    if (hasRequestError) {
+      return 'Could not connect to docker backend';
+    }
+    
+    switch (status.state) {
+      case 'connecting':
+        return 'Error connecting to ngrok cloud';
+      case 'offline':
+        return 'Error connecting to ngrok cloud';
       default:
-        return `Unexpected error status: ${agentStatus.status}`;
+        return `Unexpected status while in error state (${status.state})`;
     }
   };
 
   const getErrorMessage = () => {
-    if (agentStatus.status === 'unknown' && hasRequestError) {
-      return agentStatus.requestError;
+    if (hasRequestError) {
+      return status.requestError;
     }
-    return agentStatus.lastError;
+    return status.lastError;
   };
 
   return (

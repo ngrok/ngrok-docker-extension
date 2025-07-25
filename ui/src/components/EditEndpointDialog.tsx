@@ -5,11 +5,13 @@ import {
   Typography,
   Box,
   IconButton,
+  CircularProgress,
   useTheme
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { EndpointForm, ContainerInfo } from './EndpointDialog';
-import { StepOneConfig, StepTwoConfig, ContainerInfo as ContainerInfoType, EndpointConfiguration } from './EndpointDialog/types';
+import { StepOneConfig, StepTwoConfig, ContainerInfo as ContainerInfoType } from './EndpointDialog/types';
+import { EndpointConfig } from '../types/api';
 import { useNgrokContext } from './NgrokContext';
 import { DialogContentPanel, DialogActionsPanel } from './styled';
 
@@ -18,7 +20,7 @@ interface EditEndpointDialogProps {
   onClose: () => void;
   onComplete: (stepOne: StepOneConfig, stepTwo: StepTwoConfig) => void;
   containerInfo: ContainerInfoType;
-  existingConfig: EndpointConfiguration;
+  existingConfig: EndpointConfig;
   isEndpointOnline: boolean;
 }
 
@@ -49,6 +51,7 @@ const EditEndpointDialog: React.FC<EditEndpointDialogProps> = ({
 
   const [originalConfig, setOriginalConfig] = useState<{stepOne: StepOneConfig, stepTwo: StepTwoConfig}>();
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Set initial values when dialog opens or config changes
   useEffect(() => {
@@ -71,8 +74,9 @@ const EditEndpointDialog: React.FC<EditEndpointDialogProps> = ({
       setStepTwoConfig(initialStepTwo);
       setOriginalConfig({ stepOne: initialStepOne, stepTwo: initialStepTwo });
       setHasChanges(false);
+      setIsSubmitting(false);
     }
-  }, [open, existingConfig]);
+  }, [open]);
 
   // Check for changes whenever config changes
   useEffect(() => {
@@ -90,8 +94,13 @@ const EditEndpointDialog: React.FC<EditEndpointDialogProps> = ({
     setHasChanges(!configsAreEqual);
   }, [stepOneConfig, stepTwoConfig, originalConfig]);
 
-  const handleComplete = () => {
-    onComplete(stepOneConfig, stepTwoConfig);
+  const handleComplete = async () => {
+    setIsSubmitting(true);
+    try {
+      await onComplete(stepOneConfig, stepTwoConfig);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getUpdateButtonText = () => {
@@ -174,9 +183,10 @@ const EditEndpointDialog: React.FC<EditEndpointDialogProps> = ({
           onClick={handleComplete}
           variant="contained"
           color="primary"
-          disabled={!hasChanges}
+          disabled={!hasChanges || isSubmitting}
+          startIcon={isSubmitting ? <CircularProgress size={20} /> : undefined}
         >
-          {getUpdateButtonText()}
+          {isSubmitting ? "Updating..." : getUpdateButtonText()}
         </Button>
       </DialogActionsPanel>
     </Dialog>
