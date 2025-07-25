@@ -1,5 +1,4 @@
 import { styled } from '@mui/material/styles';
-import { Button } from '@mui/material';
 
 export const LinkButton = styled('button')(({ theme }) => ({
   background: 'none',
@@ -14,9 +13,4 @@ export const LinkButton = styled('button')(({ theme }) => ({
   }
 }));
 
-export const PrimaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  '&:hover': {
-    backgroundColor: theme.palette.primary.dark
-  }
-}));
+

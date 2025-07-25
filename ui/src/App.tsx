@@ -23,7 +23,7 @@ export function App() {
         {!authIsSetup ? (
           <AuthSetup />
         ) : (
-          <Grid2 xs={12} sx={{ mt: 2, width: '100%', minWidth: 0 }}>
+          <Grid2 size={12} sx={{ mt: 2, width: '100%', minWidth: 0 }}>
             <ContainerGrid />
           </Grid2>
         )}

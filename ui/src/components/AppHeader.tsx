@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { SettingsOutlined, ArticleOutlined, CheckCircle, Schedule } from '@mui/icons-material';
 import { AgentStatus } from '../services/statusService';
 import { createDockerDesktopClient } from '@docker/extension-api-client';
-import { SquareIconButton, StatusChip } from './styled';
+import { SquareIconButton, StatusChip, IconMedium } from './styled';
 import ngrokLogo from '../assets/ngrok-logo.svg';
 
 interface AppHeaderProps {
@@ -111,12 +111,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <Box display="flex" alignItems="center">
                 {/* Docs button */}
                 <SquareIconButton onClick={handleDocsClick}>
-                    <ArticleOutlined sx={{ width: 24, height: 24 }} />
+                    <IconMedium>
+                        <ArticleOutlined />
+                    </IconMedium>
                 </SquareIconButton>
 
                 {/* Settings button */}
                 <SquareIconButton onClick={onSettingsClick}>
-                    <SettingsOutlined sx={{ width: 24, height: 24 }} />
+                    <IconMedium>
+                        <SettingsOutlined />
+                    </IconMedium>
                 </SquareIconButton>
             </Box>
         </Box>

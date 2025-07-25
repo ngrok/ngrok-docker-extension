@@ -1,18 +1,15 @@
 import {
   Dialog,
-  DialogActions,
-  DialogContent,
   DialogTitle,
   TextField,
   Typography,
-  Box,
   Switch,
   FormControlLabel,
   IconButton,
   InputAdornment,
   useTheme,
 } from "@mui/material";
-import { SectionTitle, LinkButton } from './styled';
+import { SectionTitleMb2, SectionBoxMb3, LinkButton, FlexRowGap05, SettingsDialogContentPanel, SettingsDialogActionsPanel, IconFont16 } from './styled';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -116,8 +113,8 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
       >
         <DialogTitle 
           sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
             fontFamily: 'Roboto',
             fontWeight: 500,
@@ -134,12 +131,12 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ px: 3, py: 0 }}>
+        <SettingsDialogContentPanel>
           {/* Authtoken Section */}
-          <Box sx={{ mb: 3 }}>
-            <SectionTitle sx={{ mb: 2 }}>
+          <SectionBoxMb3>
+            <SectionTitleMb2>
               ngrok Authtoken
-            </SectionTitle>
+            </SectionTitleMb2>
             <TextField
               autoFocus
               id="authtoken"
@@ -191,7 +188,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
             >
               Connects the extension with your ngrok account
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <FlexRowGap05>
               <LinkButton
                 onClick={() => {
                   ddClient.host.openExternal(
@@ -205,16 +202,18 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                 }}
               >
                 View in dashboard
-                <OpenInNewIcon sx={{ fontSize: '16px' }} />
+                <IconFont16>
+                  <OpenInNewIcon />
+                </IconFont16>
               </LinkButton>
-            </Box>
-          </Box>
+            </FlexRowGap05>
+          </SectionBoxMb3>
 
           {/* Agent Connect URL Section */}
-          <Box sx={{ mb: 3 }}>
-            <SectionTitle sx={{ mb: 2 }}>
+          <SectionBoxMb3>
+            <SectionTitleMb2>
               Agent Connect URL
-            </SectionTitle>
+            </SectionTitleMb2>
             <TextField
               id="connecturl"
               placeholder="connect.example.org:443"
@@ -249,7 +248,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
             >
               The network address used to connect to the ngrok service. Leave blank to use ngrok's default servers
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+            <FlexRowGap05 sx={{ mb: 1 }}>
               <LinkButton
                 onClick={() => {
                   ddClient.host.openExternal("https://ngrok.com/docs/agent/ingress/");
@@ -261,10 +260,10 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                 }}
               >
                 Learn more
-                <OpenInNewIcon sx={{ fontSize: '16px' }} />
+                <IconFont16><OpenInNewIcon /></IconFont16>
               </LinkButton>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            </FlexRowGap05>
+            <FlexRowGap05>
               <LinkButton
                 onClick={() => {
                   ddClient.host.openExternal("https://dashboard.ngrok.com/tunnels/ingress");
@@ -276,16 +275,16 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                 }}
               >
                 View in dashboard
-                <OpenInNewIcon sx={{ fontSize: '16px' }} />
+                <IconFont16><OpenInNewIcon /></IconFont16>
               </LinkButton>
-            </Box>
-          </Box>
+            </FlexRowGap05>
+          </SectionBoxMb3>
 
           {/* Auto-disconnect Section */}
-          <Box sx={{ mb: 3 }}>
-            <SectionTitle sx={{ mb: 2 }}>
+          <SectionBoxMb3>
+            <SectionTitleMb2>
               Auto-Disconnect
-            </SectionTitle>
+            </SectionTitleMb2>
             <FormControlLabel
               control={
                 <Switch
@@ -327,9 +326,9 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
             >
               Enable this option in low-bandwidth environments
             </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 3, gap: 1 }}>
+          </SectionBoxMb3>
+        </SettingsDialogContentPanel>
+        <SettingsDialogActionsPanel>
           <Button 
             onClick={handleCancel} 
             variant="outlined"
@@ -368,7 +367,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
           >
             Save
           </Button>
-        </DialogActions>
+        </SettingsDialogActionsPanel>
       </Dialog>
     </div>
   );
