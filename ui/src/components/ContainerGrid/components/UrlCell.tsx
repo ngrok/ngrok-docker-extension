@@ -38,7 +38,6 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
       <Box
         component="button"
         sx={{
-          fontFamily: 'Roboto Mono, monospace',
           fontSize: 14,
           color: isOnline ? 'primary.main' : 'text.primary',
           fontWeight: isOnline ? 500 : 400,

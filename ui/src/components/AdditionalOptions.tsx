@@ -27,13 +27,15 @@ export interface AdditionalOptionsState {
 interface AdditionalOptionsProps {
   options: AdditionalOptionsState;
   onChange: (options: AdditionalOptionsState) => void;
+  expanded?: boolean;
 }
 
 const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
   options,
-  onChange
+  onChange,
+  expanded: defaultExpanded = false
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const accordionRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
 
