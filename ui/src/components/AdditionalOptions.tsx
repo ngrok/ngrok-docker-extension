@@ -201,7 +201,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
             <Link
               component="button"
               variant="caption"
-              onClick={() => openExternalLink('https://ngrok.com/docs/api/endpoints/')}
+              onClick={() => openExternalLink('https://ngrok.com/docs/agent/config/v3/#description')}
               sx={{
                 color: '#086dd7',
                 fontSize: '12px',
@@ -264,7 +264,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
             <Link
               component="button"
               variant="caption"
-              onClick={() => openExternalLink('https://ngrok.com/docs/api/endpoints/')}
+              onClick={() => openExternalLink('https://ngrok.com/docs/agent/config/v3/#metadata-1')}
               sx={{
                 color: '#086dd7',
                 fontSize: '12px',

@@ -249,22 +249,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
             >
               The network address used to connect to the ngrok service. Leave blank to use ngrok's default servers
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-              <LinkButton
-                onClick={() => {
-                  ddClient.host.openExternal("https://ngrok.com/docs/agent/ingress/");
-                }}
-                style={{ 
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                Learn more
-                <OpenInNewIcon sx={{ fontSize: '16px' }} />
-              </LinkButton>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <LinkButton
                 onClick={() => {
                   ddClient.host.openExternal("https://dashboard.ngrok.com/tunnels/ingress");
@@ -276,6 +261,19 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                 }}
               >
                 View in dashboard
+                <OpenInNewIcon sx={{ fontSize: '16px' }} />
+              </LinkButton>
+              <LinkButton
+                onClick={() => {
+                  ddClient.host.openExternal("https://ngrok.com/docs/agent/ingress/");
+                }}
+                style={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                Learn more
                 <OpenInNewIcon sx={{ fontSize: '16px' }} />
               </LinkButton>
             </Box>
