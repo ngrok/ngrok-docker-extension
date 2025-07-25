@@ -280,7 +280,7 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'port',
             headerName: 'Port',
-            width: isSmall ? 60 : 80,
+            width: isSmall ? 60 : 90,
             renderCell: (params) => (
                 <Box sx={{ fontWeight: params.row.isOnline ? 500 : 400 }}>
                     {params.value}

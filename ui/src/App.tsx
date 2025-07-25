@@ -18,12 +18,12 @@ export function App() {
         spacing={2}
         textAlign={"center"}
         justifyContent={"center"}
-        sx={{ mt: authIsSetup ? 8 : 0, overflowX: 'auto' }}
+        sx={{ mt: authIsSetup ? 8 : 0 }}
       >
         {!authIsSetup ? (
           <AuthSetup />
         ) : (
-          <Grid2 sx={{ mt: 2 }}>
+          <Grid2 xs={12} sx={{ mt: 2, width: '100%', minWidth: 0 }}>
             <ContainerGrid />
           </Grid2>
         )}
