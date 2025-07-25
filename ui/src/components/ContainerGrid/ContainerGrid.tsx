@@ -5,14 +5,13 @@ import {
     GridActionsColDef,
     GridColDef,
 } from "@mui/x-data-grid";
-import { Box, CircularProgress, Tooltip, useMediaQuery, useTheme } from "@mui/material";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import StopIcon from "@mui/icons-material/Stop";
+import { Box, Tooltip, useMediaQuery, useTheme, Switch, FormControlLabel } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { NgrokContainer, EndpointConfiguration, RunningEndpoint, useNgrokContext } from "../NgrokContext";
-import { statusService } from '../../services/statusService';
+import { NgrokContainer, useNgrokContext } from "../NgrokContext";
+import { EndpointConfig } from "../../types/api";
 import AlertDialog from "../AlertDialog";
 import EndpointCreationDialog, { StepOneConfig, StepTwoConfig } from "../EndpointCreationDialog";
 import EditEndpointDialog from "../EditEndpointDialog";
@@ -41,6 +40,13 @@ interface ContainerGridRow {
     trafficPolicy: 'YES' | 'NO';
     lastStarted: string;
     isOnline: boolean;
+    hasError: boolean;
+    errorMessage?: string;
+    state?: string;
+    isDeleted: boolean;
+    expectedState?: "online" | "offline";
+    hasEndpointConfig: boolean;
+    isContainerRunning: boolean;
     actions: any[];
 }
 
@@ -53,14 +59,15 @@ const ContainerGrid: React.FC = () => {
 
     const {
         containers,
-        runningEndpoints,
-        endpointConfigurations,
+        allDockerContainers,
         onlineEndpointsOnly,
         setOnlineEndpointsOnly,
-        setRunningEndpoints,
-        createEndpointConfiguration,
-        updateEndpointConfiguration,
-        deleteEndpointConfiguration
+        // New API-based methods
+        apiEndpoints,
+        createEndpoint,
+        updateEndpoint,
+        deleteEndpoint,
+        toggleEndpointState
     } = useNgrokContext();
 
     // Dialog state
@@ -76,7 +83,17 @@ const ContainerGrid: React.FC = () => {
     const [moreMenuContainerId, setMoreMenuContainerId] = useState<string | null>(null);
 
     const [creatingEndpoint, setCreatingEndpoint] = useState<Record<string, boolean>>({});
-    const [removingEndpoint, setRemovingEndpoint] = useState<boolean>(false);
+    const [togglingEndpoint, setTogglingEndpoint] = useState<Record<string, boolean>>({});
+
+    // Helper functions to find endpoint data from new API structure
+    const getEndpointForContainer = useCallback((containerId: string) => {
+        return apiEndpoints.find(endpoint => endpoint.id === containerId);
+    }, [apiEndpoints]);
+
+    const getRunningEndpointForContainer = useCallback((containerId: string) => {
+        const endpoint = getEndpointForContainer(containerId);
+        return endpoint?.status.state === "online" ? endpoint : null;
+    }, [getEndpointForContainer]);
 
     // Responsive column visibility
     const columnVisibilityModel = {
@@ -84,27 +101,119 @@ const ContainerGrid: React.FC = () => {
         // Hide less critical columns on mobile
         image: !isMobile,
         trafficPolicy: !isMobile,
-        lastStarted: !isSmall,
+        lastStarted: true, // Always show lastStarted for debugging
     };
 
     const getFilteredContainers = useCallback(() => {
-        // Containers are already appropriately filtered by existing logic
+        // Start with existing running containers
         const availableContainers = Object.values(containers);
 
-        // Only apply online filter if toggled on
+        // Create a set to track containers we've already included
+        const includedContainerIds = new Set<string>();
+        const result: NgrokContainer[] = [];
+
+        // First, add all running containers
+        availableContainers.forEach(container => {
+            includedContainerIds.add(container.id);
+            result.push(container);
+        });
+
+        // Then, add any endpoints that don't have matching containers
+        apiEndpoints.forEach(endpoint => {
+                // Try to find a matching container in our containers list (running or stopped)
+                const matchingContainer = availableContainers.find(c => 
+                    endpoint.id === `${c.ContainerId}:${c.Port.PublicPort}`
+                );
+
+                if (!matchingContainer) {
+                    // This endpoint doesn't have a matching container - check if container truly doesn't exist
+                    const [containerId, portStr] = endpoint.id.split(':');
+                    const port = parseInt(portStr);
+
+                    // Check if the container exists in Docker (regardless of port)
+                    const dockerContainer = allDockerContainers.find(c => c.Id === containerId);
+                    
+                    let containerName: string;
+                    let image: string;
+                    let imageId: string;
+                    
+                    if (dockerContainer) {
+                        // Container exists in Docker but doesn't have this port published (probably stopped)
+                        containerName = dockerContainer.Names[0].substring(1); // Remove leading '/'
+                        image = dockerContainer.Image;
+                        imageId = (dockerContainer as any).ImageID || '';
+                        
+                        // For offline containers, just show the published port (no private port)
+                        const privatePort = undefined;
+                        
+                        // Create a synthetic container entry for this endpoint
+                        const syntheticContainer: NgrokContainer = {
+                            id: endpoint.id,
+                            ContainerId: containerId,
+                            Name: containerName,
+                            Image: image,
+                            ImageId: imageId,
+                            Port: {
+                                PublicPort: port,
+                                PrivatePort: privatePort,
+                                Type: 'tcp'
+                            }
+                        };
+                        
+                        if (!includedContainerIds.has(endpoint.id)) {
+                            includedContainerIds.add(endpoint.id);
+                            result.push(syntheticContainer);
+                        }
+                    } else {
+                        // Container truly doesn't exist - it was deleted
+                        containerName = '<deleted>';
+                        image = '<deleted>';
+                        imageId = '';
+                        
+                        // Create a synthetic container entry for this endpoint
+                        const syntheticContainer: NgrokContainer = {
+                            id: endpoint.id,
+                            ContainerId: containerId,
+                            Name: containerName,
+                            Image: image,
+                            ImageId: imageId,
+                            Port: {
+                                PublicPort: port,
+                                PrivatePort: endpoint.targetPort ? parseInt(endpoint.targetPort) : undefined,
+                                Type: 'tcp'
+                            }
+                        };
+                        
+                        if (!includedContainerIds.has(endpoint.id)) {
+                            includedContainerIds.add(endpoint.id);
+                            result.push(syntheticContainer);
+                        }
+                    }
+                }
+        });
+
+        // Apply online filter if toggled on
         if (onlineEndpointsOnly) {
-            return availableContainers.filter(container => {
-                const hasRunningEndpoint = runningEndpoints[container.id];
-                return hasRunningEndpoint;
+            return result.filter(container => {
+                const runningEndpoint = getRunningEndpointForContainer(container.id);
+                return runningEndpoint;
             });
         }
 
-        return availableContainers;
-    }, [containers, runningEndpoints, onlineEndpointsOnly]);
+        return result;
+    }, [containers, apiEndpoints, onlineEndpointsOnly, getRunningEndpointForContainer]);
 
     const transformContainerToRow = (container: NgrokContainer): ContainerGridRow => {
-        const runningEndpoint = runningEndpoints[container.id];
-        const config = endpointConfigurations[container.id];
+        const endpoint = getEndpointForContainer(container.id);
+        const isEndpointOnline = endpoint?.status.state === "online";
+        const hasError = Boolean(endpoint?.status.lastError && endpoint?.status.lastError.trim() !== '');
+        const errorMessage = hasError ? endpoint?.status.lastError : undefined;
+        const isDeleted = container.Name === '<deleted>' && container.Image === '<deleted>';
+        const expectedState = endpoint?.expectedState ?? "offline";
+        
+        // Check if container is actually running in Docker (vs just having endpoint online)
+        const isContainerRunning = Object.values(containers).some(c => c.id === container.id);
+        
 
 
         // Format port as "publicport:privateport" if both are available, otherwise just show public port
@@ -119,13 +228,22 @@ const ContainerGrid: React.FC = () => {
             image: container.Image,
             imageId: container.ImageId,
             port: portDisplay,
-            url: runningEndpoint?.url || config?.url || '',
-            trafficPolicy: config?.trafficPolicy ? 'YES' : 'NO',
-            lastStarted: runningEndpoint?.lastStarted || config?.lastStarted || '',
-            isOnline: !!runningEndpoint, // Same logic as showing stop button
+            url: isEndpointOnline ? (endpoint?.status.url || '') : (endpoint?.url || ''),
+            trafficPolicy: endpoint?.trafficPolicy ? 'YES' : 'NO',
+            lastStarted: endpoint?.lastStarted || '',
+            isOnline: isEndpointOnline,
+            hasError: hasError,
+            errorMessage: errorMessage,
+            state: endpoint?.status.state,
+            isDeleted: isDeleted,
+            expectedState: expectedState,
+            hasEndpointConfig: !!endpoint,
+            isContainerRunning: isContainerRunning,
             actions: []
         };
     };
+
+
 
     const filteredContainers = getFilteredContainers();
     const allContainers = Object.values(containers);
@@ -134,6 +252,16 @@ const ContainerGrid: React.FC = () => {
     // Handle remove filter functionality
     const handleRemoveFilter = () => {
         setOnlineEndpointsOnly(false);
+    };
+
+    // Handle toggle switch
+    const handleToggleSwitch = async (rowId: string, desiredState: "online" | "offline") => {
+        setTogglingEndpoint(prev => ({ ...prev, [rowId]: true }));
+        try {
+            await toggleEndpointState(rowId, desiredState);
+        } finally {
+            setTogglingEndpoint(prev => ({ ...prev, [rowId]: false }));
+        }
     };
 
     // Show empty state if no containers with ports exist
@@ -155,18 +283,6 @@ const ContainerGrid: React.FC = () => {
     const generateActionButtons = (row: ContainerGridRow) => {
         const actions: any[] = [];
 
-        if (creatingEndpoint[row.id]) {
-            return [
-                <GridActionsCellItem
-                    className="circular-progress"
-                    key={"loading_" + row.containerId}
-                    icon={<CircularProgress size={20} />}
-                    label="Loading"
-                    showInMenu={false}
-                />,
-            ];
-        }
-
         if (!row.port || row.port === "0") {
             return [
                 <GridActionsCellItem
@@ -183,50 +299,21 @@ const ContainerGrid: React.FC = () => {
             ];
         }
 
-        const hasConfiguration = endpointConfigurations[row.id];
+        const hasConfiguration = getEndpointForContainer(row.id);
 
         if (!hasConfiguration) {
-            // Show create configuration button instead of play
+            // Show create configuration button
             actions.push(
                 <GridActionsCellItem
                     key={"action_create_" + row.containerId}
                     icon={
-                        <Tooltip title="Create endpoint"><PlayArrowIcon /></Tooltip>
+                        <Tooltip title="Create endpoint"><AddIcon /></Tooltip>
                     }
                     onClick={() => handleCreateConfiguration(row.id)}
                     label="Create endpoint"
                 />
             );
         } else {
-            // Has configuration - show play/stop based on online status
-            if (row.isOnline) {
-                // Stop button  
-                actions.push(
-                    <GridActionsCellItem
-                        key={"action_stop_" + row.containerId}
-                        icon={
-                            <Tooltip title="Stop endpoint"><StopIcon /></Tooltip>
-                        }
-                        onClick={() => handleStopEndpoint(row.id)}
-                        label="Stop endpoint"
-                        disabled={removingEndpoint}
-                    />
-                );
-            } else {
-                // Start button
-                actions.push(
-                    <GridActionsCellItem
-                        key={"action_start_" + row.containerId}
-                        icon={
-                            <Tooltip title="Start endpoint"><PlayArrowIcon /></Tooltip>
-                        }
-                        onClick={() => handleStartEndpoint(row.id)}
-                        label="Start endpoint"
-                        disabled={creatingEndpoint[row.id]}
-                    />
-                );
-            }
-
             // More actions menu (triple dot) - only show if has configuration
             actions.push(
                 <GridActionsCellItem
@@ -247,9 +334,54 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'status',
             headerName: '',
-            width: isSmall ? 40 : 50,
+            width: 40,
             sortable: false,
-            renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} />
+            renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} hasError={params.row.hasError} errorMessage={params.row.errorMessage} state={params.row.state} />
+        },
+        {
+            field: 'endpointToggle',
+            headerName: '',
+            width: 60,
+            sortable: false,
+            align: 'center',
+            renderCell: (params) => {
+                const hasConfig = !!getEndpointForContainer(params.row.id);
+                if (!hasConfig) return null;
+
+                const loading = togglingEndpoint[params.row.id];
+                const isOnline = params.row.expectedState === 'online';
+                const isDeleted = params.row.isDeleted;
+                
+                // Allow switch to work for deleted containers if endpoint is online
+                const isDisabled = loading || (isDeleted && !isOnline);
+                
+                // Determine tooltip message
+                let tooltipMessage;
+                if (isDeleted && !isOnline) {
+                    tooltipMessage = 'Cannot start an endpoint to a deleted container';
+                } else {
+                    tooltipMessage = isOnline ? 'Set Offline' : 'Set Online';
+                }
+
+                return (
+                    <Tooltip title={tooltipMessage}>
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    size="small"
+                                    color="primary"
+                                    checked={isOnline}
+                                    disabled={isDisabled}
+                                    onChange={(_, checked) =>
+                                        handleToggleSwitch(params.row.id, checked ? 'online' : 'offline')
+                                    }
+                                />
+                            }
+                            label=""
+                        />
+                    </Tooltip>
+                );
+            }
         },
         {
             field: 'containerName',
@@ -261,6 +393,9 @@ const ContainerGrid: React.FC = () => {
                     name={params.value}
                     containerId={params.row.containerId}
                     isOnline={params.row.isOnline}
+                    isDeleted={params.row.isDeleted}
+                    hasEndpointConfig={params.row.hasEndpointConfig}
+                    isContainerRunning={params.row.isContainerRunning}
                 />
             )
         },
@@ -274,6 +409,7 @@ const ContainerGrid: React.FC = () => {
                     image={params.value}
                     imageId={params.row.imageId}
                     isOnline={params.row.isOnline}
+                    isDeleted={params.row.isDeleted}
                 />
             )
         },
@@ -323,9 +459,9 @@ const ContainerGrid: React.FC = () => {
         },
         {
             field: 'actions',
-            headerName: 'Actions',
+            headerName: '',
             type: 'actions',
-            width: isSmall ? 80 : 100,
+            width: 50,
             getActions: (params) => generateActionButtons(params.row)
         }
     ];
@@ -354,77 +490,82 @@ const ContainerGrid: React.FC = () => {
             if (container) {
                 setCurrentContainer(container);
                 setEditDialogOpen(true);
+            } else {
+                // For deleted containers, we need to find the endpoint info
+                const endpoint = getEndpointForContainer(moreMenuContainerId);
+                if (endpoint) {
+                    // Create a synthetic container object for the edit dialog
+                    const [containerId, portStr] = moreMenuContainerId.split(':');
+                    const port = parseInt(portStr);
+                    const syntheticContainer: NgrokContainer = {
+                        id: moreMenuContainerId,
+                        ContainerId: containerId,
+                        Name: '<deleted>',
+                        Image: '<deleted>',
+                        ImageId: '',
+                        Port: {
+                            PublicPort: port,
+                            PrivatePort: endpoint.targetPort ? parseInt(endpoint.targetPort) : undefined,
+                            Type: 'tcp'
+                        }
+                    };
+                    setCurrentContainer(syntheticContainer);
+                    setEditDialogOpen(true);
+                }
             }
         }
         handleCloseMoreMenu();
     };
 
-    const handleDeleteEndpoint = () => {
+    const handleDeleteEndpoint = async () => {
         if (!moreMenuContainerId) return;
 
-        if (runningEndpoints[moreMenuContainerId]) {
-            // Stop running endpoint first
-            handleStopEndpoint(moreMenuContainerId);
+        // Remove configuration using new API (DELETE handles stopping the endpoint if running)
+        try {
+            // moreMenuContainerId is already the endpoint ID (containerId:port format)
+            await deleteEndpoint(moreMenuContainerId);
+        } catch (error) {
+            console.error('Failed to delete endpoint:', error);
         }
-        // Remove configuration
-        deleteEndpointConfiguration(moreMenuContainerId);
     };
 
-    const handleStartEndpoint = async (containerRowId: string, configOverride?: EndpointConfiguration) => {
+    const handleStartEndpoint = async (containerRowId: string, configOverride?: EndpointConfig) => {
         const container = Object.values(containers).find(c => c.id === containerRowId);
-        const config = configOverride || endpointConfigurations[containerRowId];
+        const config = configOverride || getEndpointForContainer(containerRowId);
         if (!container || !config) return;
 
         setCreatingEndpoint({ ...creatingEndpoint, [containerRowId]: true });
 
         try {
-            // Wrap the POST request with a timeout
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Request timed out after 5 seconds')), 5000);
-            });
-
-            const postPromise = ddClient.extension.vm?.service?.post('/create_endpoint', {
-                containerId: container.ContainerId,
-                targetPort: container.Port.PublicPort.toString(),
-                url: config.url,
-                binding: config.binding,
-                poolingEnabled: config.poolingEnabled,
-                trafficPolicy: config.trafficPolicy,
-                description: config.description,
-                metadata: config.metadata,
-            });
-
-            const response: any = await Promise.race([postPromise, timeoutPromise]);
-
-            // Handle both old and new response structures (Docker Desktop API change)
-            const endpointData = response.data?.endpoint || response.endpoint;
-            if (!endpointData || !endpointData.url) {
-                throw new Error(`Unexpected response from create_endpoint: ${JSON.stringify(response)}`);
+            // containerRowId is already the endpoint ID (containerId:port format)
+            const endpointId = containerRowId;
+            
+            // Check if endpoint config already exists
+            const existingEndpoint = getEndpointForContainer(endpointId);
+            
+            if (existingEndpoint) {
+                // Just toggle to online
+                await toggleEndpointState(endpointId, "online");
+            } else {
+                // Create new endpoint configuration
+                const newEndpointConfig: EndpointConfig = {
+                    id: endpointId,
+                    containerId: container.ContainerId,
+                    targetPort: container.Port.PublicPort.toString(),
+                    url: config.url,
+                    binding: config.binding,
+                    poolingEnabled: config.poolingEnabled || false,
+                    trafficPolicy: config.trafficPolicy,
+                    description: config.description,
+                    metadata: config.metadata,
+                    expectedState: "online"
+                };
+                
+                await createEndpoint(newEndpointConfig);
             }
 
-            // Add to running endpoints
-            const currentTimestamp = new Date().toISOString();
-            const runningEndpoint: RunningEndpoint = {
-                id: container.id,
-                url: endpointData.url,
-                containerId: container.ContainerId,
-                targetPort: container.Port.PublicPort.toString(),
-                lastStarted: currentTimestamp
-            };
-            setRunningEndpoints({ ...runningEndpoints, [container.id]: runningEndpoint });
-
-            // Update configuration to persist lastStarted timestamp
-            const updatedConfig = { ...config, lastStarted: currentTimestamp };
-            updateEndpointConfiguration(container.id, updatedConfig);
-
-            // Trigger immediate status check after successful endpoint creation
-            statusService.checkStatusNow();
-
-            ddClient.desktopUI.toast.success(
-                `Endpoint started at ${endpointData.url}`
-            );
+            ddClient.desktopUI.toast.success("Endpoint starting");
         } catch (error: any) {
-            console.log(error);
             let errMsg = error.error ? error.error : error.message.replaceAll(`"`, "").replaceAll("\\r", "");
             ddClient.desktopUI.toast.error(errMsg);
         } finally {
@@ -432,52 +573,17 @@ const ContainerGrid: React.FC = () => {
         }
     };
 
-    const handleStopEndpoint = async (containerRowId: string) => {
-        const container = Object.values(containers).find(c => c.id === containerRowId);
-        if (!container) return;
 
-        setRemovingEndpoint(true);
-
-        try {
-            // Wrap the POST request with a timeout
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Request timed out after 5 seconds')), 5000);
-            });
-
-            const postPromise = ddClient.extension.vm?.service?.post('/remove_endpoint', {
-                containerId: container.ContainerId,
-                targetPort: container.Port.PublicPort.toString()
-            });
-
-            await Promise.race([postPromise, timeoutPromise]);
-
-            // Remove from running endpoints but keep configuration
-            const updatedRunningEndpoints = { ...runningEndpoints };
-            delete updatedRunningEndpoints[container.id];
-            setRunningEndpoints(updatedRunningEndpoints);
-
-            // Trigger immediate status check after successful endpoint removal
-            statusService.checkStatusNow();
-
-            ddClient.desktopUI.toast.success("Endpoint stopped");
-        } catch (error: any) {
-            console.log(error);
-            let errMsg = error.error ? error.error : error.message.replaceAll(`"`, "").replaceAll("\\r", "");
-            ddClient.desktopUI.toast.error(errMsg);
-        } finally {
-            setRemovingEndpoint(false);
-        }
-    };
 
     const handleCreationDialogNext = (_stepOneConfig: StepOneConfig) => {
         // Step one completed, moving to step two - no action needed
     };
 
-    const handleCreationDialogComplete = (stepOne: StepOneConfig, stepTwo: StepTwoConfig) => {
+    const handleCreationDialogComplete = async (stepOne: StepOneConfig, stepTwo: StepTwoConfig) => {
         if (!currentContainer) return;
 
         // Create endpoint configuration from both steps
-        const config: EndpointConfiguration = {
+        const config: EndpointConfig = {
             id: currentContainer.id,
             containerId: currentContainer.ContainerId,
             targetPort: currentContainer.Port.PublicPort.toString(),
@@ -487,11 +593,11 @@ const ContainerGrid: React.FC = () => {
             trafficPolicy: stepTwo.trafficPolicy,
             description: stepOne.additionalOptions.description,
             metadata: stepOne.additionalOptions.metadata,
+            expectedState: "online"
         };
 
-        // Create configuration and start endpoint
-        createEndpointConfiguration(config);
-        handleStartEndpoint(currentContainer.id, config);
+        // Create configuration and start endpoint using new API
+        await handleStartEndpoint(currentContainer.id, config);
 
         setCreationDialogOpen(false);
         setCurrentContainer(null);
@@ -501,7 +607,8 @@ const ContainerGrid: React.FC = () => {
         if (!currentContainer) return;
 
         // Create updated endpoint configuration
-        const updatedConfig: EndpointConfiguration = {
+        const currentEndpoint = getEndpointForContainer(currentContainer.id);
+        const updatedConfig: EndpointConfig = {
             id: currentContainer.id,
             containerId: currentContainer.ContainerId,
             targetPort: currentContainer.Port.PublicPort.toString(),
@@ -511,20 +618,11 @@ const ContainerGrid: React.FC = () => {
             trafficPolicy: stepTwo.trafficPolicy,
             description: stepOne.additionalOptions.description,
             metadata: stepOne.additionalOptions.metadata,
-            lastStarted: endpointConfigurations[currentContainer.id]?.lastStarted
+            expectedState: currentEndpoint?.expectedState || "offline"
         };
 
-        // Save updated configuration
-        updateEndpointConfiguration(currentContainer.id, updatedConfig);
-
-        // If endpoint is online, we need to restart it with new config
-        const isOnline = !!runningEndpoints[currentContainer.id];
-        if (isOnline) {
-            // Stop the current endpoint first
-            await handleStopEndpoint(currentContainer.id);
-            // Start with new configuration
-            handleStartEndpoint(currentContainer.id, updatedConfig);
-        }
+        // Save updated configuration using new API (PUT handles restarting if configuration changed)
+        await updateEndpoint(currentContainer.id, updatedConfig);
 
         // Close dialog
         setEditDialogOpen(false);
@@ -554,7 +652,7 @@ const ContainerGrid: React.FC = () => {
                 }}
             />
 
-            {currentContainer && endpointConfigurations[currentContainer.id] && (
+            {currentContainer && getEndpointForContainer(currentContainer.id) && (
                 <EditEndpointDialog
                     open={editDialogOpen}
                     onClose={() => setEditDialogOpen(false)}
@@ -565,8 +663,8 @@ const ContainerGrid: React.FC = () => {
                         containerID: currentContainer.ContainerId,
                         targetPort: currentContainer.Port.PublicPort.toString()
                     }}
-                    existingConfig={endpointConfigurations[currentContainer.id]}
-                    isEndpointOnline={!!runningEndpoints[currentContainer.id]}
+                    existingConfig={getEndpointForContainer(currentContainer.id)!}
+                    isEndpointOnline={!!getRunningEndpointForContainer(currentContainer.id)}
                 />
             )}
 
@@ -575,7 +673,7 @@ const ContainerGrid: React.FC = () => {
             {moreMenuContainerId && (
                 <MoreActionsMenu
                     containerId={moreMenuContainerId}
-                    isOnline={!!runningEndpoints[moreMenuContainerId]}
+                    isOnline={!!getRunningEndpointForContainer(moreMenuContainerId)}
                     anchorEl={moreMenuAnchorEl}
                     onClose={handleCloseMoreMenu}
                     onEditEndpoint={handleEditEndpoint}
@@ -587,9 +685,13 @@ const ContainerGrid: React.FC = () => {
                 rows={filteredContainers.map(transformContainerToRow)}
                 columns={columns}
                 columnVisibilityModel={columnVisibilityModel}
+                rowHeight={40}
                 initialState={{
                     pagination: {
                         paginationModel: { page: 0, pageSize: 10 },
+                    },
+                    sorting: {
+                        sortModel: [{ field: 'lastStarted', sort: 'desc' }],
                     },
                 }}
                 pageSizeOptions={[10]}
@@ -604,6 +706,10 @@ const ContainerGrid: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
+                    },
+                    '& .MuiDataGrid-cell[data-field="containerName"]': {
+                        display: 'flex',
+                        alignItems: 'center'
                     },
                     '& .MuiDataGrid-cell[data-field="trafficPolicy"]': {
                         display: 'flex',

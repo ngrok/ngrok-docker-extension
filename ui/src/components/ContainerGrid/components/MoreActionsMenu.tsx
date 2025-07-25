@@ -1,6 +1,6 @@
 import { Menu, MenuItem, useTheme } from "@mui/material";
 import EditOutlinedIcon from "@mui/icons-material/Edit";
-import SearchIcon from "@mui/icons-material/Search";
+import ManageSearchIcon from "@mui/icons-material/Search";
 import LaunchIcon from "@mui/icons-material/Launch";
 import DeleteOutlinedIcon from "@mui/icons-material/Delete";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -26,8 +26,9 @@ const MoreActionsMenu: React.FC<MoreActionsMenuProps> = ({
   onDeleteEndpoint
 }) => {
   const theme = useTheme();
-  const { runningEndpoints } = useNgrokContext();
-  const runningEndpoint = runningEndpoints[containerId];
+  const { apiEndpoints } = useNgrokContext();
+  const endpoint = apiEndpoints.find(ep => ep.id === containerId);
+  const runningEndpoint = endpoint?.status.state === "online" ? endpoint : null;
   
   const isHttpEndpoint = (url: string): boolean => {
     return url.startsWith('http://') || url.startsWith('https://');
@@ -48,8 +49,9 @@ const MoreActionsMenu: React.FC<MoreActionsMenuProps> = ({
   };
 
   const handleViewTrafficInspector = () => {
-    if (runningEndpoint && isHttpEndpoint(runningEndpoint.url)) {
-      const hostname = extractHostname(runningEndpoint.url);
+    const url = runningEndpoint?.status.url;
+    if (url && isHttpEndpoint(url)) {
+      const hostname = extractHostname(url);
       const inspectorUrl = `https://dashboard.ngrok.com/traffic-inspector?server-name=${hostname}`;
       ddClient.host.openExternal(inspectorUrl);
     }
@@ -57,8 +59,9 @@ const MoreActionsMenu: React.FC<MoreActionsMenuProps> = ({
   };
 
   const handleViewDashboard = () => {
-    if (runningEndpoint) {
-      const dashboardUrl = `https://dashboard.ngrok.com/endpoints?q=${encodeURIComponent(runningEndpoint.url)}`;
+    const url = runningEndpoint?.status.url;
+    if (url) {
+      const dashboardUrl = `https://dashboard.ngrok.com/endpoints?q=${encodeURIComponent(url)}`;
       ddClient.host.openExternal(dashboardUrl);
     }
     onClose();
@@ -91,13 +94,13 @@ const MoreActionsMenu: React.FC<MoreActionsMenuProps> = ({
     >
       <MenuItem onClick={handleEditEndpoint}>
         <EditOutlinedIcon fontSize="small" sx={{ color: theme.palette.docker.grey[500] }} />
-        Edit Endpoints
+        Edit Endpoint
       </MenuItem>
       
-      {isOnline && isHttpEndpoint(runningEndpoint?.url || '') && (
+      {isOnline && isHttpEndpoint(runningEndpoint?.status.url || '') && (
         <MenuItem onClick={handleViewTrafficInspector}>
-          <SearchIcon fontSize="small" sx={{ color: theme.palette.docker.grey[500] }} />
-          View in Traffic Inspector
+          <ManageSearchIcon fontSize="small" sx={{ color: theme.palette.docker.grey[500] }} />
+          View in Traffic Inspector!
         </MenuItem>
       )}
       

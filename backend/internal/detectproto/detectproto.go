@@ -15,10 +15,23 @@ type Result struct {
 	TLS   bool // Port accepts TLS connections (may or may not be HTTP)
 }
 
+// Detector interface for protocol detection
+type Detector interface {
+	Detect(ctx context.Context, host, port string) (*Result, error)
+}
+
+// detector is the concrete implementation of the Detector interface
+type detector struct{}
+
+// NewDetector creates a new protocol detector
+func NewDetector() Detector {
+	return &detector{}
+}
+
 // Detect probes the TCP port and returns which protocols are supported. Be sure
 // to set a context deadline or control the cancellation otherwise this function
 // could hang forever with an unresponsive port.
-func Detect(ctx context.Context, host, port string) (*Result, error) {
+func (d *detector) Detect(ctx context.Context, host, port string) (*Result, error) {
 	result := &Result{}
 
 	// Run HTTP and TLS tests concurrently

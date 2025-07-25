@@ -69,10 +69,14 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
           size="small" 
           onClick={handleCopy}
           sx={{
-            opacity: 1,
+            opacity: 0,
             width: 24,
             height: 24,
             flexShrink: 0,
+            transition: 'opacity 0.2s ease',
+            '.MuiDataGrid-row:hover &': {
+              opacity: 1,
+            }
           }}
         >
           <ContentCopyIcon sx={{fontSize: '16px'}} />

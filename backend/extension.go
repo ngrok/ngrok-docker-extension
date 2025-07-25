@@ -7,13 +7,17 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/docker/docker/client"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/ngrok/ngrok-docker-extension/internal/endpoint"
+	"github.com/ngrok/ngrok-docker-extension/internal/detectproto"
 	"github.com/ngrok/ngrok-docker-extension/internal/handler"
+	"github.com/ngrok/ngrok-docker-extension/internal/manager"
+	"github.com/ngrok/ngrok-docker-extension/internal/store"
 )
 
 // ngrokExtension encapsulates all the state and functionality of the ngrok Docker extension
@@ -21,30 +25,41 @@ type ngrokExtension struct {
 	// Configuration
 	socketPath string
 	logger     *slog.Logger
-	
+
 	// HTTP server components
-	router *echo.Echo
+	router  *echo.Echo
 	handler *handler.Handler
-	
-	// Ngrok endpoint management
-	endpointManager endpoint.Manager
+
+	// State management components
+	store   store.Store
+	manager manager.Manager
 }
 
 // newNgrokExtension creates and initializes a new ngrok extension instance
 func newNgrokExtension(socketPath string, logger *slog.Logger) (*ngrokExtension, error) {
 	ext := &ngrokExtension{
-		socketPath:      socketPath,
-		logger:          logger,
-		endpointManager: endpoint.NewManager(logger),
+		socketPath: socketPath,
+		logger:     logger,
 	}
-	
-	// Initialize components
+
+	// Initialize store from volume-mounted path
+	if err := ext.initStore(); err != nil {
+		return nil, fmt.Errorf("failed to initialize store: %w", err)
+	}
+
+	// Create manager with store dependency
+	if err := ext.initManager(); err != nil {
+		return nil, fmt.Errorf("failed to initialize manager: %w", err)
+	}
+
+	// Initialize router
 	if err := ext.initRouter(); err != nil {
 		return nil, fmt.Errorf("failed to initialize router: %w", err)
 	}
-	
+
+	// Initialize handler with all dependencies
 	ext.initHandler()
-	
+
 	return ext, nil
 }
 
@@ -67,16 +82,55 @@ func (ext *ngrokExtension) initRouter() error {
 		Output:           os.Stdout,
 	})
 	ext.router.Use(logMiddleware)
-	
+
 	return nil
 }
 
-// initHandler creates the HTTP handler
-func (ext *ngrokExtension) initHandler() {
-	ext.handler = handler.New(ext.logger, ext.endpointManager, ext.router)
+// initStore initializes the file store from environment variable
+func (ext *ngrokExtension) initStore() error {
+	// Get state directory from environment variable
+	stateDir := os.Getenv("NGROK_EXT_STATE_DIR")
+	if stateDir == "" {
+		stateDir = "/tmp" // fallback for development
+	}
+
+	statePath := filepath.Join(stateDir, "state.json")
+	ext.store = store.NewFileStoreWithLogger(statePath, ext.logger)
+
+	return nil
 }
 
+// initManager initializes the manager with store and Docker client
+func (ext *ngrokExtension) initManager() error {
+	// Create Docker client
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return fmt.Errorf("failed to create Docker client: %w", err)
+	}
 
+	// Create ngrok SDK wrapper
+	ngrokSDK := &ngrokWrapper{}
+
+	// Get extension version from environment
+	extensionVersion := os.Getenv("EXTENSION_VERSION")
+	if extensionVersion == "" {
+		extensionVersion = "unknown"
+	}
+
+	// Create protocol detector
+	protocolDetector := detectproto.NewDetector()
+
+	// Create manager with extension version and 5 second converge interval
+	convergeInterval := 5 * time.Second
+	ext.manager = manager.NewManager(ext.store, ngrokSDK, &dockerWrapper{dockerClient}, protocolDetector, ext.logger, extensionVersion, convergeInterval)
+
+	return nil
+}
+
+// initHandler creates the HTTP handler with all dependencies
+func (ext *ngrokExtension) initHandler() {
+	ext.handler = handler.New(ext.router, ext.manager, ext.store, ext.logger)
+}
 
 // Run starts the extension and runs until the context is cancelled
 func (ext *ngrokExtension) Run(ctx context.Context) error {
@@ -103,6 +157,20 @@ func (ext *ngrokExtension) Run(ctx context.Context) error {
 		close(serverErrChan)
 	}()
 
+	// Run initial convergence after server starts
+	go func() {
+		// Add timeout to convergence
+		convergeCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		ext.logger.Info("Starting initial convergence")
+		if err := ext.manager.Converge(convergeCtx); err != nil {
+			ext.logger.Error("Initial convergence failed", "error", err)
+		} else {
+			ext.logger.Info("Initial convergence completed successfully")
+		}
+	}()
+
 	// Wait for context cancellation or server error
 	select {
 	case <-ctx.Done():
@@ -120,15 +188,15 @@ func (ext *ngrokExtension) Run(ctx context.Context) error {
 func (ext *ngrokExtension) shutdown() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
-	// Shutdown endpoint manager first
-	if err := ext.endpointManager.Shutdown(shutdownCtx); err != nil {
-		ext.logger.Warn("Error shutting down endpoint manager", "error", err)
+
+	// Shutdown manager gracefully
+	if err := ext.manager.Shutdown(shutdownCtx); err != nil {
+		ext.logger.Warn("Error shutting down manager", "error", err)
 	}
-	
+
 	if err := ext.router.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("failed to shutdown server gracefully: %w", err)
 	}
-	
+
 	return nil
 }

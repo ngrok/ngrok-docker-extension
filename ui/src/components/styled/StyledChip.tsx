@@ -3,13 +3,15 @@ import { Chip } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
 interface StatusChipProps {
-  status: 'online' | 'offline' | 'reconnecting' | 'unknown';
+  status: 'online' | 'offline' | 'connecting' | 'connectingError' | 'unknown';
 }
 
 export const StatusChip = styled(Chip, {
   shouldForwardProp: (prop) => prop !== 'status'
 })<StatusChipProps>(({ theme, status }) => {
-  const statusColor = theme.palette.status[status];
+  // Defensive fallback when custom palette.status is not available
+  const paletteStatus = (theme.palette as any).status;
+  const statusColor = paletteStatus?.[status] ?? theme.palette.text.primary;
   const backgroundColor = alpha(statusColor, 0.1);
   
   return {

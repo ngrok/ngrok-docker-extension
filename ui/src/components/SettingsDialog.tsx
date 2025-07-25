@@ -3,11 +3,9 @@ import {
   DialogTitle,
   TextField,
   Typography,
-  Switch,
-  FormControlLabel,
+  CircularProgress,
   IconButton,
   InputAdornment,
-  useTheme,
 } from "@mui/material";
 import { SectionTitleMb2, SectionBoxMb3, LinkButton, FlexRowGap05, SettingsDialogContentPanel, SettingsDialogActionsPanel, IconFont16 } from './styled';
 import CloseIcon from '@mui/icons-material/Close';
@@ -33,26 +31,25 @@ interface SettingsDialogProps {
 
 
 export default function SettingsDialog({ open: externalOpen, onClose }: SettingsDialogProps = {}) {
-  const { authToken, connectURL, autoDisconnect, saveSettings } = useNgrokContext();
-  const [tempAuthToken, setTempAuthToken] = useState(authToken);
-  const [tempConnectURL, setTempConnectURL] = useState(connectURL);
-  const [tempAutoDisconnect, setTempAutoDisconnect] = useState(autoDisconnect);
+  const { agentConfig, saveAgentSettings } = useNgrokContext();
+  const [tempAuthToken, setTempAuthToken] = useState(agentConfig?.authToken || "");
+  const [tempConnectURL, setTempConnectURL] = useState(agentConfig?.connectURL || "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const ddClient = useDockerDesktopClient();
-  const theme = useTheme();
 
   const [internalOpen, setInternalOpen] = React.useState(false);
   const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
 
   // Check if anything has changed
-  const hasChanges = tempAuthToken !== authToken || 
-                    tempConnectURL !== connectURL || 
-                    tempAutoDisconnect !== autoDisconnect;
+  const hasChanges = tempAuthToken !== (agentConfig?.authToken || "") || 
+                    tempConnectURL !== (agentConfig?.connectURL || "");
 
   const handleClickOpen = () => {
-    setTempAuthToken(authToken);
-    setTempConnectURL(connectURL);
-    setTempAutoDisconnect(autoDisconnect);
+    setTempAuthToken(agentConfig?.authToken || "");
+    setTempConnectURL(agentConfig?.connectURL || "");
+
     setInternalOpen(true);
   };
 
@@ -72,22 +69,27 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
     setTempConnectURL(event.target.value);
   };
 
-  const handleAutoDisconnectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTempAutoDisconnect(event.target.checked);
-  };
-
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
   const handleSave = async (_event: any) => {
-    // Use the new saveSettings function which will show toast and configure agent
-    await saveSettings(tempAuthToken, tempConnectURL, tempAutoDisconnect);
-    
-    if (onClose) {
-      onClose();
-    } else {
-      setInternalOpen(false);
+    setIsSubmitting(true);
+    try {
+      // Use the saveAgentSettings function which will show toast and configure agent
+      await saveAgentSettings({
+        authToken: tempAuthToken,
+        connectURL: tempConnectURL,
+        expectedState: agentConfig?.expectedState || "offline"
+      });
+      
+      if (onClose) {
+        onClose();
+      } else {
+        setInternalOpen(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -264,51 +266,6 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
             </FlexRowGap05>
           </SectionBoxMb3>
 
-          {/* Auto-disconnect Section */}
-          <SectionBoxMb3>
-            <SectionTitleMb2>
-              Auto-Disconnect
-            </SectionTitleMb2>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={tempAutoDisconnect}
-                  onChange={handleAutoDisconnectChange}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#116ED0',
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: '#8BC7F5',
-                    },
-                  }}
-                />
-              }
-              label={
-                <Typography 
-                  sx={{ 
-                    fontFamily: 'Roboto',
-                    fontSize: '14px',
-                    color: theme.palette.text.primary
-                  }}
-                >
-                  Disconnect from ngrok service when all endpoints are offline
-                </Typography>
-              }
-            />
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                fontFamily: 'Roboto',
-                fontSize: '14px',
-                lineHeight: '21px',
-                color: '#677285',
-                mt: 1
-              }}
-            >
-              Enable this option in low-bandwidth environments
-            </Typography>
-          </SectionBoxMb3>
         </SettingsDialogContentPanel>
         <SettingsDialogActionsPanel>
           <Button 
@@ -334,20 +291,21 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
           <Button 
             onClick={handleSave} 
             variant="contained"
-            disabled={tempAuthToken.length === 0 || !hasChanges}
+            disabled={tempAuthToken.length === 0 || !hasChanges || isSubmitting}
+            startIcon={isSubmitting ? <CircularProgress size={20} /> : undefined}
             sx={{
               fontFamily: 'Roboto',
               fontWeight: 500,
               fontSize: '14px',
-              width: '74px',
+              width: isSubmitting ? 'auto' : '74px',
               height: '40px',
               backgroundColor: '#116ED0',
               '&:hover': {
                 backgroundColor: '#116ED0',
-              }
+              },
             }}
           >
-            Save
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </SettingsDialogActionsPanel>
       </Dialog>

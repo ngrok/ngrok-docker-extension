@@ -29,7 +29,7 @@ function useDockerDesktopClient() {
 }
 
 export default function AuthSetup() {
-  const { setAuthToken } = useNgrokContext();
+  const { saveAgentSettings } = useNgrokContext();
   const [localAuthToken, setLocalAuthToken] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [validationError, setValidationError] = React.useState<string | null>(null);
@@ -59,12 +59,15 @@ export default function AuthSetup() {
     setValidationError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setAuthToken(localAuthToken);
-      ddClient.desktopUI.toast.success("Your ngrok auth token was authorized!");
+      // Use new API method to configure agent with expected state "online"
+      await saveAgentSettings({
+        authToken: localAuthToken,
+        connectURL: "", // Default to empty
+        expectedState: "online" // Set agent to come online automatically
+      });
+      // Success toast is handled by saveAgentSettings
     } catch (error) {
+      console.error('Failed to save authtoken:', error);
       setValidationError("Failed to save authtoken. Please try again.");
     } finally {
       setIsSubmitting(false);
