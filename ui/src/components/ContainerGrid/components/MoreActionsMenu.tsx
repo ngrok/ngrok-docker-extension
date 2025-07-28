@@ -1,8 +1,8 @@
-import { Menu, MenuItem } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
+import { Menu, MenuItem, useTheme } from "@mui/material";
+import EditOutlinedIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import LaunchIcon from "@mui/icons-material/Launch";
-import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlinedIcon from "@mui/icons-material/Delete";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { useNgrokContext } from "../../NgrokContext";
 
@@ -25,6 +25,7 @@ const MoreActionsMenu: React.FC<MoreActionsMenuProps> = ({
   onEditEndpoint,
   onDeleteEndpoint
 }) => {
+  const theme = useTheme();
   const { runningEndpoints } = useNgrokContext();
   const runningEndpoint = runningEndpoints[containerId];
   
@@ -81,32 +82,34 @@ const MoreActionsMenu: React.FC<MoreActionsMenuProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            py: 1
+            py: 1,
+            fontSize: theme.typography.caption.fontSize,
+            color: theme.palette.docker.grey[700]
           }
         }
       }}
     >
       <MenuItem onClick={handleEditEndpoint}>
-        <EditIcon fontSize="small" />
-        Edit Endpoint
+        <EditOutlinedIcon fontSize="small" sx={{ color: theme.palette.docker.grey[500] }} />
+        Edit Endpoints
       </MenuItem>
       
       {isOnline && isHttpEndpoint(runningEndpoint?.url || '') && (
         <MenuItem onClick={handleViewTrafficInspector}>
-          <SearchIcon fontSize="small" />
+          <SearchIcon fontSize="small" sx={{ color: theme.palette.docker.grey[500] }} />
           View in Traffic Inspector
         </MenuItem>
       )}
       
       {isOnline && (
         <MenuItem onClick={handleViewDashboard}>
-          <LaunchIcon fontSize="small" />
+          <LaunchIcon fontSize="small" sx={{ color: theme.palette.docker.grey[500] }} />
           View in ngrok Dashboard
         </MenuItem>
       )}
       
-      <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-        <DeleteIcon fontSize="small" />
+      <MenuItem onClick={handleDelete} >
+        <DeleteOutlinedIcon fontSize="small" sx={{ color: theme.palette.docker.grey[500] }} />
         Delete
       </MenuItem>
     </Menu>

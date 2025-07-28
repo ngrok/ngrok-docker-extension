@@ -55,7 +55,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             sx={{ width: '100%' }}
         >
             {/* Left section: Title and status indicators */}
-            <Box display="flex" alignItems="center" gap={4}>
+            <Box display="flex" alignItems="center" gap={2}>
                 {/* ngrok wordmark */}
                 <Box
                     component="img"
