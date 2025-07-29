@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { SettingsOutlined, ArticleOutlined, CheckCircle, Schedule } from '@mui/icons-material';
+import { SettingsOutlined, MenuBookOutlined, CheckCircle, Schedule } from '@mui/icons-material';
 import { AgentStatus } from '../services/statusService';
 import { createDockerDesktopClient } from '@docker/extension-api-client';
 import { SquareIconButton, StatusChip, IconMedium } from './styled';
@@ -112,7 +112,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 {/* Docs button */}
                 <SquareIconButton onClick={handleDocsClick}>
                     <IconMedium>
-                        <ArticleOutlined />
+                        <MenuBookOutlined />
                     </IconMedium>
                 </SquareIconButton>
 

@@ -1,9 +1,10 @@
 import React from 'react';
 import { Box, Grid } from '@mui/material';
-import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
+import CommitIcon from '@mui/icons-material/Commit';
 import BindingCard from '../BindingCard';
 import { SectionTitle, IconSmall, FlexRow, IconSecondary } from '../styled';
 import { BindingType } from './types';
+
 
 interface BindingSectionProps {
   selectedBinding: BindingType;
@@ -30,7 +31,7 @@ const BindingSection: React.FC<BindingSectionProps> = ({
     {
       type: 'kubernetes' as BindingType,
       title: 'Kubernetes Operator',
-      description: 'Accessible only in clusters where you run the ngrok Kubernetes Operator.',
+      description: 'Accessible in clustersrun the ngrok Kubernetes Operator.',
       learnMoreUrl: 'https://ngrok.com/docs/universal-gateway/kubernetes-endpoints/'
     }
   ];
@@ -40,7 +41,7 @@ const BindingSection: React.FC<BindingSectionProps> = ({
       <FlexRow sx={{ mb: 2 }}>
         <IconSmall sx={{ mr: 1 }}>
           <IconSecondary>
-            <ConnectWithoutContactIcon />
+            <CommitIcon />
           </IconSecondary>
         </IconSmall>
         <SectionTitle>

@@ -90,7 +90,7 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
           variant="body2" 
           sx={{ 
             fontWeight: 'medium',
-            fontSize: '14px'
+            fontSize: '16px'
           }}
         >
           Additional Options
@@ -102,10 +102,8 @@ const AdditionalOptions: React.FC<AdditionalOptionsProps> = ({
           {/* Endpoint Pooling Section */}
           <Box>
             <Typography 
-              variant="body2" 
+              variant="h6" 
               sx={{ 
-                fontWeight: 'medium',
-                fontSize: '14px',
                 mb: 1
               }}
             >

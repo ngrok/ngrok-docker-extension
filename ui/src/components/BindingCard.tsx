@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Radio, Link, useTheme } from '@mui/material';
 import PublicIcon from '@mui/icons-material/Public';
 import LockIcon from '@mui/icons-material/Lock';
+import SettingsSystemDaydreamIcon from '@mui/icons-material/SettingsSystemDaydream';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { SecondaryText } from './styled';
 
@@ -19,15 +20,7 @@ interface BindingCardProps {
 }
 
 // Kubernetes icon component (simplified)
-const KubernetesIcon: React.FC<{ sx?: any }> = ({ sx }) => (
-  <Box 
-    component="svg" 
-    viewBox="0 0 24 24" 
-    sx={{ width: 24, height: 24, fill: 'currentColor', ...sx }}
-  >
-    <path d="M10.204 14.35l.007-.01-.999-2.413a.68.68 0 0 0-.444-.456l-2.582-.71.002-.005-.002-.005 2.582-.71a.68.68 0 0 0 .444-.456l.999-2.413-.007-.01L11.06 6.9l.999 2.413a.68.68 0 0 0 .444.456l2.582.71-.002.005.002.005-2.582.71a.68.68 0 0 0-.444.456l-.999 2.413.007.01L10.204 14.35zM12 2l1.09 3.09L16 4.18l-1.91 2.73L17 8l-2.91 1.09L15 12l-3.09-1.09L12 14l-.91-3.09L8 12l.91-3.09L6 8l2.91-1.09L7 4.18l2.91.91L12 2z"/>
-  </Box>
-);
+
 
 const BindingCard: React.FC<BindingCardProps> = ({
   type,
@@ -48,7 +41,7 @@ const BindingCard: React.FC<BindingCardProps> = ({
       case 'internal':
         return <LockIcon {...iconProps} />;
       case 'kubernetes':
-        return <KubernetesIcon {...iconProps} />;
+        return <SettingsSystemDaydreamIcon {...iconProps} />;
       default:
         return <PublicIcon {...iconProps} />;
     }
