@@ -83,8 +83,8 @@ export default function AuthSetup() {
 
   return (
     <Container maxWidth="sm">
-      <Grid2 container direction="column" spacing={4} sx={{ py: 8 }}>
-        <Grid2 sx={{ textAlign: 'center' }}>
+      <Grid2 container direction="column" spacing={5} sx={{ py: 8 }}>
+        <Grid2 sx={{ textAlign: 'center'}}>
           <FlexRowMb2 sx={{ justifyContent: 'center' }}>
             <img 
               src={ngrokLogoSvg} 
@@ -98,7 +98,7 @@ export default function AuthSetup() {
         </Grid2>
 
         <Grid2>
-          <Stack spacing={3} alignItems="center">
+          <Stack spacing={4} alignItems="center">
             <Button
               variant="outlined"
               size="large"
@@ -108,8 +108,9 @@ export default function AuthSetup() {
               Get my authtoken on ngrok dashboard
             </Button>
 
-            <FlexRowStart sx={{ gap: 2, width: '100%' }}>
+            <FlexRowStart sx={{ gap: 1, width: '100%'}}>
               <TextField
+                sx={{ margin:0, flexDirection: 'row', height:42,}}
                 fullWidth
                 type={showPassword ? "text" : "password"}
                 placeholder="Paste your authtoken here"
@@ -139,18 +140,13 @@ export default function AuthSetup() {
                           tabIndex={-1}
                           disableFocusRipple
                           disableRipple
+                          sx={{ marginRight:0}}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
                       )}
                     </InputAdornment>
                   ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    fontFamily: 'Roboto Mono, monospace',
-                    fontSize: 14,
-                  },
                 }}
               />
 

@@ -12,7 +12,7 @@ import {
 import { SectionTitleMb2, SectionBoxMb3, LinkButton, FlexRowGap05, SettingsDialogContentPanel, SettingsDialogActionsPanel, IconFont16 } from './styled';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { Palette, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import Button from "@mui/material/Button";
 import React, { useState } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";

@@ -1,6 +1,6 @@
 import { Typography, Switch, useTheme } from "@mui/material";
 import { useNgrokContext } from "../../NgrokContext";
-import { FlexRow, FlexRowGap1, FlexRowGap2 } from "../../styled";
+import { FlexRow, FlexRowGap2 } from "../../styled";
 
 interface OnlineEndpointsToggleProps {
   hasContainersWithPorts?: boolean;
