@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, TextField, Typography, useTheme } from '@mui/material';
 import PolicyIcon from '@mui/icons-material/Policy';
-import { SectionTitle, LinkButton } from '../styled';
+import { SectionTitle, LinkButton, IconSmall, IconSecondary, FlexRow } from '../styled';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 
 const ddClient = createDockerDesktopClient();
@@ -26,12 +26,16 @@ const TrafficPolicySection: React.FC<TrafficPolicySectionProps> = ({
   return (
     <Box sx={{ mb: showTitle ? 3 : 0 }}>
       {showTitle && (
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <PolicyIcon sx={{ width: 20, height: 20, color: theme.palette.text.secondary, mr: 1 }} />
+        <FlexRow sx={{ mb: 2 }}>
+          <IconSmall sx={{ mr: 1 }}>
+            <IconSecondary>
+              <PolicyIcon />
+            </IconSecondary>
+          </IconSmall>
           <SectionTitle>
             Traffic Policy
           </SectionTitle>
-        </Box>
+        </FlexRow>
       )}
       
       <Typography 

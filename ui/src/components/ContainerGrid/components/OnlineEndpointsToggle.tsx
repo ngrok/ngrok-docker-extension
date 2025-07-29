@@ -1,5 +1,6 @@
-import { Box, Typography, Switch, useTheme } from "@mui/material";
+import { Typography, Switch, useTheme } from "@mui/material";
 import { useNgrokContext } from "../../NgrokContext";
+import { FlexRowGap1, FlexRowGap2 } from "../../styled";
 
 interface OnlineEndpointsToggleProps {
   hasContainersWithPorts?: boolean;
@@ -15,12 +16,12 @@ const OnlineEndpointsToggle: React.FC<OnlineEndpointsToggleProps> = ({
   const shouldHideSwitch = !hasContainersWithPorts && !onlineEndpointsOnly;
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+    <FlexRowGap2 sx={{ mb: 2 }}>
       <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '16px' }}>
         Endpoints
       </Typography>
       {!shouldHideSwitch && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <FlexRowGap1>
           <Switch 
             checked={onlineEndpointsOnly}
             onChange={(e) => setOnlineEndpointsOnly(e.target.checked)}
@@ -36,9 +37,9 @@ const OnlineEndpointsToggle: React.FC<OnlineEndpointsToggleProps> = ({
           >
             Show only online endpoints
           </Typography>
-        </Box>
+        </FlexRowGap1>
       )}
-    </Box>
+    </FlexRowGap2>
   );
 };
 

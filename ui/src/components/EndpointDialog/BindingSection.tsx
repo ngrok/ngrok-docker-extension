@@ -1,8 +1,8 @@
 import React from 'react';
-import { Box, Grid, useTheme } from '@mui/material';
+import { Box, Grid } from '@mui/material';
 import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
 import BindingCard from '../BindingCard';
-import { SectionTitle } from '../styled';
+import { SectionTitle, IconSmall, FlexRow, IconSecondary } from '../styled';
 import { BindingType } from './types';
 
 interface BindingSectionProps {
@@ -14,8 +14,6 @@ const BindingSection: React.FC<BindingSectionProps> = ({
   selectedBinding,
   onBindingChange
 }) => {
-  const theme = useTheme();
-
   const bindingOptions = [
     {
       type: 'public' as BindingType,
@@ -39,13 +37,17 @@ const BindingSection: React.FC<BindingSectionProps> = ({
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <ConnectWithoutContactIcon sx={{ width: 20, height: 20, color: theme.palette.text.secondary, mr: 1 }} />
+      <FlexRow sx={{ mb: 2 }}>
+        <IconSmall sx={{ mr: 1 }}>
+          <IconSecondary>
+            <ConnectWithoutContactIcon />
+          </IconSecondary>
+        </IconSmall>
         <SectionTitle>
           Binding
         </SectionTitle>
-      </Box>
-      
+      </FlexRow>
+
       <Grid container spacing={1}>
         {bindingOptions.map((option) => (
           <Grid item xs={4} key={option.type}>

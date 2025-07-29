@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogContent,
-  DialogActions,
   Button,
   Typography,
   Box,
@@ -13,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { EndpointForm, ContainerInfo } from './EndpointDialog';
 import { StepOneConfig, StepTwoConfig, ContainerInfo as ContainerInfoType, EndpointConfiguration } from './EndpointDialog/types';
 import { useNgrokContext } from './NgrokContext';
+import { DialogContentPanel, DialogActionsPanel } from './styled';
 
 interface EditEndpointDialogProps {
   open: boolean;
@@ -151,7 +150,7 @@ const EditEndpointDialog: React.FC<EditEndpointDialogProps> = ({
         </IconButton>
       </Box>
 
-      <DialogContent sx={{ p: 2, pt: 2 }}>
+      <DialogContentPanel>
         <EndpointForm
           containerInfo={containerInfo}
           stepOneConfig={stepOneConfig}
@@ -161,9 +160,9 @@ const EditEndpointDialog: React.FC<EditEndpointDialogProps> = ({
           showTrafficPolicy={true}
           expandedAdditionalOptions={true}
         />
-      </DialogContent>
+      </DialogContentPanel>
 
-      <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+      <DialogActionsPanel>
         <Button 
           onClick={onClose}
           variant="outlined"
@@ -179,7 +178,7 @@ const EditEndpointDialog: React.FC<EditEndpointDialogProps> = ({
         >
           {getUpdateButtonText()}
         </Button>
-      </DialogActions>
+      </DialogActionsPanel>
     </Dialog>
   );
 };

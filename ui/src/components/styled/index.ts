@@ -3,3 +3,4 @@ export * from './StyledIconButton';
 export * from './StyledPanels';
 export * from './StyledTypography';
 export * from './StyledButtons';
+export * from './StyledIcons';
