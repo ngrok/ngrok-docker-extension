@@ -25,7 +25,7 @@ const TrafficPolicySection: React.FC<TrafficPolicySectionProps> = ({
   };
 
   return (
-    <Box sx={{ mb: showTitle ? 3 : 0 }}>
+    <Box sx={{ mb: showTitle ? 1 : 1 }}>
       {showTitle && (
         <FlexRow sx={{ mb: 2 }}>
           <IconSmall sx={{ mr: 1 }}>

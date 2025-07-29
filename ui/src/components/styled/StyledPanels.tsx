@@ -73,8 +73,12 @@ export const FlexRowBetween = styled(Box)({
 
 // Dialog styled components
 export const DialogContentPanel = styled(DialogContent)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[100],
   padding: theme.spacing(2),
-  paddingTop: theme.spacing(2)
+  paddingTop: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  borderBottom: 'solid 1px',
+  borderBottomColor: theme.palette.grey[200], 
 }));
 
 export const DialogActionsPanel = styled(DialogActions)(({ theme }) => ({
