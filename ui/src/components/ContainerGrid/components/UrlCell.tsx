@@ -3,7 +3,6 @@ import { Box, IconButton } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useCallback } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { Visibility } from "@mui/icons-material";
 
 const ddClient = createDockerDesktopClient();
 
