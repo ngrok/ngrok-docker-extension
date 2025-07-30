@@ -31,7 +31,7 @@ const BindingSection: React.FC<BindingSectionProps> = ({
     {
       type: 'kubernetes' as BindingType,
       title: 'Kubernetes Operator',
-      description: 'Accessible in clustersrun the ngrok Kubernetes Operator.',
+      description: 'Accessible in clusters running the ngrok Kubernetes Operator.',
       learnMoreUrl: 'https://ngrok.com/docs/universal-gateway/kubernetes-endpoints/'
     }
   ];
