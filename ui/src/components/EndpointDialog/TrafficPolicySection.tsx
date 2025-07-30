@@ -63,7 +63,7 @@ const TrafficPolicySection: React.FC<TrafficPolicySectionProps> = ({
           username:example-password`}
         fullWidth
         multiline
-        rows={10}
+        rows={15}
         sx={{
           mb: 1,
           '& .MuiOutlinedInput-root': {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Radio, Link, useTheme, SvgIcon } from '@mui/material';
+import { Box, Typography, Radio, Link, useTheme, SvgIcon, alpha, lighten, darken} from '@mui/material';
 import PublicIcon from '@mui/icons-material/Public';
 import LockIcon from '@mui/icons-material/Lock';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -59,16 +59,24 @@ const BindingCard: React.FC<BindingCardProps> = ({
     <Box
       onClick={() => onSelect(type)}
       sx={{
-        border: selected ? `2px solid ${theme.palette.primary.main}` : `1px solid ${theme.palette.divider}`,
+        outline: selected ? `3px solid ${theme.palette.primary.main}` : `1px solid ${theme.palette.divider}`,
         borderRadius: 1,
-        backgroundColor: selected ? `${theme.palette.docker.blue[100]}`: `${theme.palette.background.paper}`,
+        backgroundColor: selected 
+          ? (theme.palette.mode === 'dark' 
+              ? `${darken(alpha(theme.palette.primary.main, 1), 0.7)}` 
+              : `${lighten(alpha(theme.palette.primary.main, 1), 0.90)}`) 
+          : (theme.palette.mode === 'dark' 
+              ? `${lighten(alpha(theme.palette.background.paper, 1), 0.05)}` 
+              : `${theme.palette.background.paper}`),
         p: 2,
         cursor: 'pointer',
         transition: 'all 0.2s ease',
         '&:hover': {
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           borderColor: theme.palette.primary.main,
-          backgroundColor: theme.palette.docker.blue[100],
+          backgroundColor: (theme.palette.mode === 'dark' 
+              ? `${darken(alpha(theme.palette.primary.main, 1), 0.7)}` 
+              : `${lighten(alpha(theme.palette.primary.main, 1), 0.90)}`), 
         },
       }}
     >

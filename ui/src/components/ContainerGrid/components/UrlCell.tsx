@@ -3,6 +3,7 @@ import { Box, IconButton } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useCallback } from "react";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
+import { Visibility } from "@mui/icons-material";
 
 const ddClient = createDockerDesktopClient();
 
@@ -75,7 +76,7 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
             flexShrink: 0,
           }}
         >
-          <ContentCopyIcon sx={{fontSize: "xs"}} />
+          <ContentCopyIcon sx={{fontSize: '16px'}} />
         </IconButton>
       </Box>
     </Box>

@@ -49,7 +49,7 @@ const BindingSection: React.FC<BindingSectionProps> = ({
         </SectionTitle>
       </FlexRow>
 
-      <Grid container spacing={1}>
+      <Grid container spacing={2}>
         {bindingOptions.map((option) => (
           <Grid item xs={4} key={option.type}>
             <BindingCard
