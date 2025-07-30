@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { SettingsOutlined, ArticleOutlined, CheckCircle, Schedule } from '@mui/icons-material';
+import { SettingsOutlined, MenuBookOutlined, CheckCircle, Schedule } from '@mui/icons-material';
 import { AgentStatus } from '../services/statusService';
 import { createDockerDesktopClient } from '@docker/extension-api-client';
 import { SquareIconButton, StatusChip, IconMedium } from './styled';
@@ -55,7 +55,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             sx={{ width: '100%' }}
         >
             {/* Left section: Title and status indicators */}
-            <Box display="flex" alignItems="center" gap={4}>
+            <Box display="flex" alignItems="center" gap={2}>
                 {/* ngrok wordmark */}
                 <Box
                     component="img"
@@ -112,7 +112,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 {/* Docs button */}
                 <SquareIconButton onClick={handleDocsClick}>
                     <IconMedium>
-                        <ArticleOutlined />
+                        <MenuBookOutlined />
                     </IconMedium>
                 </SquareIconButton>
 

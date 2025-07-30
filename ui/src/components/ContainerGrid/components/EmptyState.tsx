@@ -1,7 +1,7 @@
-import { Box, Typography, Button } from "@mui/material";
-import { AllInbox as ContainerIcon } from "@mui/icons-material";
+import { Box, Typography, Button, useTheme } from "@mui/material";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 import { EmptyStatePanel } from "../../styled";
+import ContainerIcon from "../../../assets/container.svg";
 
 const ddClient = createDockerDesktopClient();
 
@@ -11,6 +11,7 @@ interface EmptyStateProps {
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFilter }) => {
+  const theme = useTheme();
   const handleViewContainers = async () => {
     // Navigate to Docker Desktop containers page
     await ddClient.desktopUI.navigate.viewContainers();
@@ -29,12 +30,18 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isFiltered = false, onRemoveFil
           alignItems: 'center',
           justifyContent: 'center',
           mb: 3
+          
         }}
       >
-        <ContainerIcon
-          sx={{
-            fontSize: 32,
-            color: 'background.paper'
+        <img
+          src={ContainerIcon}
+          alt="Container"
+          style={{
+            width: 32,
+            height: 32,
+            filter: theme.palette.mode === 'dark' 
+              ? 'brightness(0)' // Dark for dark mode
+              : 'brightness(0) invert(1)' // Light for light mode
           }}
         />
       </Box>

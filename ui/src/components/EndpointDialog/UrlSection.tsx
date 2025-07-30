@@ -51,7 +51,7 @@ const UrlSection: React.FC<UrlSectionProps> = ({
   };
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: 1 }}>
       <FlexRow sx={{ mb: 2 }}>
         <IconSmall sx={{ mr: 1 }}>
           <IconSecondary>

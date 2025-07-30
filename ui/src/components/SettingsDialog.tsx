@@ -167,10 +167,6 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                 '& .MuiOutlinedInput-root': {
                   fontFamily: 'Roboto Mono, monospace',
                   fontSize: 14,
-                  '& fieldset': {
-                    borderColor: '#C9C9C9',
-                    borderWidth: '1.5px',
-                  },
                 },
                 mb: 2
               }}
@@ -222,17 +218,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
               onChange={handleConnectURLChange}
               value={tempConnectURL}
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  fontFamily: 'Roboto',
-                  fontSize: '14px',
-                  '& fieldset': {
-                    borderColor: '#E1E2E6',
-                    borderWidth: '1.5px',
-                  },
-                  '& input::placeholder': {
-                    color: '#677285',
-                  },
-                },
+                
                 mb: 2
               }}
             />
@@ -303,9 +289,7 @@ export default function SettingsDialog({ open: externalOpen, onClose }: Settings
                   sx={{ 
                     fontFamily: 'Roboto',
                     fontSize: '14px',
-                    color: tempAutoDisconnect 
-                      ? (theme.palette.mode === 'dark' ? '#ffffff' : '#116ED0')
-                      : '#677285'
+                    color: theme.palette.text.primary
                   }}
                 >
                   Disconnect from ngrok service when all endpoints are offline

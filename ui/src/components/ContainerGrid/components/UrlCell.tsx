@@ -44,7 +44,7 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
         <Box
           component="button"
           sx={{
-            fontSize: 14,
+            fontSize: 13,
             color: isOnline ? 'primary.main' : 'text.primary',
             fontWeight: isOnline ? 500 : 400,
             textDecoration: isOnline ? 'underline' : 'none',
@@ -75,7 +75,7 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
             flexShrink: 0,
           }}
         >
-          <ContentCopyIcon fontSize="small" />
+          <ContentCopyIcon sx={{fontSize: '16px'}} />
         </IconButton>
       </Box>
     </Box>

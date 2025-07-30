@@ -1,6 +1,6 @@
 import { Typography, Switch, useTheme } from "@mui/material";
 import { useNgrokContext } from "../../NgrokContext";
-import { FlexRowGap1, FlexRowGap2 } from "../../styled";
+import { FlexRow, FlexRowGap2 } from "../../styled";
 
 interface OnlineEndpointsToggleProps {
   hasContainersWithPorts?: boolean;
@@ -21,8 +21,11 @@ const OnlineEndpointsToggle: React.FC<OnlineEndpointsToggleProps> = ({
         Endpoints
       </Typography>
       {!shouldHideSwitch && (
-        <FlexRowGap1>
+        <FlexRow>
           <Switch 
+          sx={{
+            marginRight: '4px'
+          }}
             checked={onlineEndpointsOnly}
             onChange={(e) => setOnlineEndpointsOnly(e.target.checked)}
             size="small"
@@ -37,7 +40,7 @@ const OnlineEndpointsToggle: React.FC<OnlineEndpointsToggleProps> = ({
           >
             Show only online endpoints
           </Typography>
-        </FlexRowGap1>
+        </FlexRow>
       )}
     </FlexRowGap2>
   );

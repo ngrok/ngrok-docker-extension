@@ -1,8 +1,9 @@
 import React from 'react';
 import { Box, TextField, Typography, useTheme } from '@mui/material';
-import PolicyIcon from '@mui/icons-material/Policy';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import { SectionTitle, LinkButton, IconSmall, IconSecondary, FlexRow } from '../styled';
 import { createDockerDesktopClient } from "@docker/extension-api-client";
+
 
 const ddClient = createDockerDesktopClient();
 
@@ -24,12 +25,12 @@ const TrafficPolicySection: React.FC<TrafficPolicySectionProps> = ({
   };
 
   return (
-    <Box sx={{ mb: showTitle ? 3 : 0 }}>
+    <Box sx={{ mb: showTitle ? 1 : 1 }}>
       {showTitle && (
         <FlexRow sx={{ mb: 2 }}>
           <IconSmall sx={{ mr: 1 }}>
             <IconSecondary>
-              <PolicyIcon />
+              <ManageSearchIcon />
             </IconSecondary>
           </IconSmall>
           <SectionTitle>
@@ -42,7 +43,6 @@ const TrafficPolicySection: React.FC<TrafficPolicySectionProps> = ({
         variant="body2" 
         sx={{ 
           color: theme.palette.text.secondary,
-          fontSize: '14px',
           lineHeight: 1.4,
           mb: 1
         }}
@@ -63,7 +63,7 @@ const TrafficPolicySection: React.FC<TrafficPolicySectionProps> = ({
           username:example-password`}
         fullWidth
         multiline
-        rows={16}
+        rows={15}
         sx={{
           mb: 1,
           '& .MuiOutlinedInput-root': {
@@ -82,8 +82,7 @@ const TrafficPolicySection: React.FC<TrafficPolicySectionProps> = ({
             }
           },
           '& .MuiOutlinedInput-input': {
-            padding: '6px 8px',
-            fontSize: 14,
+            fontSize: 12,
             fontFamily: 'Roboto Mono, monospace',
           }
         }}

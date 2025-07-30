@@ -116,8 +116,8 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
       transitionDuration={0}
       PaperProps={{
         sx: {
-          width: 674,
-          maxWidth: '90vw',
+          width: 780,
+          maxWidth: '780',
           borderRadius: 2,
           boxShadow: '0px 2px 4px 4px rgba(0,0,0,0.15)',
           border: `1px solid ${theme.palette.divider}`

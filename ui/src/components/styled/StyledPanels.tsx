@@ -1,4 +1,4 @@
-import { styled } from '@mui/material/styles';
+import { styled, darken, alpha, lighten } from '@mui/material/styles';
 import { Box, DialogContent, DialogActions, DialogTitle } from '@mui/material';
 
 export const CardPanel = styled(Box)(({ theme }) => ({
@@ -73,8 +73,15 @@ export const FlexRowBetween = styled(Box)({
 
 // Dialog styled components
 export const DialogContentPanel = styled(DialogContent)(({ theme }) => ({
+  backgroundColor: 
+    (theme.palette.mode === 'dark' 
+      ? `${lighten(alpha(theme.palette.background.paper, 1), 0.05)}` 
+      : `${darken(alpha(theme.palette.background.paper, 1), 0.05)}`),
   padding: theme.spacing(2),
-  paddingTop: theme.spacing(2)
+  paddingTop: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  borderBottom: 'solid 1px',
+  borderBottomColor: theme.palette.divider, 
 }));
 
 export const DialogActionsPanel = styled(DialogActions)(({ theme }) => ({

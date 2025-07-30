@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { Box, Typography,} from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 import { FlexRow } from './styled';
 
 interface ProgressStepperProps {
@@ -10,30 +10,44 @@ interface ProgressStepperProps {
 const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
   return (
     <Box sx={{ 
+      width: '100%',
       display: 'flex', 
+      justifyContent: 'center',
       alignItems: 'center', 
       mb: 3,
+      mt: 3,
       px: 2 
     }}>
       {/* Step 1 */}
       <FlexRow>
         {currentStep > 1 ? (
-          <CheckCircleIcon 
-            sx={{ 
-              color: '#4caf50', 
-              width: 24, 
-              height: 24,
+          <Box
+            sx={{
+              height: '24px',
+              width: '24px',
+              borderRadius: '50%',
+              backgroundColor: 'status.online',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               mr: 1 
-            }} 
-          />
+            }}>
+            <CheckIcon 
+              sx={{ 
+                color: 'background.paper', 
+                width: 20, 
+                height: 20,
+              }} 
+            />
+          </Box>
         ) : (
           <Box
             sx={{
               width: 24,
               height: 24,
               borderRadius: '50%',
-              backgroundColor: currentStep === 1 ? '#116ed0' : '#e0e0e0',
-              color: 'white',
+              backgroundColor: currentStep === 1 ? 'primary.main' : '#e0e0e0',
+              color: 'background.paper',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -48,7 +62,7 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
         <Typography 
           variant="body2" 
           sx={{ 
-            color: currentStep > 1 ? '#677285' : '#000000',
+            color: currentStep > 1 ? 'text.secondary' : 'text.primary',
             fontWeight: currentStep === 1 ? 'medium' : 'regular'
           }}
         >
@@ -59,9 +73,9 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
       {/* Connecting Line */}
       <Box
         sx={{
-          width: 40,
+          width: 130,
           height: 2,
-          backgroundColor: currentStep > 1 ? '#4caf50' : '#e0e0e0',
+          backgroundColor: currentStep === 2 ? 'divider' : 'divider',
           mx: 2
         }}
       />
@@ -73,8 +87,8 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
             width: 24,
             height: 24,
             borderRadius: '50%',
-            backgroundColor: currentStep === 2 ? '#116ed0' : '#e0e0e0',
-            color: currentStep === 2 ? 'white' : '#677285',
+            backgroundColor: currentStep === 2 ? 'primary.main' : 'text.secondary',
+            color: currentStep === 2 ? 'background.paper' : 'background.paper',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -88,7 +102,7 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
         <Typography 
           variant="body2" 
           sx={{ 
-            color: currentStep === 2 ? '#000000' : '#677285',
+            color: currentStep === 2 ? 'text.primary' : 'text.secondary',
             fontWeight: currentStep === 2 ? 'medium' : 'regular'
           }}
         >
