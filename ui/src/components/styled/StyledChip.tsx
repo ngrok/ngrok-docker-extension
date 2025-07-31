@@ -1,7 +1,7 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import { Box, Typography, Switch, Tooltip } from '@mui/material';
-import { CheckCircle, PowerSettingsNew, PowerOff } from '@mui/icons-material';
+import { CheckCircle, PowerSettingsNew, PowerOff, Pending, ErrorOutline } from '@mui/icons-material';
 
 interface StatusChipProps {
     status: 'online' | 'offline' | 'connecting' | 'connectingError' | 'unknown';
@@ -53,7 +53,7 @@ const getSecondaryText = (status: string, latency?: number) => {
         case 'connecting':
             return 'Connecting...';
         case 'connectingError':
-            return 'Connection Error. Try Again...';
+            return 'Connection Error';
         case 'unknown':
         default:
             return 'Unknown';
@@ -153,7 +153,12 @@ export const StatusChip: React.FC<StatusChipProps> = ({
             {...otherProps}
         >
             <IconContainer status={status}>
-                {status === 'online' ? <PowerSettingsNew /> : status === 'offline' ? <PowerOff /> : <CheckCircle />}
+                {status === 'online' ? <PowerSettingsNew /> : 
+                 status === 'offline' ? <PowerOff /> :
+                 status === 'connectingError' && expectedState === 'online' ? <ErrorOutline /> :
+                 (status === 'connecting' || status === 'connectingError') ? 
+                 <Pending /> : 
+                 <CheckCircle />}
             </IconContainer>
             <ContentContainer>
                 <PrimaryText>ngrok agent</PrimaryText>
@@ -164,15 +169,20 @@ export const StatusChip: React.FC<StatusChipProps> = ({
                     checked={expectedState === 'online'}
                     onChange={(e) => onToggleAgentState(e.target.checked ? 'online' : 'offline')}
                     size="small"
-                    color={expectedState === 'online' ? 'success' : 'default'}
-                    sx={(theme) => ({
+                    sx={{
                         '& .MuiSwitch-track': {
-                            backgroundColor: expectedState === 'online' ? theme.palette.success.main : undefined,
+                            backgroundColor: 
+                                expectedState === 'online' && status === 'online' ? '#4caf50 !important' :
+                                expectedState === 'online' && (status === 'connecting' || status === 'connectingError') ? 'rgba(0,0,0,0.5) !important' :
+                                expectedState === 'online' ? '#8BC7F5 !important' : 'rgba(0,0,0,0.5) !important',
                         },
                         '& .MuiSwitch-thumb': {
-                            backgroundColor: expectedState === 'online' ? theme.palette.success.main : '#ffffff',
+                            backgroundColor: 
+                                expectedState === 'online' && status === 'online' ? '#2e7d32 !important' :
+                                expectedState === 'online' && (status === 'connecting' || status === 'connectingError') ? '#ffffff !important' :
+                                expectedState === 'online' ? '#116ED0 !important' : '#ffffff !important',
                         }
-                    })}
+                    }}
                 />
             </Tooltip>
         </StyledStatusContainer>
