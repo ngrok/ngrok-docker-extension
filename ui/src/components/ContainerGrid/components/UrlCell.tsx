@@ -12,16 +12,19 @@ interface UrlCellProps {
 }
 
 const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
+  const isAssignedWhenStarted = url === '<assigned-when-started>';
+  
   const handleCopy = useCallback(() => {
+    if (isAssignedWhenStarted) return; // Don't copy placeholder text
     navigator.clipboard.writeText(url);
     ddClient.desktopUI.toast.success('URL copied to clipboard');
-  }, [url]);
+  }, [url, isAssignedWhenStarted]);
 
   const handleUrlClick = useCallback(() => {
-    if (isOnline && url) {
+    if (isOnline && url && !isAssignedWhenStarted) {
       ddClient.host.openExternal(url);
     }
-  }, [url, isOnline]);
+  }, [url, isOnline, isAssignedWhenStarted]);
 
   if (!url) {
     return null;
@@ -45,10 +48,11 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
           component="button"
           sx={{
             fontSize: 13,
-            color: isOnline ? 'primary.main' : 'text.primary',
+            color: isAssignedWhenStarted ? 'text.disabled' : (isOnline ? 'primary.main' : 'text.primary'),
             fontWeight: isOnline ? 500 : 400,
-            textDecoration: isOnline ? 'underline' : 'none',
-            cursor: isOnline ? 'pointer' : 'default',
+            fontStyle: isAssignedWhenStarted ? 'italic' : 'normal',
+            textDecoration: isOnline && !isAssignedWhenStarted ? 'underline' : 'none',
+            cursor: (isOnline && !isAssignedWhenStarted) ? 'pointer' : 'default',
             border: 'none',
             background: 'none',
             padding: 0,
@@ -57,7 +61,7 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             minWidth: 0, // Allow text to shrink when needed
-            '&:hover': isOnline ? {
+            '&:hover': (isOnline && !isAssignedWhenStarted) ? {
               textDecoration: 'underline'
             } : {}
           }}
@@ -65,22 +69,24 @@ const UrlCell: React.FC<UrlCellProps> = ({ url, isOnline }) => {
         >
           {url}
         </Box>
-        <IconButton 
-          size="small" 
-          onClick={handleCopy}
-          sx={{
-            opacity: 0,
-            width: 24,
-            height: 24,
-            flexShrink: 0,
-            transition: 'opacity 0.2s ease',
-            '.MuiDataGrid-row:hover &': {
-              opacity: 1,
-            }
-          }}
-        >
-          <ContentCopyIcon sx={{fontSize: '16px'}} />
-        </IconButton>
+        {!isAssignedWhenStarted && (
+          <IconButton 
+            size="small" 
+            onClick={handleCopy}
+            sx={{
+              opacity: 0,
+              width: 24,
+              height: 24,
+              flexShrink: 0,
+              transition: 'opacity 0.2s ease',
+              '.MuiDataGrid-row:hover &': {
+                opacity: 1,
+              }
+            }}
+          >
+            <ContentCopyIcon sx={{fontSize: '16px'}} />
+          </IconButton>
+        )}
       </Box>
     </Box>
   );

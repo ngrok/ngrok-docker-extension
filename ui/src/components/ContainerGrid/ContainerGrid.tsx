@@ -221,6 +221,20 @@ const ContainerGrid: React.FC = () => {
             ? `${container.Port.PublicPort}:${container.Port.PrivatePort}`
             : container.Port.PublicPort.toString();
 
+        // Determine URL display value
+        let urlDisplay = '';
+        if (isEndpointOnline) {
+            urlDisplay = endpoint?.status.url || '';
+        } else if (endpoint) {
+            // Endpoint is configured but not online
+            const configuredUrl = endpoint.url || '';
+            if (configuredUrl.trim() === '') {
+                urlDisplay = '<assigned-when-started>';
+            } else {
+                urlDisplay = configuredUrl;
+            }
+        }
+
         return {
             id: container.id,
             containerId: container.ContainerId,
@@ -228,7 +242,7 @@ const ContainerGrid: React.FC = () => {
             image: container.Image,
             imageId: container.ImageId,
             port: portDisplay,
-            url: isEndpointOnline ? (endpoint?.status.url || '') : (endpoint?.url || ''),
+            url: urlDisplay,
             trafficPolicy: endpoint?.trafficPolicy ? 'YES' : 'NO',
             lastStarted: endpoint?.lastStarted || '',
             isOnline: isEndpointOnline,
