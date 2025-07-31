@@ -26,6 +26,7 @@ export interface DockerContainer {
     Image: string;
     ImageID: string;
     Ports: DockerPort[];
+    State: string;
 }
 
 export interface DockerPort {
@@ -283,9 +284,16 @@ export function NgrokContextProvider({
             const newContainers: Record<string, NgrokContainer> = {};
             for (const container of loaded) {
                 const publicPorts = container.Ports ? container.Ports.filter(x => x.PublicPort) : [];
+                const isRunning = container.State === 'running';
 
                 for (const port of publicPorts) {
                     const container_id = `${container.Id}:${port.PublicPort}`;
+                    
+                    // Only include containers with published ports if they're also running
+                    if (!isRunning) {
+                        continue;
+                    }
+                    
                     const imageId = (container as any).ImageID;
                     if (!containers[container_id]) {
                         newContainers[container_id] = {
