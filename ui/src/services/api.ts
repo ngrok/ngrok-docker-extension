@@ -10,31 +10,41 @@ import {
 
 const ddClient = createDockerDesktopClient();
 
+// Helper function to handle both old and new Docker Desktop API response formats
+function extractData<T>(result: unknown): T {
+  // Check if result has a .data property (new API format)
+  if (result && typeof result === 'object' && 'data' in result) {
+    return (result as { data: T }).data;
+  }
+  // Otherwise return the result directly (old API format)
+  return result as T;
+}
+
 // Agent API
 export const getAgent = async (): Promise<AgentResponse> => {
   const result = await ddClient.extension.vm!.service!.get('/agent');
-  return result as AgentResponse;
+  return extractData<AgentResponse>(result);
 };
 
 export const putAgent = async (config: AgentConfig): Promise<AgentResponse> => {
   const result = await ddClient.extension.vm!.service!.put('/agent', config);
-  return result as AgentResponse;
+  return extractData<AgentResponse>(result);
 };
 
 // Endpoints API
 export const listEndpoints = async (): Promise<{ endpoints: EndpointResponse[] }> => {
   const result = await ddClient.extension.vm!.service!.get('/endpoints');
-  return result as { endpoints: EndpointResponse[] };
+  return extractData<{ endpoints: EndpointResponse[] }>(result);
 };
 
 export const createEndpoint = async (config: EndpointConfig): Promise<EndpointResponse> => {
   const result = await ddClient.extension.vm!.service!.post('/endpoints', config);
-  return result as EndpointResponse;
+  return extractData<EndpointResponse>(result);
 };
 
 export const updateEndpoint = async (id: string, config: EndpointConfig): Promise<EndpointResponse> => {
   const result = await ddClient.extension.vm!.service!.put(`/endpoints/${id}`, config);
-  return result as EndpointResponse;
+  return extractData<EndpointResponse>(result);
 };
 
 export const deleteEndpoint = async (id: string): Promise<void> => {
@@ -44,5 +54,5 @@ export const deleteEndpoint = async (id: string): Promise<void> => {
 // Utility API (unchanged)
 export const detectProtocol = async (request: DetectProtocolRequest): Promise<DetectProtocolResponse> => {
   const result = await ddClient.extension.vm!.service!.post('/detect_protocol', request);
-  return result as DetectProtocolResponse;
+  return extractData<DetectProtocolResponse>(result);
 };
