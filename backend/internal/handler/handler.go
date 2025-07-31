@@ -2,48 +2,47 @@ package handler
 
 import (
 	"log/slog"
-	"slices"
-	"time"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ngrok/ngrok-docker-extension/internal/endpoint"
+	"github.com/ngrok/ngrok-docker-extension/internal/manager"
+	"github.com/ngrok/ngrok-docker-extension/internal/store"
 )
 
 type Handler struct {
-	logger          *slog.Logger
-	endpointManager endpoint.Manager
+	logger  *slog.Logger
+	Manager manager.Manager
+	Store   store.Store
 }
 
-func New(logger *slog.Logger, endpointManager endpoint.Manager, router *echo.Echo) *Handler {
+func New(e *echo.Echo, mgr manager.Manager, store store.Store, logger *slog.Logger) *Handler {
 	h := &Handler{
-		logger:          logger,
-		endpointManager: endpointManager,
+		logger:  logger,
+		Manager: mgr,
+		Store:   store,
 	}
-	
-	// Setup routes
-	router.POST("/configure_agent", h.ConfigureAgent)
-	router.GET("/list_endpoints", h.ListEndpoints)
-	router.POST("/create_endpoint", h.CreateEndpoint)
-	router.POST("/remove_endpoint", h.RemoveEndpoint)
-	router.GET("/agent_status", h.GetAgentStatus)
-	router.POST("/detect_protocol", h.DetectProtocol)
-	
+
+	// State management routes
+	e.PUT("/agent", h.PutAgent)
+	e.GET("/agent", h.GetAgent)
+	e.POST("/endpoints", h.PostEndpoints)
+	e.GET("/endpoints", h.GetEndpoints)
+	e.GET("/endpoints/:id", h.GetEndpointByID)
+	e.PUT("/endpoints/:id", h.PutEndpointByID)
+	e.DELETE("/endpoints/:id", h.DeleteEndpointByID)
+
+	// Utility routes
+	e.POST("/detect_protocol", h.DetectProtocol)
+
 	return h
 }
 
-// Helper function to convert endpoint manager endpoints to our response format
-func convertEndpointsToSlice(endpointsMap map[string]*endpoint.Endpoint) []Endpoint {
-	return slices.Collect(func(yield func(Endpoint) bool) {
-		for _, ep := range endpointsMap {
-			if !yield(Endpoint{
-				ID:          ep.Forwarder.ID(),
-				URL:         ep.Forwarder.URL().String(),
-				ContainerID: ep.ContainerID,
-				TargetPort:  ep.TargetPort,
-				LastStarted: ep.StartedAt.Format(time.RFC3339),
-			}) {
-				return
-			}
-		}
-	})
+// ErrorResponse (for HTTP error cases)
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+// internalServerError returns a 500 internal server error response
+func (h *Handler) internalServerError(c echo.Context, message string) error {
+	return c.JSON(http.StatusInternalServerError, map[string]string{"error": message})
 }

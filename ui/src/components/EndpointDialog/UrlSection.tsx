@@ -13,6 +13,11 @@ interface UrlSectionProps {
   url: string;
   onUrlChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   showProtocolWarning: boolean;
+  warningData: {
+    severity: 'error' | 'warning' | 'info';
+    primary: string;
+    secondary: string;
+  } | null;
   detectedProtocol: string;
   enteredProtocol: string;
 }
@@ -22,6 +27,7 @@ const UrlSection: React.FC<UrlSectionProps> = ({
   url,
   onUrlChange,
   showProtocolWarning,
+  warningData,
   detectedProtocol,
   enteredProtocol
 }) => {
@@ -29,21 +35,30 @@ const UrlSection: React.FC<UrlSectionProps> = ({
 
   const getUrlPlaceholder = (binding: BindingType, detectedProtocol: string): string => {
     const baseProtocol = detectedProtocol || 'https';
+
+    
+    let placeholder: string;
     switch (binding) {
       case 'internal':
-        if (baseProtocol === 'tcp') return 'tcp://foo.internal:1234';
-        if (baseProtocol === 'tls') return 'tls://foo.internal:443';
-        return 'https://foo.internal';
+        if (baseProtocol === 'tcp') placeholder = 'tcp://foo.internal:1234';
+        else if (baseProtocol === 'tls') placeholder = 'tls://foo.internal:443';
+        else placeholder = 'https://foo.internal';
+        break;
       case 'kubernetes':
-        if (baseProtocol === 'tcp') return 'tcp://foo.bar:1234';
-        if (baseProtocol === 'tls') return 'tls://foo.bar:443';
-        return 'http://foo.bar';
+        if (baseProtocol === 'tcp') placeholder = 'tcp://foo.bar:1234';
+        else if (baseProtocol === 'tls') placeholder = 'tls://foo.bar:443';
+        else placeholder = 'http://foo.bar';
+        break;
       case 'public':
       default:
-        if (baseProtocol === 'tcp') return 'tcp://';
-        if (baseProtocol === 'tls') return 'tls://foo.ngrok.app';
-        return 'https://foo.ngrok.app';
+        if (baseProtocol === 'tcp') placeholder = 'tcp://';
+        else if (baseProtocol === 'tls') placeholder = 'tls://foo.ngrok.app';
+        else placeholder = 'https://foo.ngrok.app';
+        break;
     }
+    
+
+    return placeholder;
   };
 
   const openExternalLink = (url: string) => {
@@ -94,6 +109,7 @@ const UrlSection: React.FC<UrlSectionProps> = ({
 
       <ProtocolWarning
         visible={showProtocolWarning}
+        warningData={warningData}
         detectedProtocol={detectedProtocol}
         enteredProtocol={enteredProtocol}
       />

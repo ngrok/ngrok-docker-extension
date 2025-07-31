@@ -74,7 +74,7 @@ backend/
 - Manages ngrok agent configuration and lifecycle
 - Creates/removes ngrok endpoints for container ports  
 - Thread-safe endpoint storage with composite keys (`containerID:targetPort`)
-- Auto-disconnect capability when no endpoints remain
+
 - Connection status tracking with latency metrics
 
 ### Protocol Detection (`internal/detectproto/`)
@@ -85,7 +85,7 @@ backend/
 
 ### POST /configure_agent
 Configure ngrok agent with auth token
-- **Body**: `{token: string, connectURL?: string, autoDisconnect?: bool}`
+- **Body**: `{token: string, connectURL?: string}`
 - **Response**: 200 OK or 401 Unauthorized
 
 ### POST /create_endpoint

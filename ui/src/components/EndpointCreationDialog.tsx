@@ -5,6 +5,7 @@ import {
   Typography,
   Box,
   IconButton,
+  CircularProgress,
   useTheme
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -60,6 +61,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
   const [stepTwoConfig, setStepTwoConfig] = useState<StepTwoConfig>({
     trafficPolicy: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
 
@@ -79,6 +81,7 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
       setStepTwoConfig({
         trafficPolicy: ''
       });
+      setIsSubmitting(false);
     }
   }, [open]);
 
@@ -97,8 +100,13 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
     setCurrentStep(1);
   };
 
-  const handleComplete = () => {
-    onComplete(stepOneConfig, stepTwoConfig);
+  const handleComplete = async () => {
+    setIsSubmitting(true);
+    try {
+      await onComplete(stepOneConfig, stepTwoConfig);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getCreateButtonText = () => {
@@ -223,8 +231,10 @@ const EndpointCreationDialog: React.FC<EndpointCreationDialogProps> = ({
               onClick={handleComplete}
               variant="contained"
               color="primary"
+              disabled={isSubmitting}
+              startIcon={isSubmitting ? <CircularProgress size={20} /> : undefined}
             >
-              {getCreateButtonText()}
+              {isSubmitting ? "Creating..." : getCreateButtonText()}
             </Button>
           </>
         )}

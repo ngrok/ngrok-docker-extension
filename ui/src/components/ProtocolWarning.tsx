@@ -1,31 +1,51 @@
 import React from 'react';
-import { Box, Typography, Link } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
-import { createDockerDesktopClient } from "@docker/extension-api-client";
-
-const ddClient = createDockerDesktopClient();
 
 interface ProtocolWarningProps {
   visible: boolean;
+  warningData: {
+    severity: 'error' | 'warning' | 'info';
+    primary: string;
+    secondary: string;
+  } | null;
   detectedProtocol: string;
   enteredProtocol: string;
 }
 
 const ProtocolWarning: React.FC<ProtocolWarningProps> = ({
   visible,
-  detectedProtocol: _detectedProtocol,
-  enteredProtocol
+  warningData
 }) => {
-  if (!visible) return null;
+  if (!visible || !warningData) return null;
 
-  const handleLearnMoreClick = () => {
-    ddClient.host.openExternal('https://ngrok.com/docs/protocol/');
+  // Get background color based on severity
+  const getBackgroundColor = (severity: string) => {
+    switch (severity) {
+      case 'error': return '#ffebee'; // Light red
+      case 'warning': return '#fff4dc'; // Light orange (current)
+      case 'info': return '#e3f2fd'; // Light blue
+      default: return '#fff4dc';
+    }
   };
+
+  // Get text color based on severity
+  const getTextColor = (severity: string) => {
+    switch (severity) {
+      case 'error': return '#c62828'; // Dark red
+      case 'warning': return '#b85504'; // Dark orange (current)
+      case 'info': return '#1565c0'; // Dark blue
+      default: return '#b85504';
+    }
+  };
+
+  const backgroundColor = getBackgroundColor(warningData.severity);
+  const textColor = getTextColor(warningData.severity);
 
   return (
     <Box
       sx={{
-        backgroundColor: '#fff4dc',
+        backgroundColor,
         borderRadius: 1,
         p: 2,
         mb: 1,
@@ -36,7 +56,7 @@ const ProtocolWarning: React.FC<ProtocolWarningProps> = ({
     >
       <WarningIcon 
         sx={{ 
-          color: '#b85504', 
+          color: textColor, 
           width: 20, 
           height: 20,
           flexShrink: 0,
@@ -47,40 +67,23 @@ const ProtocolWarning: React.FC<ProtocolWarningProps> = ({
         <Typography 
           variant="body2" 
           sx={{ 
-            color: '#b85504',
+            color: textColor,
             fontSize: '14px',
             lineHeight: 1.4
           }}
         >
-          Are you sure you want to <Box component="span" sx={{ fontWeight: 'medium' }}>{enteredProtocol}</Box>? 
-          We haven't detected this protocol on your endpoint.
+          {warningData.primary}
         </Typography>
         <Typography 
           variant="body2" 
           sx={{ 
-            color: '#b85504',
+            color: textColor,
             fontSize: '14px',
             lineHeight: 1.4,
             mt: 0.5
           }}
         >
-          <Link
-            component="button"
-            onClick={handleLearnMoreClick}
-            sx={{
-              color: '#b85504',
-              fontSize: '14px',
-              fontWeight: 'medium',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              p: 0,
-              border: 'none',
-              background: 'none'
-            }}
-          >
-            View protocol docs
-          </Link>
-          .
+          {warningData.secondary}
         </Typography>
       </Box>
     </Box>
