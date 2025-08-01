@@ -11,6 +11,7 @@ declare module '@mui/material/styles' {
     status: {
       online: string;
       offline: string;
+      starting: string;
       connecting: string;
       connectingError: string;
       unknown: string;
@@ -25,6 +26,7 @@ declare module '@mui/material/styles' {
     status?: {
       online?: string;
       offline?: string;
+      starting?: string;
       connecting?: string;
       connectingError?: string;
       unknown?: string;
@@ -46,6 +48,7 @@ export const buildNgrokTheme = (dockerTheme: Theme) =>
       status: {
         online: '#2E7F74',     // Success green
         offline: '#757575',    // Grey
+        starting: '#ffa726',     // Yellow / warning
         connecting: '#1976d2', // Cool blue for connecting without error
         connectingError: '#d32f2f', // Error red for connecting with error
         unknown: '#9E9E9E'     // Light grey
