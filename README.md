@@ -8,9 +8,9 @@ Go here if you're looking for the [ngrok Docker image](#docker-image).
 
 To install the extension:
 
-1. Open Docker Desktop and go to the extensions marketplace.
-2. Search for "ngrok" and click "Install".
-3. Once installed, activate the extension by clicking on the ngrok icon in the Docker Desktop toolbar.
+1. Navigate to Docker Hub → [ngrok/ngrok-docker-extension](https://hub.docker.com/r/ngrok/ngrok-docker-extension)
+2. In the Tag drop-down menu, select the extension version you wish to install. We recommend using the latest available version.
+3. Click `Run in Docker Desktop`
 
 ## Quick start
 
