@@ -17,7 +17,7 @@ To install the extension:
 After installing the extension:
 
 1. The extension will prompt you to add your ngrok authtoken
-2. Start an endpoint by clicking the start icon on the container you want to put online
+2. Start an endpoint by clicking the `+` icon on the container you want to put online
 3. Optionally specify a custom URL and [traffic policy](https://ngrok.com/docs/traffic-policy/).
 4. You have an endpoint URL for your container that you can share!
 
