@@ -1,6 +1,6 @@
 import React from 'react';
-import { styled } from '@mui/material/styles';
-import { Box, Typography, Switch, Tooltip } from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
+import { Box, Typography, Switch, Tooltip, } from '@mui/material';
 import { CheckCircle, PowerSettingsNew, PowerOff, Pending, ErrorOutline } from '@mui/icons-material';
 
 interface StatusChipProps {
@@ -14,28 +14,29 @@ interface StatusChipProps {
     size?: string;
 }
 
-const getStateStyles = (status: string) => {
+
+const getStateStyles = (status: string, theme: any) => {
     switch (status) {
         case 'online':
             return {
-                backgroundColor: '#e6f5f3', // Light green from Figma
-                iconBackgroundColor: '#2e7d32', // Green from Figma
-                secondaryTextColor: '#2e7d32', // Green from Figma
+                backgroundColor: theme.palette.docker.green[100], // Light green Docker theme color
+                iconBackgroundColor: theme.palette.docker.green[500], // Green Docker theme color
+                secondaryTextColor: theme.palette.docker.green[500], // Green Docker theme color
             };
         case 'connectingError':
             return {
-                backgroundColor: '#fdeaea', // Light red from Figma
-                iconBackgroundColor: '#d52536', // Red from Figma
-                secondaryTextColor: '#d52536', // Red from Figma
+                backgroundColor: theme.palette.docker.red[100], // Light red Docker theme color
+                iconBackgroundColor: theme.palette.docker.red[500], // Red Docker theme color
+                secondaryTextColor: theme.palette.docker.red[500], // Red Docker theme color
             };
         case 'offline':
         case 'connecting':
         case 'unknown':
         default:
             return {
-                backgroundColor: '#efeff2', // Light gray from Figma
-                iconBackgroundColor: '#677285', // Gray from Figma
-                secondaryTextColor: '#8993a5', // Gray text from Figma
+                backgroundColor: theme.palette.docker.grey[100] ,// Light gray Docker theme color
+                iconBackgroundColor: theme.palette.docker.grey[500], // Gray Docker theme color
+                secondaryTextColor: theme.palette.text.secondary, // Gray text Docker theme color
             };
     }
 };
@@ -63,7 +64,7 @@ const getSecondaryText = (status: string, latency?: number) => {
 const StyledStatusContainer = styled(Box, {
     shouldForwardProp: (prop) => !['status', 'latency', 'expectedState', 'onToggleAgentState'].includes(prop as string)
 })<StatusChipProps>(({ theme, status }) => {
-    const styles = getStateStyles(status);
+    const styles = getStateStyles(status, theme);
 
     return {
         backgroundColor: styles.backgroundColor,
@@ -82,7 +83,7 @@ const StyledStatusContainer = styled(Box, {
 const IconContainer = styled(Box, {
     shouldForwardProp: (prop) => prop !== 'status'
 })<{ status: string }>(({ theme, status }) => {
-    const styles = getStateStyles(status);
+    const styles = getStateStyles(status, theme);
 
     return {
         backgroundColor: styles.iconBackgroundColor,
@@ -111,19 +112,19 @@ const ContentContainer = styled(Box)(({ theme }) => ({
     paddingRight: theme.spacing(2),
 }));
 
-const PrimaryText = styled(Typography)(() => ({
+const PrimaryText = styled(Typography)(({ theme }) => ({
     fontFamily: 'Roboto',
     fontWeight: 500,
     fontSize: '14px',
-    color: '#000000',
+    color: theme.palette.text.primary,
     lineHeight: 'normal',
     whiteSpace: 'nowrap',
 }));
 
 const SecondaryText = styled(Typography, {
     shouldForwardProp: (prop) => prop !== 'status'
-})<{ status: string }>(({ status }) => {
-    const styles = getStateStyles(status);
+})<{ status: string }>(({ theme, status }) => {
+    const styles = getStateStyles(status, theme);
 
     return {
         fontFamily: 'Roboto',
@@ -142,6 +143,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({
     onToggleAgentState,
     ...otherProps
 }) => {
+    const theme = useTheme();
     const secondaryText = getSecondaryText(status, latency);
 
     return (
@@ -172,15 +174,15 @@ export const StatusChip: React.FC<StatusChipProps> = ({
                     sx={{
                         '& .MuiSwitch-track': {
                             backgroundColor: 
-                                expectedState === 'online' && status === 'online' ? '#4caf50 !important' :
+                                expectedState === 'online' && status === 'online' ? `${theme.palette.docker.green[300]} !important` :
                                 expectedState === 'online' && (status === 'connecting' || status === 'connectingError') ? 'rgba(0,0,0,0.5) !important' :
-                                expectedState === 'online' ? '#8BC7F5 !important' : 'rgba(0,0,0,0.5) !important',
+                                expectedState === 'online' ? '#8BC7F5 !important' : `${theme.palette.docker.grey[300]} !important` ,
                         },
                         '& .MuiSwitch-thumb': {
                             backgroundColor: 
-                                expectedState === 'online' && status === 'online' ? '#2e7d32 !important' :
+                                expectedState === 'online' && status === 'online' ? `${theme.palette.docker.green[500]}` :
                                 expectedState === 'online' && (status === 'connecting' || status === 'connectingError') ? '#ffffff !important' :
-                                expectedState === 'online' ? '#116ED0 !important' : '#ffffff !important',
+                                expectedState === 'online' ? '#116ED0 !important' : `${theme.palette.docker.grey[500]} !important`,
                         }
                     }}
                 />
