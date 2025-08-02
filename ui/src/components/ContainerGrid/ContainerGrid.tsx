@@ -6,7 +6,7 @@ import {
     GridColDef,
 } from "@mui/x-data-grid";
 import { Box, Tooltip, useMediaQuery, useTheme, Switch, FormControlLabel } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -307,7 +307,7 @@ const ContainerGrid: React.FC = () => {
                 <GridActionsCellItem
                     key={"action_create_" + row.containerId}
                     icon={
-                        <Tooltip title="Create endpoint"><AddIcon /></Tooltip>
+                        <Tooltip title="Create endpoint"><AddCircleIcon /></Tooltip>
                     }
                     onClick={() => handleCreateConfiguration(row.id)}
                     label="Create endpoint"
