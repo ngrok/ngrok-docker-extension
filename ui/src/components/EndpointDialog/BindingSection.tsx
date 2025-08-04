@@ -25,7 +25,7 @@ const BindingSection: React.FC<BindingSectionProps> = ({
     {
       type: 'internal' as BindingType,
       title: 'Internal',
-      description: 'Only accessible to clients on your internal network.',
+      description: 'Accessible only via forwarding from your other endpoints.',
       learnMoreUrl: 'https://ngrok.com/docs/universal-gateway/internal-endpoints/'
     },
     {

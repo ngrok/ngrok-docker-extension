@@ -40,25 +40,49 @@ const UrlSection: React.FC<UrlSectionProps> = ({
     let placeholder: string;
     switch (binding) {
       case 'internal':
-        if (baseProtocol === 'tcp') placeholder = 'tcp://foo.internal:1234';
-        else if (baseProtocol === 'tls') placeholder = 'tls://foo.internal:443';
-        else placeholder = 'https://foo.internal';
+        if (baseProtocol === 'tcp') placeholder = 'tcp://example.internal:1234';
+        else if (baseProtocol === 'tls') placeholder = 'tls://example.internal:443';
+        else placeholder = 'https://example.internal';
         break;
       case 'kubernetes':
-        if (baseProtocol === 'tcp') placeholder = 'tcp://foo.bar:1234';
-        else if (baseProtocol === 'tls') placeholder = 'tls://foo.bar:443';
-        else placeholder = 'http://foo.bar';
+        if (baseProtocol === 'tcp') placeholder = 'tcp://name.namespace:1234';
+        else if (baseProtocol === 'tls') placeholder = 'tls://name.namespace:443';
+        else placeholder = 'http://name.namespace';
         break;
       case 'public':
       default:
-        if (baseProtocol === 'tcp') placeholder = 'tcp://';
-        else if (baseProtocol === 'tls') placeholder = 'tls://foo.ngrok.app';
-        else placeholder = 'https://foo.ngrok.app';
+        if (baseProtocol === 'tcp') placeholder = 'tcp://1.tcp.ngrok.io:12345';
+        else if (baseProtocol === 'tls') placeholder = 'tls://example.ngrok.app';
+        else placeholder = 'https://example.ngrok.app';
         break;
     }
     
 
     return placeholder;
+  };
+
+  const getHelpTextForBinding = (binding: BindingType): React.ReactNode => {
+    switch (binding) {
+      case 'public':
+        return (
+          <>
+            Leave blank for ngrok to assign a URL for you, otherwise URL must match a{' '}
+            <LinkButton 
+              onClick={() => openExternalLink('https://dashboard.ngrok.com/domains')}
+              sx={{ display: 'inline', p: 0, minHeight: 'auto', fontSize: 'inherit' }}
+            >
+              Domain
+            </LinkButton>
+            {' '}in your account.
+          </>
+        );
+      case 'internal':
+        return 'URL hostname must end in .internal';
+      case 'kubernetes':
+        return 'http://foo.bar appears as service foo in namespace bar in your k8s clusters';
+      default:
+        return '';
+    }
   };
 
   const openExternalLink = (url: string) => {
@@ -123,7 +147,7 @@ const UrlSection: React.FC<UrlSectionProps> = ({
           mb: 0.5
         }}
       >
-        Leave blank to auto-generate a random URL.
+        {getHelpTextForBinding(binding)}
       </Typography>
 
       <LinkButton onClick={() => openExternalLink('https://ngrok.com/docs/universal-gateway/bindings/')}>
