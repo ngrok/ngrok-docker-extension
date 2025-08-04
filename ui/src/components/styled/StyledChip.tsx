@@ -19,8 +19,8 @@ const getStateStyles = (status: string, theme: any) => {
     switch (status) {
         case 'online':
             return {
-                backgroundColor: theme.palette.docker.green[100], // Light green Docker theme color
-                iconBackgroundColor: theme.palette.docker.green[500], // Green Docker theme color
+                backgroundColor: theme.palette.docker.grey[100], // Light green Docker theme color
+                iconBackgroundColor: theme.palette.docker.green[400], // Green Docker theme color
                 secondaryTextColor: theme.palette.docker.green[500], // Green Docker theme color
             };
         case 'connectingError':
@@ -180,7 +180,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({
                         },
                         '& .MuiSwitch-thumb': {
                             backgroundColor: 
-                                expectedState === 'online' && status === 'online' ? `${theme.palette.docker.green[500]}` :
+                                expectedState === 'online' && status === 'online' ? `${theme.palette.docker.green[500]} !important` :
                                 expectedState === 'online' && (status === 'connecting' || status === 'connectingError') ? '#ffffff !important' :
                                 expectedState === 'online' ? '#116ED0 !important' : `${theme.palette.docker.grey[500]} !important`,
                         }
