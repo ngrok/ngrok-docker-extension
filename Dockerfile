@@ -36,12 +36,12 @@ LABEL org.opencontainers.image.title="ngrok" \
     org.opencontainers.image.vendor="ngrok" \
     com.docker.desktop.extension.api.version="${VERSION}" \
     com.docker.desktop.extension.icon="https://user-images.githubusercontent.com/550861/222650471-a1908709-8920-406b-a55d-b8231cd3a4a5.svg" \
-    com.docker.extension.screenshots="[{\"alt\":\"containers\", \"url\":\"https://user-images.githubusercontent.com/550861/222644761-b30982aa-e81a-4546-9678-dadfc731e0fc.png\"},{\"alt\":\"settings\", \"url\":\"https://user-images.githubusercontent.com/550861/222644829-3b717704-5b58-455f-b729-dad4c96daf18.png\"}]" \
-    com.docker.extension.detailed-description="Use this extension to connect the containers that have published ports in Docker Desktop to the public internet using ngrok endpoints." \
+    com.docker.extension.screenshots="[{\"alt\":\"containers\", \"url\":\"https://raw.githubusercontent.com/ngrok/ngrok-docker-extension/main/resources/screenshot.png\"},{\"alt\":\"policy\", \"url\":\"https://raw.githubusercontent.com/ngrok/ngrok-docker-extension/main/resources/screenshot_1.png\"}]" \
+    com.docker.extension.detailed-description="<h5>ngrok Docker Desktop Extension</h5><p>Use ngrok's API Gateway cloud service to forward traffic from internet-accessible endpoint URLs to your local Docker containers. This extension provides tools to create and manage endpoints, apply Traffic Policy, configure custom URLs, binding type, and enable endpoint pooling for load balancing scenarios.</p><h5>About ngrok</h5><p>ngrok is the leading way to make any application, device, or service securely available on its global edge in seconds. ngrok wraps the complexity of authentication, remote management, load balancing, and networking into a programmable component embeddable into any stack. ngrok is used by over 7 million developers and is recommended by category leaders including Twilio, GitHub, Okta, Microsoft, Zoom, and Shopify.</p>" \
     com.docker.extension.publisher-url="https://ngrok.com" \
     com.docker.extension.additional-urls="[{\"title\":\"Docs\",\"url\":\"https://ngrok.com/docs\"}]" \
-    com.docker.extension.changelog="<ul><li>Support for HTTP endpoints</li><li>Multiple endpoints in single session</li></ul>" \
-    com.docker.extension.categories="networking,utility-tools" \
+    com.docker.extension.changelog="<ul><li>Visual overhaul: easily configure your endpoints with Traffic Policy, binding options, customizable URLs, and endpoint pooling.</li><li>Consume the latest version of the ngrok agent</li></ul>" \
+    com.docker.extension.categories="networking,utility-tools,testing-tools" \
     com.docker.extension.account-info="required"
 
 # Conditionally install development tools
