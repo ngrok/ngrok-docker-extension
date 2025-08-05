@@ -38,7 +38,7 @@ const OnlineEndpointsToggle: React.FC<OnlineEndpointsToggleProps> = ({
                 : '#677285'
             }}
           >
-            Show only online endpoints
+            Show only off endpoints
           </Typography>
         </FlexRow>
       )}
