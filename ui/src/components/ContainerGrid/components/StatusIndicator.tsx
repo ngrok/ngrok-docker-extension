@@ -5,9 +5,10 @@ interface StatusIndicatorProps {
   hasError: boolean;
   errorMessage?: string;
   state?: string;
+  hasEndpointConfig?: boolean;
 }
 
-const StatusIndicator: React.FC<StatusIndicatorProps> = ({ isOnline, hasError, errorMessage, state }) => {
+const StatusIndicator: React.FC<StatusIndicatorProps> = ({ isOnline, hasError, errorMessage, state, hasEndpointConfig = false }) => {
   const theme = useTheme();
   
   const getStatusColor = () => {
@@ -89,6 +90,33 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({ isOnline, hasError, e
   if (hasError && errorMessage) {
     return (
       <Tooltip title={errorMessage} arrow>
+        {content}
+      </Tooltip>
+    );
+  }
+
+  // Show tooltip for online state
+  if (isOnline && hasEndpointConfig) {
+    return (
+      <Tooltip title="Endpoint online" arrow>
+        {content}
+      </Tooltip>
+    );
+  }
+
+  // Show tooltip for offline state (has config but not online)
+  if (!isOnline && hasEndpointConfig) {
+    return (
+      <Tooltip title="Endpoint offline" arrow>
+        {content}
+      </Tooltip>
+    );
+  }
+
+  // Show tooltip for no endpoint configuration
+  if (!hasEndpointConfig) {
+    return (
+      <Tooltip title="No endpoint configured" arrow>
         {content}
       </Tooltip>
     );

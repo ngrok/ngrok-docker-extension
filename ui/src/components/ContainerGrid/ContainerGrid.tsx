@@ -5,8 +5,8 @@ import {
     GridActionsColDef,
     GridColDef,
 } from "@mui/x-data-grid";
-import { Box, Tooltip, useMediaQuery, useTheme, Switch, FormControlLabel } from "@mui/material";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
+import { Box, Tooltip, useMediaQuery, useTheme, Switch, FormControlLabel, IconButton } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -315,19 +315,7 @@ const ContainerGrid: React.FC = () => {
 
         const hasConfiguration = getEndpointForContainer(row.id);
 
-        if (!hasConfiguration) {
-            // Show create configuration button
-            actions.push(
-                <GridActionsCellItem
-                    key={"action_create_" + row.containerId}
-                    icon={
-                        <Tooltip title="Create endpoint"><AddCircleIcon /></Tooltip>
-                    }
-                    onClick={() => handleCreateConfiguration(row.id)}
-                    label="Create endpoint"
-                />
-            );
-        } else {
+        if (hasConfiguration) {
             // More actions menu (triple dot) - only show if has configuration
             actions.push(
                 <GridActionsCellItem
@@ -350,7 +338,7 @@ const ContainerGrid: React.FC = () => {
             headerName: '',
             width: 40,
             sortable: false,
-            renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} hasError={params.row.hasError} errorMessage={params.row.errorMessage} state={params.row.state} />
+            renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} hasError={params.row.hasError} errorMessage={params.row.errorMessage} state={params.row.state} hasEndpointConfig={params.row.hasEndpointConfig} />
         },
         {
             field: 'endpointToggle',
@@ -360,7 +348,27 @@ const ContainerGrid: React.FC = () => {
             align: 'center',
             renderCell: (params) => {
                 const hasConfig = !!getEndpointForContainer(params.row.id);
-                if (!hasConfig) return null;
+                
+                if (!hasConfig) {
+                    // Show create endpoint button when no configuration exists
+                    return (
+                        <Tooltip title="Create endpoint">
+                            <IconButton 
+                                size="small"
+                                onClick={() => handleCreateConfiguration(params.row.id)}
+                                sx={{ 
+                                    color: 'primary.main',
+                                    '&:hover': {
+                                        backgroundColor: 'primary.main',
+                                        color: 'primary.contrastText'
+                                    }
+                                }}
+                            >
+                                <AddIcon />
+                            </IconButton>
+                        </Tooltip>
+                    );
+                }
 
                 const loading = togglingEndpoint[params.row.id];
                 const isOnline = params.row.expectedState === 'online';
