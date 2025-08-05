@@ -6,7 +6,7 @@ import {
     GridColDef,
 } from "@mui/x-data-grid";
 import { Box, Tooltip, useMediaQuery, useTheme, Switch, FormControlLabel, IconButton } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
@@ -336,15 +336,19 @@ const ContainerGrid: React.FC = () => {
         {
             field: 'status',
             headerName: '',
-            width: 40,
             sortable: false,
-            renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} hasError={params.row.hasError} errorMessage={params.row.errorMessage} state={params.row.state} hasEndpointConfig={params.row.hasEndpointConfig} />
+            disableColumnMenu: true,
+            align: 'center',
+            width: 30,
+            minWidth: 30,
+            renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} hasError={params.row.hasError} errorMessage={params.row.errorMessage} state={params.row.state} hasEndpointConfig={params.row.hasEndpointConfig}/>
         },
         {
             field: 'endpointToggle',
             headerName: '',
             width: 60,
             sortable: false,
+            disableColumnMenu: true,
             align: 'center',
             renderCell: (params) => {
                 const hasConfig = !!getEndpointForContainer(params.row.id);
@@ -356,15 +360,8 @@ const ContainerGrid: React.FC = () => {
                             <IconButton 
                                 size="small"
                                 onClick={() => handleCreateConfiguration(params.row.id)}
-                                sx={{ 
-                                    color: 'primary.main',
-                                    '&:hover': {
-                                        backgroundColor: 'primary.main',
-                                        color: 'primary.contrastText'
-                                    }
-                                }}
                             >
-                                <AddIcon />
+                                <AddCircleIcon />
                             </IconButton>
                         </Tooltip>
                     );
@@ -653,7 +650,7 @@ const ContainerGrid: React.FC = () => {
 
     // Normal grid view
     return (
-        <Box sx={{ width: '100%', minWidth: 0 }}>
+        <Box sx={{ width: '100%', minWidth: 0,}}>
             <OnlineEndpointsToggle hasContainersWithPorts={true} />
             <AlertDialog
                 open={showAlertDialog}
@@ -724,10 +721,10 @@ const ContainerGrid: React.FC = () => {
                     width: '100%',
                     minWidth: 0,
                     // Keep minimal styling that doesn't conflict with Docker's DataGrid theme
-                    '& .MuiDataGrid-cell[data-field="status"]': {
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                    
+                    //Hide border between Status and Toggle header cells.
+                    '& .MuiDataGrid-columnHeader[data-field="status"]': {
+                        '.MuiDataGrid-iconSeparator' : {display: 'none !important'},
                     },
                     '& .MuiDataGrid-cell[data-field="containerName"]': {
                         display: 'flex',
