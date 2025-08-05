@@ -41,7 +41,7 @@ LABEL org.opencontainers.image.title="ngrok" \
     com.docker.extension.publisher-url="https://ngrok.com" \
     com.docker.extension.additional-urls="[{\"title\":\"Docs\",\"url\":\"https://ngrok.com/docs\"}]" \
     com.docker.extension.changelog="<ul><li>Visual overhaul: easily configure your endpoints with Traffic Policy, binding options, customizable URLs, and endpoint pooling.</li><li>Consume the latest version of the ngrok agent</li></ul>" \
-    com.docker.extension.categories="networking,utility-tools,testing-tools,kubernetes" \
+    com.docker.extension.categories="networking,utility-tools,testing-tools" \
     com.docker.extension.account-info="required"
 
 # Conditionally install development tools
