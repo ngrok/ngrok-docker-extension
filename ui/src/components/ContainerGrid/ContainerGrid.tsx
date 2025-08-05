@@ -334,16 +334,6 @@ const ContainerGrid: React.FC = () => {
 
     const columns: DataGridColumnType = [
         {
-            field: 'status',
-            headerName: '',
-            sortable: false,
-            disableColumnMenu: true,
-            align: 'center',
-            width: 30,
-            minWidth: 30,
-            renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} hasError={params.row.hasError} errorMessage={params.row.errorMessage} state={params.row.state} hasEndpointConfig={params.row.hasEndpointConfig}/>
-        },
-        {
             field: 'endpointToggle',
             headerName: '',
             width: 60,
@@ -401,6 +391,16 @@ const ContainerGrid: React.FC = () => {
                     </Tooltip>
                 );
             }
+        },
+        {
+            field: 'status',
+            headerName: '',
+            width: 50,
+            minWidth: 50,
+            sortable: true,
+            align: 'center',
+            disableColumnMenu: true,
+            renderCell: (params) => <StatusIndicator isOnline={params.row.isOnline} hasError={params.row.hasError} errorMessage={params.row.errorMessage} state={params.row.state} hasEndpointConfig={params.row.hasEndpointConfig} />
         },
         {
             field: 'containerName',
@@ -722,7 +722,10 @@ const ContainerGrid: React.FC = () => {
                     minWidth: 0,
                     // Keep minimal styling that doesn't conflict with Docker's DataGrid theme
                     
-                    //Hide border between Status and Toggle header cells.
+                    //Hide border between Toggle and Status header cells.
+                    '& .MuiDataGrid-columnHeader[data-field="endpointToggle"]': {
+                        '.MuiDataGrid-iconSeparator' : {display: 'none !important'},
+                    },
                     '& .MuiDataGrid-columnHeader[data-field="status"]': {
                         '.MuiDataGrid-iconSeparator' : {display: 'none !important'},
                     },
