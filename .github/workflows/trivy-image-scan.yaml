@@ -30,10 +30,8 @@ jobs:
         platforms: linux/amd64 # Load in the following step supports only one image and linux/amd64 is fine for scanning
 
     - name: Build
-      env:
-        TAG: ${{ github.sha }}
       run: |
-        make build-extension
+        make build-extension TAG=${{ github.sha }}
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5  # v0.30.0

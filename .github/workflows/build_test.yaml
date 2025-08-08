@@ -34,10 +34,8 @@ jobs:
           platforms: linux/amd64
 
       - name: Build images
-        env:
-          TAG: ${{ github.sha }}
         run: |
-          make build-extension
+          make build-extension TAG=${{ github.sha }}
 
   go-tests:
     runs-on: ubuntu-latest

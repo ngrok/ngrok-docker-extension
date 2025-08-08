@@ -42,10 +42,8 @@ jobs:
           echo "release-version=$tag" >> $GITHUB_OUTPUT
 
       - name: Build images
-        env:
-          TAG: ${{ steps.git-tag.outputs.release-version }}
         run: |
-          make build-extension
+          make build-extension TAG=${{ steps.git-tag.outputs.release-version }}
 
       - name: "Docker Login"
         uses: docker/login-action@v3
