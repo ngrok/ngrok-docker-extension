@@ -1,0 +1,55 @@
+name: build & test
+on:
+  push:
+    branches:
+      - "**"
+
+env:
+  DOCKER_BUILDX_PLATFORMS: linux/amd64,linux/arm64
+
+jobs:
+  build:
+    permissions:
+      contents: "read"
+      id-token: "write"
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+      - name: Checkout local
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+
+      - id: buildx-setup
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64
+
+      - name: Build images
+        run: |
+          make build-extension TAG=${{ github.sha }}
+
+  go-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout local
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+
+      - name: go tests
+        working-directory: ./backend
+        run: |
+          go mod download
+          go test -v ./... -race

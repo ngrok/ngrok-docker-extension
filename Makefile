@@ -1,5 +1,8 @@
 IMAGE?=ngrok/ngrok-docker-extension
-TAG?=latest
+TAG?=0.0.0-dev
+
+# Normalize TAG by stripping 'v' prefix if present
+override TAG := $(shell echo $(TAG) | sed 's/^v//')
 
 BUILDER=buildx-multi-arch
 
@@ -7,10 +10,10 @@ INFO_COLOR = \033[0;36m
 NO_COLOR   = \033[m
 
 build-extension: ## Build service image to be deployed as a desktop extension
-	docker buildx build --tag=$(IMAGE):$(TAG) . --load
+	docker buildx build --build-arg VERSION=$(TAG) --tag=$(IMAGE):$(TAG) . --load
 
 build-extension-dev: ## Build service image with development tools (includes curl)
-	docker buildx build --build-arg DEVELOPMENT=true --tag=$(IMAGE):$(TAG) . --load
+	docker buildx build --build-arg DEVELOPMENT=true --build-arg VERSION=$(TAG) --tag=$(IMAGE):$(TAG) . --load
 
 install-extension: build-extension ## Install the extension
 	docker extension install -f $(IMAGE):$(TAG)

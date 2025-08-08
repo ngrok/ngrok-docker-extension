@@ -1,4 +1,4 @@
-FROM golang:1.24.2-alpine AS builder
+FROM golang:1.24.4-alpine AS builder
 ENV CGO_ENABLED=0
 WORKDIR /backend
 COPY backend/go.* .
@@ -25,7 +25,7 @@ RUN npm run build
 FROM alpine
 
 # Build arguments
-ARG VERSION=0.1.0
+ARG VERSION
 ARG DEVELOPMENT=false
 
 # Make version available as environment variable
@@ -34,7 +34,10 @@ ENV EXTENSION_VERSION="${VERSION}"
 LABEL org.opencontainers.image.title="ngrok" \
     org.opencontainers.image.description="Put your containers online with ngrok's API Gateway." \
     org.opencontainers.image.vendor="ngrok" \
-    com.docker.desktop.extension.api.version="${VERSION}" \
+    org.opencontainers.image.licenses="MIT" \
+    org.opencontainers.image.source="https://github.com/ngrok/ngrok-docker-extension" \
+    org.opencontainers.image.version="${VERSION}" \
+    com.docker.desktop.extension.api.version=">= 0.3.0" \
     com.docker.desktop.extension.icon="https://user-images.githubusercontent.com/550861/222650471-a1908709-8920-406b-a55d-b8231cd3a4a5.svg" \
     com.docker.extension.screenshots="[{\"alt\":\"containers\", \"url\":\"https://raw.githubusercontent.com/ngrok/ngrok-docker-extension/main/resources/screenshot.png\"},{\"alt\":\"policy\", \"url\":\"https://raw.githubusercontent.com/ngrok/ngrok-docker-extension/main/resources/screenshot_1.png\"}]" \
     com.docker.extension.detailed-description="<h5>ngrok Docker Desktop Extension</h5><p>Use ngrok's API Gateway cloud service to forward traffic from internet-accessible endpoint URLs to your local Docker containers. This extension provides tools to create and manage endpoints, apply Traffic Policy, configure custom URLs, binding type, and enable endpoint pooling for load balancing scenarios.</p><h5>About ngrok</h5><p>ngrok is the leading way to make any application, device, or service securely available on its global edge in seconds. ngrok wraps the complexity of authentication, remote management, load balancing, and networking into a programmable component embeddable into any stack. ngrok is used by over 7 million developers and is recommended by category leaders including Twilio, GitHub, Okta, Microsoft, Zoom, and Shopify.</p>" \
