@@ -1,0 +1,44 @@
+name: trivy image scan
+
+on:
+  push:
+    branches:
+      - "**"
+  schedule:
+  - cron: '0 16 * * 1' # Run every Monday at 8:00 Pacific (16:00 UTC)
+
+env:
+  DOCKER_BUILDX_PLATFORMS: linux/amd64
+
+jobs:
+  image-scan:
+    name: Image Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - id: buildx-setup
+      name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: linux/amd64 # Load in the following step supports only one image and linux/amd64 is fine for scanning
+
+    - name: Build
+      env:
+        TAG: ${{ github.sha }}
+      run: |
+        make build-extension
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5  # v0.30.0
+      with:
+        image-ref: ngrok/ngrok-docker-extension:${{ github.sha }}
+        severity: 'CRITICAL,HIGH'
+        exit-code: '1' # fail job on HIGH/CRITICAL vulns
+        format: 'table' # Show vulnerabilities in CI logs
