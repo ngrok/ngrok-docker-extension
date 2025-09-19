@@ -1,35 +1,35 @@
 # ngrok Docker Desktop Extension
 
-Use [ngrok](https://ngrok.com)'s API Gateway cloud service to forward traffic from internet-accessible endpoint URLs to your local Docker containers.
+Make your local Docker containers accessible on the internet using [ngrok](https://ngrok.com)’s secure, global network—no port forwarding required. This Docker Desktop extension creates public, shareable URLs and routes traffic directly to your containers with a click.
 
-Go here if you're looking for the [ngrok Docker image](#docker-image).
+Looking for a CLI-first workflow? See the [Docker image](#docker-image).
 
 ## Installation
 
-[Click here](https://open.docker.com/extensions/marketplace?extensionId=ngrok/ngrok-docker-extension) to add the ngrok extension to Docker Desktop.
+[Install from Docker Desktop Marketplace](https://open.docker.com/extensions/marketplace?extensionId=ngrok/ngrok-docker-extension).
 
 ## Quick start
 
 After installing the extension:
 
-1. The extension will prompt you to add your ngrok authtoken
-2. Start an endpoint by clicking the `+` icon on the container you want to put online
-3. Optionally specify a custom URL and [traffic policy](https://ngrok.com/docs/traffic-policy/).
-4. You have an endpoint URL for your container that you can share!
+1. When prompted, add your ngrok authtoken. Don’t have one? [Sign up for a free ngrok account](https://dashboard.ngrok.com/signup) to get it.
+2. Click the `+` next to a container to start an endpoint.
+3. Optionally set a custom URL and apply a [traffic policy](https://ngrok.com/docs/traffic-policy/).
+4. Share the public URL with anyone who needs access.
 
-## Screenshots
+## Screenshot
 <img width="1292" alt="containers" src="./resources/screenshot.png">
 
 ## Development
 
-See [AGENT.md](AGENT.md)
+See `AGENT.md` for local development.
 
-## Docker Image
+## Docker image
 
-Perfer a terminal over GUI? You're probably looking for the [ngrok Docker Image](https://hub.docker.com/r/ngrok/ngrok).
+Prefer a terminal over a GUI? Use the [ngrok Docker image](https://hub.docker.com/r/ngrok/ngrok).
 
-The docker image is suited for automation, scripting, and DevOps workflows. 
+Ideal for automation, scripting, and DevOps workflows.
 
 Links:
-- [ngrok Docker Image on Dockerhub](https://hub.docker.com/r/ngrok/ngrok)
-- [ngrok Docker Image on Github](https://github.com/ngrok/docker-ngrok)
+- [ngrok Docker image on Docker Hub](https://hub.docker.com/r/ngrok/ngrok)
+- [ngrok Docker image on GitHub](https://github.com/ngrok/docker-ngrok)
