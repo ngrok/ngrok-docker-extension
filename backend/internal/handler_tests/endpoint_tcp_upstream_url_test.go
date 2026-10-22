@@ -45,7 +45,7 @@ func TestPostEndpoints_UpstreamDefaultScheme(t *testing.T) {
 			gomock.Any(), // upstream (we'll capture this)
 			gomock.Any(), // options
 		).
-		Do(func(ctx interface{}, upstream interface{}, opts ...interface{}) {
+		Do(func(ctx any, upstream any, opts ...any) {
 			// Extract the upstream URL by parsing the string representation
 			// The upstream struct has unexported fields, so we use string parsing
 			upstreamStr := fmt.Sprintf("%+v", upstream)
@@ -149,7 +149,7 @@ func TestPostEndpoints_TLSDetection_HTTPSScheme(t *testing.T) {
 			gomock.Any(), // upstream (we'll capture this)
 			gomock.Any(), // options
 		).
-		Do(func(ctx interface{}, upstream interface{}, opts ...interface{}) {
+		Do(func(ctx any, upstream any, opts ...any) {
 			// Extract the upstream URL by parsing the string representation
 			upstreamStr := fmt.Sprintf("%+v", upstream)
 			t.Logf("Forward called with upstream: %s", upstreamStr)
@@ -237,7 +237,7 @@ func TestPostEndpoints_TLSDetection_TLSScheme(t *testing.T) {
 			gomock.Any(), // upstream (we'll capture this)
 			gomock.Any(), // options
 		).
-		Do(func(ctx interface{}, upstream interface{}, opts ...interface{}) {
+		Do(func(ctx any, upstream any, opts ...any) {
 			// Extract the upstream URL by parsing the string representation
 			upstreamStr := fmt.Sprintf("%+v", upstream)
 			t.Logf("Forward called with upstream: %s", upstreamStr)

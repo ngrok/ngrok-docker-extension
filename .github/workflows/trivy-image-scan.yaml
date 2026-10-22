@@ -18,14 +18,14 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
 
     - id: buildx-setup
       name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       with:
         platforms: linux/amd64 # Load in the following step supports only one image and linux/amd64 is fine for scanning
 
@@ -34,7 +34,7 @@ jobs:
         make build-extension TAG=${{ github.sha }}
 
     - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5  # v0.30.0
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
         image-ref: ngrok/ngrok-docker-extension:${{ github.sha }}
         severity: 'CRITICAL,HIGH'

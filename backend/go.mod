@@ -1,6 +1,6 @@
 module github.com/ngrok/ngrok-docker-extension
 
-go 1.24
+go 1.27.3
 
 require (
 	github.com/docker/docker v28.3.3+incompatible

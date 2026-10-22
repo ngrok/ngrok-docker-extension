@@ -72,14 +72,14 @@ func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) *TestEnv {
 }
 
 // makeJSONRequest creates a JSON request body from any object
-func makeJSONRequest(t *testing.T, data interface{}) []byte {
+func makeJSONRequest(t *testing.T, data any) []byte {
 	body, err := json.Marshal(data)
 	require.NoError(t, err, "Should be able to marshal request data to JSON")
 	return body
 }
 
 // jsonUnmarshal unmarshals JSON data with proper error handling
-func jsonUnmarshal(t *testing.T, data []byte, v interface{}) error {
+func jsonUnmarshal(t *testing.T, data []byte, v any) error {
 	err := json.Unmarshal(data, v)
 	require.NoError(t, err, "Should be able to unmarshal JSON response")
 	return err
@@ -87,11 +87,11 @@ func jsonUnmarshal(t *testing.T, data []byte, v interface{}) error {
 
 // APIRequest defines parameters for making HTTP API requests in tests
 type APIRequest struct {
-	Method       string      // HTTP method (GET, POST, PUT, etc.)
-	Path         string      // URL path
-	RequestBody  interface{} // Request body to marshal to JSON (nil for no body)
-	ResponseBody interface{} // Response body to unmarshal JSON into (must be pointer)
-	ExpectedCode int         // Expected HTTP status code
+	Method       string // HTTP method (GET, POST, PUT, etc.)
+	Path         string // URL path
+	RequestBody  any    // Request body to marshal to JSON (nil for no body)
+	ResponseBody any    // Response body to unmarshal JSON into (must be pointer)
+	ExpectedCode int    // Expected HTTP status code
 }
 
 // apiRequest makes an HTTP request with optional JSON body, executes it, and unmarshals the response
