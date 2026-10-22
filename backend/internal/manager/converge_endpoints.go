@@ -262,7 +262,7 @@ func (m *manager) setEndpointOnline(endpointID string, forwarder ngrok.EndpointF
 // computeConfigHash computes a hash of endpoint configuration for change detection
 func (m *manager) computeConfigHash(config store.EndpointConfig) string {
 	// Only hash fields that affect the ngrok endpoint
-	configData := map[string]interface{}{
+	configData := map[string]any{
 		"url":            config.URL,
 		"binding":        config.Binding,
 		"poolingEnabled": config.PoolingEnabled,
